@@ -2,31 +2,31 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>articles on Jeannory&#39;s blog</title>
-    <link>https://jeannory.github.io/tags/articles/</link>
+    <link>https://jeannory.github.io/blog/docs/tags/articles/</link>
     <description>Recent content in articles on Jeannory&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Tue, 08 Oct 2019 11:03:17 +0200</lastBuildDate>
     
-	<atom:link href="https://jeannory.github.io/tags/articles/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://jeannory.github.io/blog/docs/tags/articles/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Mockito</title>
-      <link>https://jeannory.github.io/articles/mockito/</link>
+      <link>https://jeannory.github.io/blog/docs/articles/mockito/</link>
       <pubDate>Tue, 08 Oct 2019 11:03:17 +0200</pubDate>
       
-      <guid>https://jeannory.github.io/articles/mockito/</guid>
+      <guid>https://jeannory.github.io/blog/docs/articles/mockito/</guid>
       <description>Mockito page
 toDo</description>
     </item>
     
     <item>
       <title>Spring Security</title>
-      <link>https://jeannory.github.io/articles/spring-security/</link>
+      <link>https://jeannory.github.io/blog/docs/articles/spring-security/</link>
       <pubDate>Mon, 07 Oct 2019 23:47:25 +0200</pubDate>
       
-      <guid>https://jeannory.github.io/articles/spring-security/</guid>
+      <guid>https://jeannory.github.io/blog/docs/articles/spring-security/</guid>
       <description>Il s&amp;rsquo;agit de mon premier article, les avis/critiques sont le bienvenus.
 Vous pouvez retrouver les dépôts git,
  Pour le back-end : ici Pour le front-end : ici  Bonne lecture.
