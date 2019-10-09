@@ -2,31 +2,31 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Jeannory&#39;s blog</title>
-    <link>https://jeannory.github.io/blog/docs/</link>
+    <link>https://jeannory.github.io/blog/</link>
     <description>Recent content on Jeannory&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Wed, 09 Oct 2019 17:28:02 +0200</lastBuildDate>
     
-	<atom:link href="https://jeannory.github.io/blog/docs/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://jeannory.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Mockito</title>
-      <link>https://jeannory.github.io/blog/docs/articles/mockito/</link>
+      <link>https://jeannory.github.io/blog/articles/mockito/</link>
       <pubDate>Tue, 08 Oct 2019 11:03:17 +0200</pubDate>
       
-      <guid>https://jeannory.github.io/blog/docs/articles/mockito/</guid>
+      <guid>https://jeannory.github.io/blog/articles/mockito/</guid>
       <description>Mockito page
 toDo</description>
     </item>
     
     <item>
       <title>Spring Security</title>
-      <link>https://jeannory.github.io/blog/docs/articles/spring-security/</link>
+      <link>https://jeannory.github.io/blog/articles/spring-security/</link>
       <pubDate>Mon, 07 Oct 2019 23:47:25 +0200</pubDate>
       
-      <guid>https://jeannory.github.io/blog/docs/articles/spring-security/</guid>
+      <guid>https://jeannory.github.io/blog/articles/spring-security/</guid>
       <description>Il s&amp;rsquo;agit de mon premier article, les avis/critiques sont le bienvenus.
 Vous pouvez retrouver les dépôts git,
  Pour le back-end : ici Pour le front-end : ici  Bonne lecture.
@@ -38,10 +38,10 @@ Stack technique :</description>
     
     <item>
       <title>Author</title>
-      <link>https://jeannory.github.io/blog/docs/author/</link>
+      <link>https://jeannory.github.io/blog/author/</link>
       <pubDate>Mon, 07 Oct 2019 23:39:08 +0200</pubDate>
       
-      <guid>https://jeannory.github.io/blog/docs/author/</guid>
+      <guid>https://jeannory.github.io/blog/author/</guid>
       <description>A propos de l&amp;rsquo;auteur : passionné de développement, j&amp;rsquo;ai beaucoup appris en naviguant sur le web et à travers de nombreux exemples et MOOC open source. Je souhaite à mon tour contribuer.</description>
     </item>
     
