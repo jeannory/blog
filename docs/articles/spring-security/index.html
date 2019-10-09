@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="alternate" href="/index.xml" type="application/rss+xml" title="Jeannory&#39;s blog">
+		<link rel="icon" href="https://jeannory.github.io//favicon.ico">
+		<title>Spring Security - Jeannory&#39;s blog</title>
+		
+		<link rel="stylesheet" href="https://jeannory.github.io//css/highlight/default.css">
+		<link rel="stylesheet" href="https://jeannory.github.io//css/bootstrap.min.css">
+		<link rel="stylesheet" href="https://jeannory.github.io//css/bootstrap-theme.min.css">
+		<link rel="stylesheet" href="https://jeannory.github.io//css/theme.css">
+		<link rel="stylesheet" href="https://jeannory.github.io//css/bootie-docs.css">
+		<link rel="stylesheet" href="https://jeannory.github.io//css/site.css">
+	</head>
+
+<body role="document">
+
+	
+	<nav class="navbar navbar-inverse navbar-fixed-top">
+		<div class="container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="https://jeannory.github.io//">Jeannory&#39;s blog</a>
+			</div>
+			<div id="navbar" class="navbar-collapse collapse">
+				<ul class="nav navbar-nav">
+					<li ><a href="https://jeannory.github.io//author">Author</a></li>
+			
+			
+				
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Articles<span class="caret"></span></a>
+						<ul class="dropdown-menu" role="menu">
+						
+							<li><a href="https://jeannory.github.io//categories/mockito">Mockito</a></li>
+						
+							<li><a href="https://jeannory.github.io//categories/spring-security">Spring-Security</a></li>
+						
+						</ul>
+					</li>
+				
+				</ul>
+				
+			</div>
+		</div>
+	</nav>
+
+<div class="container">
+
+
+<div class="row">
+	<div class="col-sm-8 doc-main">
+		<main role="main">
+			<article>
+				<a id="title"></a>
+				<h1 class="doc-entry-title">Spring Security</h1>
+				<div class="doc-entry-meta">
+					<span><time datetime="2019-10-07">October 07, 2019</time></span>
+				</div>
+				<section>
+					
+
+<p>Il s&rsquo;agit de mon premier article, les avis/critiques sont le bienvenus.</p>
+
+<p>Vous pouvez retrouver les dépôts git,</p>
+
+<ul>
+<li>Pour le back-end : <a href="https://github.com/jeannory/SpringSecurityExampleBE">ici</a></li>
+<li>Pour le front-end : <a href="https://github.com/jeannory/SpringSecurityExampleFE">ici</a></li>
+</ul>
+
+<p>Bonne lecture.</p>
+
+<p><em>Article du 23/08/2019 importé en markdown pour Hugo au 08/10/2019.</em></p>
+
+<hr />
+
+<h2 id="protéger-son-application-avec-springboot-angular-et-jwt">Protéger son application avec SpringBoot, Angular et Jwt</h2>
+
+<p>Développer une application full stack en respectant les règles en terme de cyber sécurité.</p>
+
+<p>Rapide initiation à Spring Security.</p>
+
+<p>Stack technique :</p>
+
+<ul>
+<li>Java 8</li>
+<li>Springboot 2</li>
+<li>Angular 7</li>
+</ul>
+
+<hr />
+
+<h3 id="projet">Projet</h3>
+
+<p>Le projet se compose de 2 applications. Un Back-end en java et un Front-end en Angular.</p>
+
+<p>Fonctions :</p>
+
+<ul>
+<li>Créer un compte</li>
+<li>Se connecter</li>
+<li>Modifier un rôle</li>
+<li>Réaliser une action en fonction de son role</li>
+</ul>
+
+<p>Sécurité :</p>
+
+<p>Utilisation d&rsquo;un token de session Jwt, pour valider les appels entre le Back-end et le Front-end.</p>
+
+<p>Sommaire :</p>
+
+<ul>
+<li>Back-end : présentation de l&rsquo;architecture en services web</li>
+<li>Back-end : implémentation de Spring Security</li>
+<li>Back-end : tests de end-point</li>
+<li>Front-end : Présentation du projet + implémentation</li>
+<li>Front-end : Interceptor</li>
+<li>Front-end : CanActivate</li>
+<li>Front-end : tests de fonctionalités</li>
+</ul>
+
+<hr />
+
+<h2 id="back-end-présentation-de-l-architecture-en-services-web">Back-end : présentation de l&rsquo;architecture en services web</h2>
+
+<ul>
+<li>Persistance des données sur une base de données postgresql</li>
+<li>Management des entités par l&rsquo;ORM d&rsquo;hibernate</li>
+<li>Conversion des entités/DTO par ModelMapper</li>
+<li>Exposition des services REST par Springboot</li>
+</ul>
+
+<h3 id="back-end-implémentation-de-spring-security">Back-end : implémentation de Spring Security</h3>
+
+<p>Au lancement de l&rsquo;application le singleton produit une liste de JsonWebKey qui va servir pour générer et valider les tokens.</p>
+
+<pre><code>@Component
+@Scope(&quot;singleton&quot;)
+public class SingletonBean {
+
+    private final static Logger logger = Logger.getLogger(SingletonBean.class);
+    private static List&lt;JsonWebKey&gt; jsonWebKeys;
+    private static ModelMapper modelMapper;
+
+    public SingletonBean() {
+        logger.info(&quot;**********&quot;);
+        logger.info(&quot;Constructor SingletonBean begin&quot;);
+        List&lt;Integer&gt; listInt = Arrays.asList(1, 2, 3);
+        jsonWebKeys = listInt.stream().map(i -&gt; {
+            try {
+                JsonWebKey jsonWebKey = RsaJwkGenerator.generateJwk(2048);
+                jsonWebKey.setKeyId(String.valueOf(i));
+                logger.info(&quot;JsonWebKeys number : &quot; + i + &quot; generate&quot;);
+                return jsonWebKey;
+            } catch (JoseException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }).collect(Collectors.toCollection(ArrayList::new)).stream().filter(Objects::nonNull).collect(Collectors.toList());
+        modelMapper = new ModelMapper();
+        logger.info(&quot;Constructor SingletonBean end&quot;);
+        logger.info(&quot;**********&quot;);
+    }
+
+    public List&lt;JsonWebKey&gt; getJsonWebKeys() {
+        return jsonWebKeys;
+    }
+
+    public ModelMapper getModelMapper() {
+        return modelMapper;
+    }
+}
+</code></pre>
+
+<hr />
+
+<p>En important Spring Security, il est nécessaire d&rsquo;implémenter certaines méthodes.</p>
+
+<pre><code>    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-security&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+</code></pre>
+
+<hr />
+
+<p>Il faut d&rsquo;abord créer une class JwtRequestFilter qui hérite de OncePerRequestFilter pour redéfinir doFilterInternal.</p>
+
+<pre><code>public class JwtRequestFilter extends OncePerRequestFilter {
+
+    private final static Logger logger = Logger.getLogger(JwtRequestFilter.class);
+    @Autowired
+    private UserDetailsService userDetailsService;
+    @Autowired
+    private AuthProvider authProvider;
+    @Autowired
+    private TokenUtilityProvider tokenUtilityProvider;
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, FilterChain filterChain) throws ServletException, IOException {
+        try {
+            String token = validateTokenHeader(httpServletRequest);
+            TokenUtility tokenUtility = tokenUtilityProvider.getTokenUtility(token);
+            if (tokenUtility.isValidateToken()) {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(tokenUtility.getEmail());
+                if(userDetails!=null){
+                    List&lt;SimpleGrantedAuthority&gt; simpleGrantedAuthorities
+                            = tokenUtility.getRoles().stream()
+                            .map(role -&gt; new SimpleGrantedAuthority(AUTHORITY_PREFIX + role))
+                            .collect(Collectors.toCollection(ArrayList::new));
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, simpleGrantedAuthorities);
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpServletRequest));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    logger.info(&quot;Method doFilterInternal - token is valid&quot;);
+                }
+            }
+        } catch (CustomNoHeaderException ex) {
+            /**
+            * NPE or if token not found on header no status to return
+            * rejected if @Secure on controller
+            */
+            logger.info(&quot;Method doFilterInternal : &quot; + ex.getMessage());
+        }
+        filterChain.doFilter(httpServletRequest, httpServletResponse);
+    }
+
+    private String validateTokenHeader(HttpServletRequest httpServletRequest) {
+        try {
+            final String requestTokenHeader = httpServletRequest.getHeader(HEADER_STRING);
+            String token = requestTokenHeader.replace(TOKEN_PREFIX, &quot;&quot;);
+            if (token == null) {
+                throw new CustomNoHeaderException(&quot;token not found on header&quot;);
+            }
+            return token;
+        } catch (NullPointerException ex) {
+            throw new CustomNoHeaderException(&quot;token not found on header&quot;);
+        }
+    }
+
+}
+</code></pre>
+
+<hr />
+
+<p>Le filter va intercepter toutes les requêtes pour récupérer le token dans le header des requests. Le principe est simple, une méthode va en vérifier le contenu et tenter de valider sa signature. Si le test est positive, le(s) rôle(s) de l&rsquo;utilisateur seront enregistrés dans le context de l&rsquo;application, dans le cas contraire la response enverra un status 403.</p>
+
+<hr />
+
+<p>Observez les méthodes getTokenUtility et validateToken de la class TokenUtilityProvider, le besoin est de décoder, convertir le token, afin de récupérer des valeurs. Il faut ensuite vérifier l&rsquo;authenticité des informations recueillis (utilisation des librairies de jose4j et jjwt). Une fois ces étapes réussies (If(tokenUtility.isValidateToken dans doFilterInternal), la liste des rôles est injectée dans le contexte de l&rsquo;application. Il suffit qu&rsquo;une exception soit levée dans la méthode validateTokenUtility pour que l&rsquo;application envoie une response avec un status 403.</p>
+
+<pre><code>@Component
+public class TokenUtilityProvider implements ITools, Serializable {
+
+    private final static Logger logger = Logger.getLogger(TokenUtilityProvider.class);
+    @Autowired
+    SingletonBean singletonBean;
+    private static TokenUtility tokenUtility;
+
+    public TokenUtilityProvider() {
+    }
+
+    public TokenUtility getTokenUtility(String token){
+        try {
+            tokenUtility = validateToken(token);
+        } catch (CustomMalformedClaimException ex) {
+            logger.error(ex.getMessage());
+            tokenUtility.setValidateToken(false);
+        } catch (CustomInvalidJwtException ex) {
+            logger.error(ex.getMessage());
+            tokenUtility.setValidateToken(false);
+        } catch (CustomJwtException ex) {
+            /**
+            * if exception in :
+            * -TokenUtility.validateToken
+            * -TokenUtilityProvider.validateJsonWebKey
+            * -TokenUtilityProvider.getStringFromJwtNode
+            */
+            logger.error(ex.getMessage());
+            tokenUtility.setValidateToken(false);
+        }
+        logger.info(&quot;Method getTokenUtility succeed&quot;);
+        return tokenUtility;
+    }
+
+    private TokenUtility validateToken(String token) {
+        tokenUtility = new TokenUtility();
+        try {
+            String kid = getStringFromJwtNode(token, 0, &quot;kid&quot;);
+            String issuer = getStringFromJwtNode(token, 1, &quot;iss&quot;);
+            /**
+            * not in use
+            */
+            String exp = getStringFromJwtNode(token, 1, &quot;exp&quot;);
+            JsonWebKey jsonWebKey = validateJsonWebKey(kid);
+            tokenUtility.setKid(Integer.valueOf(kid));
+            JwtConsumer jwtConsumer = new JwtConsumerBuilder()
+                    .setRequireExpirationTime()
+                    .setAllowedClockSkewInSeconds(120)
+                    .setRequireSubject()
+                    .setExpectedIssuer(issuer)
+                    .setVerificationKey(jsonWebKey.getKey())
+                    .build();
+            JwtClaims jwtClaims = jwtConsumer.processToClaims(token);
+            if (jwtClaims == null) {
+                throw new CustomJwtException(&quot;token is invalid&quot;);
+            }
+            else{
+                tokenUtility.setEmail(jwtClaims.getSubject());
+                List&lt;String&gt; roleStrings = jwtClaims.getStringListClaimValue(AUTHORITIES_KEY);
+                tokenUtility.setRoles(roleStrings);
+                /**
+                * jwt validation succeeded
+                */
+                tokenUtility.setValidateToken(true);
+                return tokenUtility;
+            }
+        } catch (MalformedClaimException ex) {
+            throw new CustomMalformedClaimException(&quot;claim is malFormed&quot;);
+        } catch (InvalidJwtException ex) {
+            throw new CustomInvalidJwtException(&quot;jwt is invalid&quot;);
+        } catch (NullPointerException ex) {
+            throw new CustomJwtException(&quot;token is invalid&quot;);
+        }
+    }
+
+    /**
+    * to calculate expiration of jwt
+    */
+    private Long millisecondsLeft(String exp) {
+        NumericDate jwtNumericDate = NumericDate.fromSeconds(Long.valueOf(exp));
+        NumericDate numericDateNow = NumericDate.now();
+        Long millisecondsLeft = jwtNumericDate.getValueInMillis() - numericDateNow.getValueInMillis();
+        return millisecondsLeft;
+    }
+
+    private String getStringFromJwtNode(String token, int indice, String nodeName) {
+        try {
+            String[] tokenTab = token.split(&quot;\\.&quot;);
+            String headerEncoded = tokenTab[indice];
+            byte[] decodeBytesHeader = Base64.getUrlDecoder().decode(headerEncoded);
+            String decodeHeader = new String(decodeBytesHeader);
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode rootNode;
+            rootNode = objectMapper.readValue(decodeHeader, JsonNode.class);
+            JsonNode node = rootNode.path(nodeName);
+            String kid = node.asText();
+            return kid;
+        } catch (IOException ex) {
+            throw new CustomJwtException(&quot;failed to get infos from the token&quot;);
+        } catch (NullPointerException ex) {
+            throw new CustomJwtException(&quot;failed to get infos from the token&quot;);
+        }
+    }
+
+    private JsonWebKey validateJsonWebKey(String kid) {
+        try {
+            /**
+            * get jsonWebKey by kid
+            */
+            JsonWebKeySet jsonWebKeySet = new JsonWebKeySet(singletonBean.getJsonWebKeys());
+            JsonWebKey jsonWebKey = jsonWebKeySet.findJsonWebKey(kid, null, null, null);
+            return jsonWebKey;
+        } catch (NullPointerException ex) {
+            throw new CustomJwtException(&quot;failed to created JsonWebKeySet&quot;);
+        }
+    }
+}
+</code></pre>
+
+<hr />
+
+<p>Il faut également créer une classe qui implémente UserDetailsService (soit UserServiceImpl) et redéfinir la méthode loadUserByUsername.</p>
+
+<pre><code>/**
+ * with Spring security
+ * @Secure needs to redefine loadUserByUsername(String username)
+ * abstract method of UserDetailsService
+ */
+@Override
+public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    try {
+        final User user = manageSelectMyUserByEmailException(username);
+        Set&lt;SimpleGrantedAuthority&gt; simpleGrantedAuthorities = roleService.findByUsersEmail(user.getEmail()).stream().map(role -&gt; {
+            return new SimpleGrantedAuthority(AUTHORITY_PREFIX + role.getName());
+        }).collect(Collectors.toCollection(HashSet::new));
+        logger.info(&quot;Method loadUserByUsername succeed&quot;);
+        return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), simpleGrantedAuthorities);
+    } catch (UsernameNotFoundException ex) {
+        logger.error(ex.getMessage());
+        return null;
+    }
+}
+
+private User manageSelectMyUserByEmailException(String username) {
+    final User user = userRepository.selectMyUserByEmail(username);
+    if (
+            user == null ||
+                    user.getId() == null ||
+                    user.getEmail() == null ||
+                    user.getPassword() == null ||
+                    user.getRoles() == null
+    ) {
+        throw new UsernameNotFoundException(&quot;Invalid user&quot;);
+    }
+    return user;
+}
+</code></pre>
+
+<hr />
+
+<p>Enfin il faut créer une class qui hérite de WebSecurityConfigurerAdapter et redéfinir la méthode configure.</p>
+
+<pre><code>@Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(securedEnabled = true)
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Bean
+    public JwtRequestFilter jwtRequestFilter() {
+        return new JwtRequestFilter();
+    }
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        /**
+        * return status 403 if not allowed
+        */
+        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and().
+                authorizeRequests()
+                .antMatchers(HttpMethod.GET, &quot;/api&quot;, &quot;/api/*&quot;).permitAll()
+                .antMatchers(HttpMethod.GET, &quot;/roles&quot;, &quot;/roles/*&quot;).hasRole(ADMIN)
+                .antMatchers(HttpMethod.GET, &quot;/users&quot;, &quot;/users/*&quot;).hasRole(ADMIN)
+                .antMatchers(HttpMethod.POST, &quot;/api/*&quot;).permitAll()
+                .antMatchers(HttpMethod.PUT, &quot;/api/*&quot;).permitAll()
+                .antMatchers(HttpMethod.DELETE, &quot;/api/*&quot;).permitAll().and()
+                .requestCache().requestCache(new NullRequestCache()).and()
+                .cors().and()
+                .csrf().disable();
+
+        /**
+        * add custom JWT security filter,if not allowing by @Secure return status 403
+        */
+        http.addFilterBefore(jwtRequestFilter(), UsernamePasswordAuthenticationFilter.class);
+    }
+}
+</code></pre>
+
+<hr />
+
+<p>Dans notre controlleur il est possible de limiter les accès aux end-points en fonction des rôles utilisateurs, en utilisant l&rsquo;annotaion @Secure.</p>
+
+<p>Le end-point getUsers lui est exclusivement réservé aux utilisateurs disposant du ADMIN.</p>
+
+<pre><code>//http://localhost:8080/api/UserWebController/getUsers
+@Secured({AUTHORITY_PREFIX + ADMIN})
+@RequestMapping(path = &quot;/getUsers&quot;, method = RequestMethod.GET)
+public List&lt;UserDTO&gt; getUsers() throws CustomConverterException{
+    List&lt;UserDTO&gt; userDTOS = userService.getUsers();
+    if(userDTOS.isEmpty()||userDTOS==null){
+        logger.info(&quot;end-point getUsers failed&quot;);
+        throw new ResponseStatusException(
+                HttpStatus.INTERNAL_SERVER_ERROR, &quot;Internal server error&quot;
+        );
+    }
+    userDTOS.forEach(u -&gt; {
+        u.setPassword(null);
+    });
+    logger.info(&quot;end-point getUsers succeed&quot;);
+    return userDTOS;
+}
+</code></pre>
+
+<hr />
+
+<p>L&rsquo;accessibilité du end-point setUser est réservée aux utilisateurs disposant du ou des rôles USER, MANAGER et ADMIN.</p>
+
+<pre><code>//http://localhost:8080/api/UserWebController/setUser
+@Secured({AUTHORITY_PREFIX + USER, AUTHORITY_PREFIX + MANAGER, AUTHORITY_PREFIX + ADMIN})
+@RequestMapping(path = &quot;/setUser&quot;, method = RequestMethod.PUT)
+public UserDTO setUser(@RequestBody UserDTO userDTOEntry) {
+        validateThisUser(userDTOEntry.getEmail());
+    final UserDTO userDTO = userService.setUser(userDTOEntry);
+    if(userDTO==null){
+        logger.info(&quot;end-point setUser failed&quot;);
+        throw new ResponseStatusException(
+                HttpStatus.INTERNAL_SERVER_ERROR, &quot;Internal server error&quot;
+        );
+    }
+    logger.info(&quot;end-point setUser succeed&quot;);
+    return userDTO;
+}
+</code></pre>
+
+<hr />
+
+<p>Nous souhaitons ajouter une condition supplémentaire : un administrateur peut accéder à ce endpoint quelque soit l&rsquo;utilisateur à modifier, à contrario les managers et users ne peuvent modifier qu&rsquo;eux même.</p>
+
+<p>Il est possible d&rsquo;ajouter des contraintes supplémentaires en utilisant les informations de l&rsquo;utilisateur enregistré dans le contexte de l&rsquo;application.</p>
+
+<p>Cette condition a été rajoutée dans la super class de tous les contrôlleurs.</p>
+
+<pre><code>public class SuperController{
+
+    private final static Logger logger = Logger.getLogger(SuperController.class);
+    private static UserDetails userDetails;
+
+    private void getSecurityContextHolder() {
+        UsernamePasswordAuthenticationToken authentication = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        userDetails = (UserDetails) authentication.getPrincipal();
+    }
+
+    /**
+    * for each @Secure ROLE_USER &amp;&amp; ROLE_MANAGER only themself can access
+    * for all @Secure ROLE_ADMIN can access
+    */
+    public void validateThisUser(String emailEntry) {
+        try {
+            getSecurityContextHolder();
+            boolean authorization = false;
+            if(userDetails.getAuthorities().contains(new SimpleGrantedAuthority(&quot;ROLE_ADMIN&quot;))){
+                authorization = true;
+            }else {
+                if (userDetails.getUsername().equals(emailEntry)) {
+                    authorization = true;
+                }
+            }
+                if(authorization==false){
+                    throw new ResponseStatusException(
+                            HttpStatus.FORBIDDEN, &quot;Forbidden&quot;
+                    );
+                }
+        } catch (NullPointerException ex) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, &quot;Forbidden&quot;
+            );
+        }
+    }
+
+}
+</code></pre>
+
+<hr />
+
+<h3 id="back-end-tests-de-end-point">Back-end : tests de end-point</h3>
+
+<h3 id="connection">Connection</h3>
+
+<p>Dans le cas ou l&rsquo;utilisateur résussit à s&rsquo;authentifier, la méthode va retourner le token de session Jwt.</p>
+
+<pre><code>public class AuthProvider implements ITools {
+
+    private final static Logger logger = Logger.getLogger(AuthProvider.class);
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private RoleRepository roleRepository;
+    @Autowired
+    SingletonBean singletonBean;
+
+    public Token validateConnection(Credential credential) {
+        String credentialSha3 = getStringSha3(credential.getPassword());
+        User user = userRepository.selectMyUserByEmail(credential.getEmail());
+        if (user == null) {
+            return null;
+        } else
+        if(credentialSha3.equals(user.getPassword())) {
+            try {
+                String jwt = generateJwt(credential.getEmail());
+                Token token = new Token();
+                token.setToken(jwt);
+                logger.info(&quot;Method validateConnection succeed&quot;);
+                return token;
+            } catch (CustomJoseException ex) {
+                logger.error(ex.getMessage());
+                return null;
+            } catch(CustomTokenException ex){
+                logger.error(ex.getMessage());
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private String generateJwt(String email){
+        try {
+            List&lt;Role&gt; roles = roleRepository.findByUsersEmail(email);
+            if(roles.isEmpty()||roles==null){
+                throw new CustomTokenException(&quot;token must contain at least 1 role&quot;);
+            }
+            List&lt;String&gt; rolesString = roles.stream().map(
+                    role-&gt;{
+                        return role.getName();
+                    }).collect(Collectors.toCollection(ArrayList::new));
+            int kidRandom = generateRandmoKid();
+            RsaJsonWebKey rsaJsonWebKey = (RsaJsonWebKey) singletonBean.getJsonWebKeys().get(kidRandom);
+            /**
+            * Create the Claims, which will be the content of the jwt
+            */
+            JwtClaims jwtClaims = new JwtClaims();
+            jwtClaims.setIssuer(DOMAIN);
+            jwtClaims.setExpirationTimeMinutesInTheFuture(120);
+            jwtClaims.setGeneratedJwtId();
+            jwtClaims.setIssuedAtToNow();
+            jwtClaims.setNotBeforeMinutesInThePast(2);
+            jwtClaims.setSubject(email);
+            jwtClaims.setStringListClaim(AUTHORITIES_KEY, rolesString);
+            JsonWebSignature jsonWebSignature = new JsonWebSignature();
+            jsonWebSignature.setPayload(jwtClaims.toJson());
+            jsonWebSignature.setKeyIdHeaderValue(rsaJsonWebKey.getKeyId());
+            jsonWebSignature.setKey(rsaJsonWebKey.getPrivateKey());
+            jsonWebSignature.setAlgorithmHeaderValue(AlgorithmIdentifiers.RSA_USING_SHA256);
+            return jsonWebSignature.getCompactSerialization();
+
+        } catch (JoseException ex) {
+            throw new CustomJoseException(&quot;Failed to generate token&quot;);
+        }catch (NullPointerException ex){
+            throw new CustomTokenException(&quot;user roles cannot be null&quot;);
+        }
+    }
+
+}
+</code></pre>
+
+<hr />
+
+<p><img src = "/img/012.png"></p>
+
+<hr />
+
+<p><img src = "/img/014.png"></p>
+
+<hr />
+
+<h3 id="jeu-de-tests">Jeu de tests</h3>
+
+<p>Identifiants à prendre :</p>
+
+<ul>
+<li>jean@jean.com (ADMIN)</li>
+<li>jeanne@jeanne.com (MANAGER)</li>
+<li>john@john.com (USER)</li>
+<li>johny@johny.com (USER)</li>
+<li>password 0000</li>
+</ul>
+
+<p>Lancer le jeu d&rsquo;essai</p>
+
+<ul>
+<li><a href="http://localhost:8080/api/UserWebController/getDataTest">http://localhost:8080/api/UserWebController/getDataTest</a></li>
+</ul>
+
+<p>End-points à tester :</p>
+
+<ul>
+<li><p><a href="http://localhost:8080/api/UserWebController/getUserDto?email=jean@jean.com">http://localhost:8080/api/UserWebController/getUserDto?email=jean@jean.com</a></p>
+
+<ul>
+<li>Avec un role User pour lui même</li>
+<li>Avec un role User pour quelqu&rsquo;un d&rsquo;autre</li>
+<li>Avec un role Admin pour quelqu&rsquo;un d&rsquo;autre</li>
+</ul></li>
+
+<li><p><a href="http://localhost:8080/api/UserWebController/getRoles">http://localhost:8080/api/UserWebController/getRoles</a></p>
+
+<ul>
+<li>Avec un role manager</li>
+<li>Avec un role admin</li>
+<li>Avec un role admin en modifiant la signature du token</li>
+<li>Avec un role admin en modifiant le payload du token</li>
+</ul></li>
+
+<li><p><a href="http://localhost:8080/api/UserWebController/getRoleDtos?email=jean@jean.com">http://localhost:8080/api/UserWebController/getRoleDtos?email=jean@jean.com</a></p>
+
+<ul>
+<li>Avec un role user</li>
+<li>Avec un token modifié : exemple prendre la signature d&rsquo;un autre token mais disposant des caractéristiques identiques (rôles et kid)</li>
+<li>Avec un token périmé (en réduisant le exp du token à 1 minute par exemple)</li>
+</ul></li>
+</ul>
+
+<hr />
+
+<p>Voici ce que devrais retourner le résultat du 1er test (une response contenant le DTO avec un status 200)</p>
+
+<hr />
+
+<p><img src = "/img/015.png"></p>
+
+<hr />
+
+<h3 id="springboot-data-rest-spécificité">SpringBoot data rest - spécificité</h3>
+
+<p>Par défaut SpringSecurity laisse un accès libre aux end points générés automatiquement par SpringBoot JPA Rest.</p>
+
+<p>Les entités de la base de données peuvent être lus par n&rsquo;importe qui!</p>
+
+<p>Les conditions d&rsquo;accès à ces end-points sont définis dans la class SecurityConfig.</p>
+
+<pre><code>@Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(securedEnabled = true)
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Bean
+    public JwtRequestFilter jwtRequestFilter() {
+        return new JwtRequestFilter();
+    }
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        /**
+        * return status 403 if not allowed
+        */
+        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and().
+                authorizeRequests()
+                .antMatchers(HttpMethod.GET, &quot;/api&quot;, &quot;/api/*&quot;).permitAll()
+                .antMatchers(HttpMethod.GET, &quot;/roles&quot;, &quot;/roles/*&quot;).hasRole(ADMIN)
+                .antMatchers(HttpMethod.GET, &quot;/users&quot;, &quot;/users/*&quot;).hasRole(ADMIN)
+                .antMatchers(HttpMethod.POST, &quot;/api/*&quot;).permitAll()
+                .antMatchers(HttpMethod.PUT, &quot;/api/*&quot;).permitAll()
+                .antMatchers(HttpMethod.DELETE, &quot;/api/*&quot;).permitAll().and()
+                .requestCache().requestCache(new NullRequestCache()).and()
+                .cors().and()
+                .csrf().disable();
+
+        /**
+        * add custom JWT security filter,if not allowing by @Secure return status 403
+        */
+        http.addFilterBefore(jwtRequestFilter(), UsernamePasswordAuthenticationFilter.class);
+    }
+}
+</code></pre>
+
+<hr />
+
+<p>Les accès des end-points pour les entités Users et Roles sont valables uniquement pour les utilisateurs disposant du rôle ADMIN.</p>
+
+<p>Pour l&rsquo;entitée Space, aucune condition n&rsquo;a été établiee (pour l&rsquo;exemple).</p>
+
+<p>Ainsi la requête <a href="http://localhost:8080/spaces">http://localhost:8080/spaces</a> sur un navigateur permet à n&rsquo;importe qui de récupérer des informations contenus dans la base de données.</p>
+
+<p>A tester :</p>
+
+<ul>
+<li><p><a href="http://localhost:8080/spaces">http://localhost:8080/spaces</a></p>
+
+<ul>
+<li>Sans token</li>
+</ul></li>
+
+<li><p><a href="http://localhost:8080/users">http://localhost:8080/users</a></p>
+
+<ul>
+<li>Sans token, avec un role user, puis avec un role admin</li>
+</ul></li>
+</ul>
+
+<hr />
+
+<h2 id="front-end-présentation-du-projet-implémentation">Front-end : Présentation du projet + implémentation</h2>
+
+<p>Le projet dispose de fonctions rudimentaires.</p>
+
+<p>Les fonctions basiques d&rsquo;angular ne seront pas présentées.</p>
+
+<p>Nous nous intéressons ici qu&rsquo;aux fonctions de sécurités.</p>
+
+<ul>
+<li>Se connecter</li>
+<li>S&rsquo;inscrire</li>
+<li>Modifier son profil (USER, MANAGER et ADMIN)</li>
+<li>Allez sur sa page (MANAGER et ADMIN)</li>
+<li>Modifier les roles des utilisateur (ADMIN)</li>
+</ul>
+
+<p><img src = "/img/018.png"></p>
+
+<hr />
+
+<h3 id="front-end-interceptor">Front-end : Interceptor</h3>
+
+<p>A chaque connexion, le token de session est enregistré en localStorage (mémoire du pc). Un interceptor va récupérer ce token et le renvoyer dans le header de chaques requêtes clientes.</p>
+
+<pre><code>@Injectable({
+providedIn: 'root'
+})
+export class TokenInterceptorService implements HttpInterceptor{
+
+constructor(
+    private router:Router,
+    ) { }
+
+    intercept(request: HttpRequest&lt;any&gt;, next: HttpHandler): Observable&lt;HttpEvent&lt;any&gt;&gt; {
+    request = request.clone({
+        setHeaders: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+    });
+    return next.handle(request).pipe(
+        catchError((error: HttpErrorResponse) =&gt; {
+        if (error.error instanceof ErrorEvent) {
+        } else {
+        if (error.status === 403) { 
+            this.router.navigate( [&quot;/error&quot;] );
+        }
+        if (error.status === 500) { 
+            this.router.navigate( [&quot;/error&quot;] );
+        }
+        }
+        return throwError(error);
+    })
+    );
+    }
+}
+</code></pre>
+
+<hr />
+
+<p>Ce même interceptor a pour mission de router vers la page d&rsquo;error s&rsquo;il détecte que le status de la response serveur est 403 ou 500.</p>
+
+<hr />
+
+<h3 id="front-end-canactivate">Front-end : CanActivate</h3>
+
+<p>Angular permet aussi de gérer les rôles du token.</p>
+
+<p>Il faut pour cela redéfinir la méthode canActivate.</p>
+
+<p>Ici nous récupérons le token pour en extraire les roles utilisateur.
+Vous observez que l&rsquo;utilisateur est redirigé vers une page d&rsquo;erreur si le role est null.</p>
+
+<p>Il a également été rajoutée la fonction pour déterminer si le token est périmé.
+Ainsi le client déconnecte automatiquement l&rsquo;utilisateur et le route vers la page de re-authentification, et cela sans action du serveur d&rsquo;application.</p>
+
+<pre><code>@Injectable({
+providedIn: 'root'
+})
+export class AuthGuardService implements CanActivate{
+
+roles:string[];
+role:string;
+email:string;
+exp:string;
+
+constructor(
+    private router:Router,
+    private apiService:ApiService,
+    private subscriptionService: SubscriptionService
+    ) { }
+
+canActivate(
+    route: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot): Observable&lt;boolean&gt; | Promise&lt;boolean&gt; | boolean {
+    const expectedRole = route.data.expectedRole;
+    this.role = null;
+    if (localStorage.getItem('token')){
+
+        this.getDecodedAccessToken(localStorage.getItem('token'));
+        if(expectedRole!=null){
+            this.roles.forEach(element =&gt; {
+            if(element===expectedRole){
+                this.role = element;
+            }
+            });
+            if(this.role==null){
+                this.router.navigate( [&quot;/error&quot;] );
+                return false
+            }
+        }
+        var current_time = new Date().getTime() / 1000;
+        if(current_time &gt; parseInt(this.exp)){
+            // Destroy local session; redirect to /login
+            localStorage.removeItem('token');
+            localStorage.removeItem('email');
+            this.subscriptionService.emitTokenSubject();
+            alert(&quot;Your session has expired, please provide Login!&quot;)
+            this.router.navigate( [&quot;/login&quot;] );
+        }
+        return true;
+    }
+        else  {
+        this.subscriptionService.emitTokenSubject();
+        alert(&quot;You are currently not logged in, please provide Login!&quot;)
+        this.router.navigate( [&quot;/login&quot;] );
+        return false
+    }
+}
+
+validateConnection(credential : Credential){
+this.apiService.validateConnection(credential)
+.subscribe((resp: any) =&gt; {
+    localStorage.setItem('token', resp.token);
+    this.subscriptionService.emitTokenSubject();
+    this.getDecodedAccessToken(resp.token);
+    this.router.navigate(['/space']);
+}, err =&gt; {
+    console.log(err);
+    alert(err.message);
+})
+}
+
+getDecodedAccessToken(token: string): void {
+try{
+    let jwtData = token.split('.')[1];
+    let decodedJwtJsonData = window.atob(jwtData)
+    let decodedJwtData = JSON.parse(decodedJwtJsonData)
+    let roles = decodedJwtData.roles+ '';
+    this.exp = decodedJwtData.exp;
+    this.roles= roles.split(&quot;,&quot;);
+    this.email=decodedJwtData.sub+'';
+    localStorage.setItem('email', this.email);
+}
+catch(Error){
+    console.log(Error);
+}
+}
+}
+</code></pre>
+
+<hr />
+
+<p>Enfin c&rsquo;est le module app-routing.module.ts qui définis les pages accessible en fonctions des roles, avec une redirection vers un page d&rsquo;erreur si nécessaire.</p>
+
+<pre><code>const routes: Routes = [
+{
+    path:'',
+    component:HomeComponent
+},
+{
+    path:'home', 
+    component:HomeComponent
+},
+{
+    path:'user', 
+    component:SpaceComponent,
+    canActivate: [AuthGuardService],
+    data:{
+    expectedRole:'USER'
+    }   
+},
+{
+    path:'manager', 
+    component:ManagerComponent,
+    canActivate: [AuthGuardService],
+    data:{
+    expectedRole:'MANAGER'
+    }   
+},
+{
+    path:'admin', 
+    component:AdminComponent,
+    canActivate: [AuthGuardService],
+    data:{
+    expectedRole:'ADMIN'
+    }
+},
+{
+    path:'login',
+    component:LoginComponent
+},
+{
+    path:'register',
+    component:RegisterComponent
+},
+{
+    path:'error',
+    component:ErrorComponent
+},
+{ path: '**', redirectTo: '' }
+];
+
+@NgModule({
+imports: [RouterModule.forRoot(routes)],
+exports: [RouterModule]
+})
+export class AppRoutingModule { }
+</code></pre>
+
+<hr />
+
+<h3 id="front-end-tests-de-fonctionalités">Front-end : tests de fonctionalités</h3>
+
+<p>Comme pour le test des end-points, je vous propose de vous connecter/déconnecter avec des utilisateurs disposant d&rsquo;un role différents (USER/MANAGER/ADMIN), et de tester les différentes pages du site.</p>
+
+<p>Vous pourrez observer les redirections réalisées par Angular en fonction des conditions définis (interception du status de la response du serveur, expiration du token, rôle non approprié, utilisateur non connecté, &hellip;).</p>
+
+<p><img src="/img/021.png"></p>
+
+<hr />
+
+<p>Cette rapide initiation est terminée.</p>
+
+<p>Il s&rsquo;agit d&rsquo;une première version qui sera améliorée.</p>
+
+<p>Pour tous commentaires et remarques, vous pouvez me contacter par mail : phou.jeannory@gmail.com
+ou par message : <a href="https://www.linkedin.com/in/jeannory-phou-69380715a/">linkedin</a></p>
+
+				</section>
+			</article>
+		</main>
+	</div> 
+
+	
+
+<div class="col-sm-3 col-sm-offset-1 doc-sidebar">
+	<div id="sidebar">
+	<div class="sidebar-module">
+		<div class="sidebar-toc">
+			<h4 class="sidebar-heading">Table of Contents</h4>
+			<ul>
+				<li><strong><a href="#title">Spring Security</a></strong></li>
+			</ul>
+			<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#protéger-son-application-avec-springboot-angular-et-jwt">Protéger son application avec SpringBoot, Angular et Jwt</a>
+<ul>
+<li><a href="#projet">Projet</a></li>
+</ul></li>
+<li><a href="#back-end-présentation-de-l-architecture-en-services-web">Back-end : présentation de l&rsquo;architecture en services web</a>
+<ul>
+<li><a href="#back-end-implémentation-de-spring-security">Back-end : implémentation de Spring Security</a></li>
+<li><a href="#back-end-tests-de-end-point">Back-end : tests de end-point</a></li>
+<li><a href="#connection">Connection</a></li>
+<li><a href="#jeu-de-tests">Jeu de tests</a></li>
+<li><a href="#springboot-data-rest-spécificité">SpringBoot data rest - spécificité</a></li>
+</ul></li>
+<li><a href="#front-end-présentation-du-projet-implémentation">Front-end : Présentation du projet + implémentation</a>
+<ul>
+<li><a href="#front-end-interceptor">Front-end : Interceptor</a></li>
+<li><a href="#front-end-canactivate">Front-end : CanActivate</a></li>
+<li><a href="#front-end-tests-de-fonctionalités">Front-end : tests de fonctionalités</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+		</div>
+	</div>
+	<div class="sidebar-module">
+		<h4 class="sidebar-heading">Pages in Categories</h4>
+		<ul class="sidebar-category-list">
+		
+			<li>
+				<a href="https://jeannory.github.io//categories/mockito">
+					<span class="doc-list-category">Mockito</span>
+				</a>
+				<ul>
+					<li><a href="/articles/mockito/">Mockito</a>
+					</li>
+				
+				</ul>
+			</li>
+		
+			<li>
+				<a href="https://jeannory.github.io//categories/spring-security">
+					<span class="doc-list-category">Spring-Security</span>
+				</a>
+				<ul>
+					<li>
+						<span class="active">Spring Security</span>
+						</li>
+				
+				</ul>
+			</li>
+		
+		</ul>
+	</div>
+	<div class="sidebar-module">
+		<h4 class="sidebar-heading">Tags</h4>
+		<div class="tag-box">
+		
+			<a class="tag-item" href="https://jeannory.github.io//tags/articles">articles</a>
+		
+			<a class="tag-item" href="https://jeannory.github.io//tags/author">author</a>
+		
+		</div>
+	</div>
+	</div>
+</div>
+
+</div> 
+
+
+<hr />
+
+<div class="row">
+	<div class="col-sm-8">
+		<p class="doc-footer-em"><a href="#" onclick="resetSidebarPos()">Back to TOP</a></p>
+	</div>
+</div>
+
+</div> 
+
+<footer class="doc-footer">
+	
+	
+	<p>Powered by <strong><a href="https://github.com/progrhyme/hugo-theme-bootie-docs">Bootie Docs</a></strong> - theme for <a href="http://gohugo.io/">Hugo</a> by <a href="https://github.com/progrhyme/">progrhyme</a>.</p>
+</footer>
+
+
+
+<script src="https://jeannory.github.io//js/jquery.min.js"></script>
+<script src="https://jeannory.github.io//js/bootstrap.min.js"></script>
+
+<script src="https://jeannory.github.io//js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script src="https://jeannory.github.io//js/ie10-viewport-bug-workaround.js"></script>
+<script src="https://jeannory.github.io//js/bootie-docs.js"></script>
+
+</body>
+</html>

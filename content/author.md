@@ -1,7 +1,7 @@
 ---
 title: "Author"
 date: 2019-10-07T23:39:08+02:00
-draft: true
+draft: false
 author: "Jeannory"
 tags: ["author"]
 ---

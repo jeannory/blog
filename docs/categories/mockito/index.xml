@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Mockito on Jeannory&#39;s blog</title>
+    <link>https://jeannory.github.io/categories/mockito/</link>
+    <description>Recent content in Mockito on Jeannory&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 08 Oct 2019 11:03:17 +0200</lastBuildDate>
+    
+	<atom:link href="https://jeannory.github.io/categories/mockito/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Mockito</title>
+      <link>https://jeannory.github.io/articles/mockito/</link>
+      <pubDate>Tue, 08 Oct 2019 11:03:17 +0200</pubDate>
+      
+      <guid>https://jeannory.github.io/articles/mockito/</guid>
+      <description>Mockito page
+toDo</description>
+    </item>
+    
+  </channel>
+</rss>
