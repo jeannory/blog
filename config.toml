@@ -1,0 +1,4 @@
+baseURL = "https://jeannory.github.io/"
+languageCode = "en-us"
+title = "Jeannory's blog"
+theme = "hugo-theme-bootie-docs"
