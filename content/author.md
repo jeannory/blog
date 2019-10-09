@@ -6,7 +6,8 @@ author: "Jeannory"
 tags: ["author"]
 ---
 
-<img src = "/img/jeanno_2018.png", width = "", height = "400">
+![Jeannory](/blog/img/jeanno_2018.png)
+<!-- <img src = "https://jeannory.github.io/blog/img/jeanno_2018.png", width = "", height = "400"> -->
 
 -----------------
 

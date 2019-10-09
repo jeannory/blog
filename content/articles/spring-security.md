@@ -550,11 +550,11 @@ Dans le cas ou l'utilisateur résussit à s'authentifier, la méthode va retourn
 
 -----
 
-<img src = "/img/012.png">
+![Advanced REST client](/blog/img/012.png)
 
 -----
 
-<img src = "/img/014.png">
+![https://jwt.io/](/blog/img/014.png)
 
 -----
 
@@ -596,7 +596,7 @@ Voici ce que devrais retourner le résultat du 1er test (une response contenant 
 
 -----
 
-<img src = "/img/015.png">
+![Advanced REST client](/blog/img/015.png)
 
 -----
 
@@ -674,7 +674,7 @@ Nous nous intéressons ici qu'aux fonctions de sécurités.
 * Allez sur sa page (MANAGER et ADMIN)
 * Modifier les roles des utilisateur (ADMIN)
 
-<img src = "/img/018.png">
+![Angular IHM 1](/blog/img/018.png)
 
 -----
 
@@ -882,7 +882,7 @@ Comme pour le test des end-points, je vous propose de vous connecter/déconnecte
 
 Vous pourrez observer les redirections réalisées par Angular en fonction des conditions définis (interception du status de la response du serveur, expiration du token, rôle non approprié, utilisateur non connecté, ...).
 
-<img src="/img/021.png">
+![Angular IHM 2](/blog/img/021.png)
 
 -----
 
