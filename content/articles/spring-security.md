@@ -18,6 +18,7 @@ Vous pouvez retrouver les dépôts git,
 Bonne lecture.
 
 _Article du 23/08/2019 importé en markdown pour Hugo au 08/10/2019._
+
 _MAJ au 11/10/2019 - ajout de la fonction refresh token_
 
 ---
