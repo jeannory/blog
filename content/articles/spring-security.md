@@ -6,8 +6,6 @@ author: "Jeannory"
 tags: ["articles"]
 categories: ["Spring Security"]
 ---
-## Introduction ##
-
 Il s'agit de mon premier article, les avis/critiques sont le bienvenus.
 
 Vous pouvez retrouver les dépôts git,
@@ -18,9 +16,8 @@ Vous pouvez retrouver les dépôts git,
 Bonne lecture.
 
 _Article du 23/08/2019 importé en markdown pour Hugo au 08/10/2019._
-_MAJ au 11/10/2019 - ajout de la fonction refresh token_
 
----
+-----
 
 ## Protéger son application avec SpringBoot, Angular et Jwt ##
 
@@ -34,7 +31,7 @@ Stack technique :
 * Springboot 2
 * Angular 7
 
----
+-----
 
 ### Projet ###
 
@@ -61,7 +58,7 @@ Sommaire :
 * Front-end : CanActivate
 * Front-end : tests de fonctionalités
 
----
+-----
 
 ## Back-end : présentation de l'architecture en services web ##
 
@@ -111,7 +108,7 @@ Au lancement de l'application le singleton produit une liste de JsonWebKey qui v
         }
     }
 
----
+-----
 
 En important Spring Security, il est nécessaire d'implémenter certaines méthodes.
 
@@ -120,7 +117,7 @@ En important Spring Security, il est nécessaire d'implémenter certaines métho
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
----
+-----
 
 Il faut d'abord créer une class JwtRequestFilter qui hérite de OncePerRequestFilter pour redéfinir doFilterInternal.
 
@@ -177,11 +174,11 @@ Il faut d'abord créer une class JwtRequestFilter qui hérite de OncePerRequestF
 
     }
 
----
+-----
 
 Le filter va intercepter toutes les requêtes pour récupérer le token dans le header des requests. Le principe est simple, une méthode va en vérifier le contenu et tenter de valider sa signature. Si le test est positive, le(s) rôle(s) de l'utilisateur seront enregistrés dans le context de l'application, dans le cas contraire la response enverra un status 403.
 
----
+-----
 
 Observez les méthodes getTokenUtility et validateToken de la class TokenUtilityProvider, le besoin est de décoder, convertir le token, afin de récupérer des valeurs. Il faut ensuite vérifier l'authenticité des informations recueillis (utilisation des librairies de jose4j et jjwt). Une fois ces étapes réussies (If(tokenUtility.isValidateToken dans doFilterInternal), la liste des rôles est injectée dans le contexte de l'application. Il suffit qu'une exception soit levée dans la méthode validateTokenUtility pour que l'application envoie une response avec un status 403.
 
@@ -303,7 +300,7 @@ Observez les méthodes getTokenUtility et validateToken de la class TokenUtility
         }
     }
 
----
+-----
 
 Il faut également créer une classe qui implémente UserDetailsService (soit UserServiceImpl) et redéfinir la méthode loadUserByUsername.
 
@@ -341,7 +338,7 @@ Il faut également créer une classe qui implémente UserDetailsService (soit Us
         return user;
     }
 
----
+-----
 
 Enfin il faut créer une class qui hérite de WebSecurityConfigurerAdapter et redéfinir la méthode configure.
 
@@ -379,7 +376,7 @@ Enfin il faut créer une class qui hérite de WebSecurityConfigurerAdapter et re
         }
     }
 
----
+-----
 
 Dans notre controlleur il est possible de limiter les accès aux end-points en fonction des rôles utilisateurs, en utilisant l'annotaion @Secure.
 
@@ -403,7 +400,7 @@ Le end-point getUsers lui est exclusivement réservé aux utilisateurs disposant
         return userDTOS;
     }
 
----
+-----
 
 L'accessibilité du end-point setUser est réservée aux utilisateurs disposant du ou des rôles USER, MANAGER et ADMIN.
 
@@ -423,7 +420,7 @@ L'accessibilité du end-point setUser est réservée aux utilisateurs disposant 
         return userDTO;
     }
 
----
+-----
 
 Nous souhaitons ajouter une condition supplémentaire : un administrateur peut accéder à ce endpoint quelque soit l'utilisateur à modifier, à contrario les managers et users ne peuvent modifier qu'eux même.
 
@@ -470,7 +467,7 @@ Cette condition a été rajoutée dans la super class de tous les contrôlleurs.
 
     }
 
----
+-----
 
 ### Back-end : tests de end-point ###
 
@@ -551,15 +548,15 @@ Dans le cas ou l'utilisateur résussit à s'authentifier, la méthode va retourn
 
     }
 
----
+-----
 
 ![Advanced REST client](/blog/img/012.png)
 
----
+-----
 
 ![https://jwt.io/](/blog/img/014.png)
 
----
+-----
 
 ### Jeu de tests ###
 
@@ -593,15 +590,15 @@ End-points à tester :
     * Avec un token modifié : exemple prendre la signature d'un autre token mais disposant des caractéristiques identiques (rôles et kid)
     * Avec un token périmé (en réduisant le exp du token à 1 minute par exemple)
 
----
+-----
 
 Voici ce que devrais retourner le résultat du 1er test (une response contenant le DTO avec un status 200)
 
----
+-----
 
 ![Advanced REST client](/blog/img/015.png)
 
----
+-----
 
 ### SpringBoot data rest - spécificité ###
 
@@ -645,7 +642,7 @@ Les conditions d'accès à ces end-points sont définis dans la class SecurityCo
         }
     }
 
----
+-----
 
 Les accès des end-points pour les entités Users et Roles sont valables uniquement pour les utilisateurs disposant du rôle ADMIN.
 
@@ -661,7 +658,7 @@ A tester :
 * http://localhost:8080/users
     * Sans token, avec un role user, puis avec un role admin
 
----
+-----
 
 ## Front-end : Présentation du projet + implémentation ##
 
@@ -679,7 +676,7 @@ Nous nous intéressons ici qu'aux fonctions de sécurités.
 
 ![Angular IHM 1](/blog/img/018.png)
 
----
+-----
 
 ### Front-end : Interceptor ###
 
@@ -717,11 +714,11 @@ A chaque connexion, le token de session est enregistré en localStorage (mémoir
         }
     }
 
----
+-----
 
 Ce même interceptor a pour mission de router vers la page d'error s'il détecte que le status de la response serveur est 403 ou 500.
 
----
+-----
 
 ### Front-end : CanActivate ###
 
@@ -819,7 +816,7 @@ Ainsi le client déconnecte automatiquement l'utilisateur et le route vers la pa
     }
     }
 
----
+-----    
 
 Enfin c'est le module app-routing.module.ts qui définis les pages accessible en fonctions des roles, avec une redirection vers un page d'erreur si nécessaire.
 
@@ -877,7 +874,7 @@ Enfin c'est le module app-routing.module.ts qui définis les pages accessible en
     })
     export class AppRoutingModule { }
 
----
+-----
 
 ### Front-end : tests de fonctionalités ###
 
@@ -887,146 +884,7 @@ Vous pourrez observer les redirections réalisées par Angular en fonction des c
 
 ![Angular IHM 2](/blog/img/021.png)
 
----
-
-## Fonction refresh token ##
-
-_MAJ au 11/10/2019_
-
-Une relation professionnelle sous LinkedIn m'a fait remarqué qu'il y manquait la fonction de refresh token.
-Quelques semaines plus tard en entretien un recruteur m'a fait la même réflexion!
-
-Je me suis donc décidé à implémenter cette fonction.
-
-_Il s'agit d'une méthode "maison" et je ne suis pas en mesure d'affirmer qu'elle soit optimale._
-
----
-
-Le client va se charger de calculer le temps restant avant que le token arrive à expiration (méthode canActivate).
-
-S'il est inférieur à 30 minutes ou 1800 secondes (if(expLeft < 1800)), le front-end va envoyer une requête au serveur pour lui demander un nouveau token.
-
-      if(expLeft < 1800){
-        var token = new Token();
-        token.token = localStorage.getItem('token');
-        this.apiService.getRefreshToken(token)
-        .subscribe((resp: any) => {
-          localStorage.setItem('token', resp.token);
-          this.subscriptionService.emitTokenSubject();
-          this.getDecodedAccessToken(resp.token);
-       }, err => {
-         console.log(err);
-         alert(err.message);
-       })
-      }
-
----
-
-Envoie du token dans le body de la requête.
-
-      public getRefreshToken(token:Token){
-        return this.httpClient.post<any>(this.APIEndpoint+'api/UserWebController/refreshToken', token)
-      }
-
----
-
-Le Back-end va d'abord le récupérer.
-
-    //http://localhost:8080/api/UserWebController/refreshToken
-    @RequestMapping(path = "/refreshToken", method = RequestMethod.POST)
-    public Token refreshToken(@RequestBody Token token)  {
-        token = authProvider.validateRefreshToken(token);
-        if(token == null){
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error"
-            );
-        }
-        return token;
-    }
-
----
-
-Pour ensuite utiliser la méthode qui va en vérifer l'authenticité (soit la méthode getTokenUtility de la class TokenUtilityProvider).
-
-Si l'opération réussit, le serveur génère un nouveau token avec les données actualisés (nouveaux rôles s'ils ont été modifiés entre-temps).
-
----
-
-    public Token validateRefreshToken(Token token) {
-        if(token==null){
-            return null;
-        }
-        final TokenUtility tokenUtility = tokenUtilityProvider.getTokenUtility(token.getToken());
-        if (tokenUtility.isValidateToken()) {
-            try {
-                final Token token1 = new Token();
-                logger.info("refreshToken old : " + token.getToken());
-                token1.setToken(generateJwt(tokenUtility.getEmail()));
-                logger.info("refreshToken new : " + token1.getToken());
-                return token1;
-            } catch (CustomJoseException ex) {
-                logger.error(ex.getMessage());
-                return null;
-            } catch (CustomTokenException ex) {
-                logger.error(ex.getMessage());
-                return null;
-            }
-        }
-        return null;
-    }
-
-    private String generateJwt(String email) {
-        try {
-            List<Role> roles = roleRepository.findByUsersEmail(email);
-            if (roles.isEmpty() || roles == null) {
-                throw new CustomTokenException("token must contain at least 1 role");
-            }
-            List<String> rolesString = roles.stream().map(
-                    role -> {
-                        return role.getName();
-                    }).collect(Collectors.toCollection(ArrayList::new));
-            Integer kidRandom = generateRandmoKid();
-            RsaJsonWebKey rsaJsonWebKey = (RsaJsonWebKey) singletonBean.getJsonWebKeys().get(kidRandom);
-            /**
-             * Create the Claims, which will be the content of the jwt
-             */
-            JwtClaims jwtClaims = new JwtClaims();
-            jwtClaims.setIssuer(DOMAIN);
-            /**
-            *UI request for refresh token 30 min before its expiration
-            *setExpirationTimeMinutesInTheFuture to 29 UI will always request for a new token
-            *setExpirationTimeMinutesInTheFuture to 120 UI will request for a new token after 90 min
-             */
-            jwtClaims.setExpirationTimeMinutesInTheFuture(120);
-    //            jwtClaims.setExpirationTimeMinutesInTheFuture(29);
-            jwtClaims.setGeneratedJwtId();
-            jwtClaims.setIssuedAtToNow();
-            jwtClaims.setNotBeforeMinutesInThePast(2);
-            jwtClaims.setSubject(email);
-            jwtClaims.setStringListClaim(AUTHORITIES_KEY, rolesString);
-            JsonWebSignature jsonWebSignature = new JsonWebSignature();
-            jsonWebSignature.setPayload(jwtClaims.toJson());
-            jsonWebSignature.setKeyIdHeaderValue(rsaJsonWebKey.getKeyId());
-            jsonWebSignature.setKey(rsaJsonWebKey.getPrivateKey());
-            jsonWebSignature.setAlgorithmHeaderValue(AlgorithmIdentifiers.RSA_USING_SHA256);
-            return jsonWebSignature.getCompactSerialization();
-            
-        } catch (JoseException ex) {
-            throw new CustomJoseException("Failed to generate token");
-        } catch (NullPointerException ex) {
-            throw new CustomTokenException("all objects must be initialized to build jsonWebSignature");
-        }
-    }
-
----
-
-Il est également possible de rendre le mode d'authentification entièrement dynamique.
-Pour cela il faut modifier la valeure de setExpirationTimeMinutesInTheFuture à 29.
-Ainsi le client va automatiquement demander un refresh token à toutes ses requêtes.
-
----
-
-## Conclusion ##
+-----
 
 Cette rapide initiation est terminée.
 
