@@ -1080,9 +1080,9 @@ public String getEmailUser(){
 
 <hr />
 
-<p>Et grâce à l&rsquo;email nous allons pouvoir utiliser la même méthode que celle de la demande d&rsquo;authentification.</p>
+<p>Et grâce à l&rsquo;email nous allons pouvoir utiliser la méthode qui permet de générer un nouveau token.</p>
 
-<p>Si l&rsquo;opération réussit, le serveur génère un nouveau token avec les données actualisés (nouveaux rôles s&rsquo;ils ont été modifiés entre-temps).</p>
+<p>En cas de réussite ce token disposera des données actualisés (nouveaux rôles), et d&rsquo;une nouvelle date d&rsquo;expiration</p>
 
 <pre><code>public Token getRefreshToken(String email){
         try {

@@ -964,9 +964,9 @@ Le back-end va d'abord récupérer l'email utilisateur enregistré dans le conte
 
 ---
 
-Et grâce à l'email nous allons pouvoir utiliser la même méthode que celle de la demande d'authentification.
+Et grâce à l'email nous allons pouvoir utiliser la méthode qui permet de générer un nouveau token.
 
-Si l'opération réussit, le serveur génère un nouveau token avec les données actualisés (nouveaux rôles s'ils ont été modifiés entre-temps).
+En cas de réussite ce token disposera des données actualisés (nouveaux rôles), et d'une nouvelle date d'expiration
 
     public Token getRefreshToken(String email){
             try {
