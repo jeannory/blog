@@ -83,7 +83,7 @@
 
 <p><em>Article du 23/08/2019 importé en markdown pour Hugo au 08/10/2019.</em></p>
 
-<p><em>MAJ au 11/10/2019 - ajout de la fonction refresh token</em></p>
+<p><em>MAJ au 12/10/2019 - ajout de la fonction refresh token</em></p>
 
 <hr />
 
@@ -1003,7 +1003,7 @@ export class AppRoutingModule { }
 
 <h2 id="fonction-refresh-token">Fonction refresh token</h2>
 
-<p><em>MAJ au 11/10/2019</em></p>
+<p><em>MAJ au 12/10/2019</em></p>
 
 <p>Une relation professionnelle sous LinkedIn m&rsquo;a fait remarqué qu&rsquo;il y manquait la fonction de refresh token.
 Quelques semaines plus tard en entretien un recruteur m&rsquo;a fait la même réflexion!</p>
@@ -1018,10 +1018,13 @@ Quelques semaines plus tard en entretien un recruteur m&rsquo;a fait la même r�
 
 <p>S&rsquo;il est inférieur à 30 minutes ou 1800 secondes (if(expLeft &lt; 1800)), le front-end va envoyer une requête au serveur pour lui demander un nouveau token.</p>
 
-<pre><code>  if(expLeft &lt; 1800){
-    var token = new Token();
-    token.token = localStorage.getItem('token');
-    this.apiService.getRefreshToken(token)
+<pre><code>  var current_time = new Date().getTime() / 1000;
+  var expLeft = parseInt(this.exp) - current_time;
+  //when the token has less than 30 minutes before expiration
+  //client requests for refresh token
+  //server returns new token with a new expiration date and update roles
+  if(expLeft &lt; 1800){
+    this.apiService.getRefreshToken()
     .subscribe((resp: any) =&gt; {
       localStorage.setItem('token', resp.token);
       this.subscriptionService.emitTokenSubject();
@@ -1035,21 +1038,25 @@ Quelques semaines plus tard en entretien un recruteur m&rsquo;a fait la même r�
 
 <hr />
 
-<p>Envoie du token dans le body de la requête.</p>
+<p>Une simple méthode get va se charger d&rsquo;effectuer l&rsquo;appel.</p>
 
-<pre><code>  public getRefreshToken(token:Token){
-    return this.httpClient.post&lt;any&gt;(this.APIEndpoint+'api/UserWebController/refreshToken', token)
+<pre><code>  public getRefreshToken(){
+    return this.httpClient.get&lt;any&gt;(this.APIEndpoint+'api/UserWebController/refreshToken')
   }
 </code></pre>
 
 <hr />
 
-<p>Le Back-end va d&rsquo;abord le récupérer.</p>
+<p>Comme pour toutes les requêtes l&rsquo;intercepteur va envoyer l&rsquo;ancien token (en principe non encore périmé), et le serveur va en vérifier l&rsquo;authenticité via le filter.</p>
+
+<hr />
+
+<p>Nouveau end point</p>
 
 <pre><code>//http://localhost:8080/api/UserWebController/refreshToken
-@RequestMapping(path = &quot;/refreshToken&quot;, method = RequestMethod.POST)
-public Token refreshToken(@RequestBody Token token)  {
-    token = authProvider.validateRefreshToken(token);
+@RequestMapping(path = &quot;/refreshToken&quot;, method = RequestMethod.GET)
+public Token refreshToken()  {
+    Token token = authProvider.getRefreshToken(getEmailUser());
     if(token == null){
         throw new ResponseStatusException(
                 HttpStatus.INTERNAL_SERVER_ERROR, &quot;Internal server error&quot;
@@ -1059,26 +1066,30 @@ public Token refreshToken(@RequestBody Token token)  {
 }
 </code></pre>
 
+<p>Le back-end va d&rsquo;abord récupérer l&rsquo;email utilisateur enregistré dans le context de l&rsquo;application.</p>
+
+<pre><code>private UserDetails getSecurityContextHolder() {
+    final UsernamePasswordAuthenticationToken authentication = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+    return (UserDetails) authentication.getPrincipal();
+}
+
+public String getEmailUser(){
+    return getSecurityContextHolder().getUsername();
+}
+</code></pre>
+
 <hr />
 
-<p>Pour ensuite utiliser la méthode qui va en vérifer l&rsquo;authenticité (soit la méthode getTokenUtility de la class TokenUtilityProvider).</p>
+<p>Et grâce à l&rsquo;email nous allons pouvoir utiliser la même méthode que celle de la demande d&rsquo;authentification.</p>
 
 <p>Si l&rsquo;opération réussit, le serveur génère un nouveau token avec les données actualisés (nouveaux rôles s&rsquo;ils ont été modifiés entre-temps).</p>
 
-<hr />
-
-<pre><code>public Token validateRefreshToken(Token token) {
-    if(token==null){
-        return null;
-    }
-    final TokenUtility tokenUtility = tokenUtilityProvider.getTokenUtility(token.getToken());
-    if (tokenUtility.isValidateToken()) {
+<pre><code>public Token getRefreshToken(String email){
         try {
-            final Token token1 = new Token();
-            logger.info(&quot;refreshToken old : &quot; + token.getToken());
-            token1.setToken(generateJwt(tokenUtility.getEmail()));
-            logger.info(&quot;refreshToken new : &quot; + token1.getToken());
-            return token1;
+            final Token token = new Token();
+            token.setToken(generateJwt(email));
+            logger.info(&quot;refreshToken new : &quot; + token.getToken());
+            return token;
         } catch (CustomJoseException ex) {
             logger.error(ex.getMessage());
             return null;
@@ -1086,15 +1097,13 @@ public Token refreshToken(@RequestBody Token token)  {
             logger.error(ex.getMessage());
             return null;
         }
-    }
-    return null;
 }
 
 private String generateJwt(String email) {
     try {
         List&lt;Role&gt; roles = roleRepository.findByUsersEmail(email);
         if (roles.isEmpty() || roles == null) {
-            throw new CustomTokenException(&quot;token must contain at least 1 role&quot;);
+            throw new CustomTokenException(&quot;email cannot be empty &amp;&amp; token must contain at least 1 role&quot;);
         }
         List&lt;String&gt; rolesString = roles.stream().map(
                 role -&gt; {
@@ -1139,6 +1148,30 @@ private String generateJwt(String email) {
 <p>Il est également possible de rendre le mode d&rsquo;authentification entièrement dynamique.
 Pour cela il faut modifier la valeure de setExpirationTimeMinutesInTheFuture à 29.
 Ainsi le client va automatiquement demander un refresh token à toutes ses requêtes.</p>
+
+<p>Par l&rsquo;exemple je vais vous démontrer un de ses intérêts :</p>
+
+<pre><code>//            jwtClaims.setExpirationTimeMinutesInTheFuture(120);
+            jwtClaims.setExpirationTimeMinutesInTheFuture(29);
+</code></pre>
+
+<hr />
+
+<p>Nous allons nous connecter avec johny@johny.com qui dispose du rôle USER.</p>
+
+<p><img src="/blog/img/030.png" alt="johny@johny.com page 1" /></p>
+
+<hr />
+
+<p>Sur un autre navigateur l&rsquo;admin jean@jean.com va se connecter et changer les rôles de johny@johny.com.</p>
+
+<p><img src="/blog/img/031.png" alt="page admin" /></p>
+
+<hr />
+
+<p>Retourner sur le navigateur avec le compte johny@johny.com et faite un clique sur &lsquo;Home&rsquo; puis sur &lsquo;User&rsquo; et la vous constaterez que le Serveur a renvoyé le token avec les rôles qui viennent juste d&rsquo;être mis à jour!</p>
+
+<p><img src="/blog/img/032.png" alt="johny@johny.com page 2" /></p>
 
 <hr />
 

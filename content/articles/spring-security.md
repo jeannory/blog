@@ -19,7 +19,7 @@ Bonne lecture.
 
 _Article du 23/08/2019 importé en markdown pour Hugo au 08/10/2019._
 
-_MAJ au 11/10/2019 - ajout de la fonction refresh token_
+_MAJ au 12/10/2019 - ajout de la fonction refresh token_
 
 ---
 
@@ -892,7 +892,7 @@ Vous pourrez observer les redirections réalisées par Angular en fonction des c
 
 ## Fonction refresh token ##
 
-_MAJ au 11/10/2019_
+_MAJ au 12/10/2019_
 
 Une relation professionnelle sous LinkedIn m'a fait remarqué qu'il y manquait la fonction de refresh token.
 Quelques semaines plus tard en entretien un recruteur m'a fait la même réflexion!
@@ -907,10 +907,13 @@ Le client va se charger de calculer le temps restant avant que le token arrive �
 
 S'il est inférieur à 30 minutes ou 1800 secondes (if(expLeft < 1800)), le front-end va envoyer une requête au serveur pour lui demander un nouveau token.
 
+      var current_time = new Date().getTime() / 1000;
+      var expLeft = parseInt(this.exp) - current_time;
+      //when the token has less than 30 minutes before expiration
+      //client requests for refresh token
+      //server returns new token with a new expiration date and update roles
       if(expLeft < 1800){
-        var token = new Token();
-        token.token = localStorage.getItem('token');
-        this.apiService.getRefreshToken(token)
+        this.apiService.getRefreshToken()
         .subscribe((resp: any) => {
           localStorage.setItem('token', resp.token);
           this.subscriptionService.emitTokenSubject();
@@ -923,20 +926,23 @@ S'il est inférieur à 30 minutes ou 1800 secondes (if(expLeft < 1800)), le fron
 
 ---
 
-Envoie du token dans le body de la requête.
+Une simple méthode get va se charger d'effectuer l'appel.
 
-      public getRefreshToken(token:Token){
-        return this.httpClient.post<any>(this.APIEndpoint+'api/UserWebController/refreshToken', token)
+      public getRefreshToken(){
+        return this.httpClient.get<any>(this.APIEndpoint+'api/UserWebController/refreshToken')
       }
 
 ---
 
-Le Back-end va d'abord le récupérer.
+Comme pour toutes les requêtes l'intercepteur va envoyer l'ancien token (en principe non encore périmé), et le serveur va en vérifier l'authenticité via le filter.
+
+---
+Nouveau end point 
 
     //http://localhost:8080/api/UserWebController/refreshToken
-    @RequestMapping(path = "/refreshToken", method = RequestMethod.POST)
-    public Token refreshToken(@RequestBody Token token)  {
-        token = authProvider.validateRefreshToken(token);
+    @RequestMapping(path = "/refreshToken", method = RequestMethod.GET)
+    public Token refreshToken()  {
+        Token token = authProvider.getRefreshToken(getEmailUser());
         if(token == null){
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error"
@@ -945,26 +951,29 @@ Le Back-end va d'abord le récupérer.
         return token;
     }
 
+Le back-end va d'abord récupérer l'email utilisateur enregistré dans le context de l'application.
+
+    private UserDetails getSecurityContextHolder() {
+        final UsernamePasswordAuthenticationToken authentication = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        return (UserDetails) authentication.getPrincipal();
+    }
+
+    public String getEmailUser(){
+        return getSecurityContextHolder().getUsername();
+    }
+
 ---
 
-Pour ensuite utiliser la méthode qui va en vérifer l'authenticité (soit la méthode getTokenUtility de la class TokenUtilityProvider).
+Et grâce à l'email nous allons pouvoir utiliser la même méthode que celle de la demande d'authentification.
 
 Si l'opération réussit, le serveur génère un nouveau token avec les données actualisés (nouveaux rôles s'ils ont été modifiés entre-temps).
 
----
-
-    public Token validateRefreshToken(Token token) {
-        if(token==null){
-            return null;
-        }
-        final TokenUtility tokenUtility = tokenUtilityProvider.getTokenUtility(token.getToken());
-        if (tokenUtility.isValidateToken()) {
+    public Token getRefreshToken(String email){
             try {
-                final Token token1 = new Token();
-                logger.info("refreshToken old : " + token.getToken());
-                token1.setToken(generateJwt(tokenUtility.getEmail()));
-                logger.info("refreshToken new : " + token1.getToken());
-                return token1;
+                final Token token = new Token();
+                token.setToken(generateJwt(email));
+                logger.info("refreshToken new : " + token.getToken());
+                return token;
             } catch (CustomJoseException ex) {
                 logger.error(ex.getMessage());
                 return null;
@@ -972,15 +981,13 @@ Si l'opération réussit, le serveur génère un nouveau token avec les données
                 logger.error(ex.getMessage());
                 return null;
             }
-        }
-        return null;
     }
 
     private String generateJwt(String email) {
         try {
             List<Role> roles = roleRepository.findByUsersEmail(email);
             if (roles.isEmpty() || roles == null) {
-                throw new CustomTokenException("token must contain at least 1 role");
+                throw new CustomTokenException("email cannot be empty && token must contain at least 1 role");
             }
             List<String> rolesString = roles.stream().map(
                     role -> {
@@ -1011,7 +1018,7 @@ Si l'opération réussit, le serveur génère un nouveau token avec les données
             jsonWebSignature.setKey(rsaJsonWebKey.getPrivateKey());
             jsonWebSignature.setAlgorithmHeaderValue(AlgorithmIdentifiers.RSA_USING_SHA256);
             return jsonWebSignature.getCompactSerialization();
-            
+
         } catch (JoseException ex) {
             throw new CustomJoseException("Failed to generate token");
         } catch (NullPointerException ex) {
@@ -1024,6 +1031,29 @@ Si l'opération réussit, le serveur génère un nouveau token avec les données
 Il est également possible de rendre le mode d'authentification entièrement dynamique.
 Pour cela il faut modifier la valeure de setExpirationTimeMinutesInTheFuture à 29.
 Ainsi le client va automatiquement demander un refresh token à toutes ses requêtes.
+
+Par l'exemple je vais vous démontrer un de ses intérêts :
+
+    //            jwtClaims.setExpirationTimeMinutesInTheFuture(120);
+                jwtClaims.setExpirationTimeMinutesInTheFuture(29);
+
+---
+
+Nous allons nous connecter avec johny@johny.com qui dispose du rôle USER.
+
+![johny@johny.com page 1](/blog/img/030.png)
+
+---
+
+Sur un autre navigateur l'admin jean@jean.com va se connecter et changer les rôles de johny@johny.com.
+
+![page admin](/blog/img/031.png)
+
+---
+
+Retourner sur le navigateur avec le compte johny@johny.com et faite un clique sur 'Home' puis sur 'User' et la vous constaterez que le Serveur a renvoyé le token avec les rôles qui viennent juste d'être mis à jour!
+
+![johny@johny.com page 2](/blog/img/032.png)
 
 ---
 
