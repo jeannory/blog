@@ -154,10 +154,10 @@ public class SingletonBean {
     private final static Logger logger = Logger.getLogger(SingletonBean.class);
     private static List&lt;JsonWebKey&gt; jsonWebKeys;
     private static ModelMapper modelMapper;
+    private static ObjectMapper objectMapper;
 
     public SingletonBean() {
-        logger.info(&quot;**********&quot;);
-        logger.info(&quot;Constructor SingletonBean begin&quot;);
+        logger.info(&quot;Constructor SingletonBean&quot;);
         List&lt;Integer&gt; listInt = Arrays.asList(1, 2, 3);
         jsonWebKeys = listInt.stream().map(i -&gt; {
             try {
@@ -171,8 +171,7 @@ public class SingletonBean {
             }
         }).collect(Collectors.toCollection(ArrayList::new)).stream().filter(Objects::nonNull).collect(Collectors.toList());
         modelMapper = new ModelMapper();
-        logger.info(&quot;Constructor SingletonBean end&quot;);
-        logger.info(&quot;**********&quot;);
+        objectMapper = new ObjectMapper();
     }
 
     public List&lt;JsonWebKey&gt; getJsonWebKeys() {
@@ -181,6 +180,10 @@ public class SingletonBean {
 
     public ModelMapper getModelMapper() {
         return modelMapper;
+    }
+
+    public static ObjectMapper getObjectMapper() {
+        return objectMapper;
     }
 }
 </code></pre>
@@ -211,17 +214,18 @@ public class SingletonBean {
 
     @Override
     protected void doFilterInternal(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, FilterChain filterChain) throws ServletException, IOException {
+        logger.info(&quot;Method doFilterInternal&quot;);
         try {
-            String token = validateTokenHeader(httpServletRequest);
-            TokenUtility tokenUtility = tokenUtilityProvider.getTokenUtility(token);
+            final String token = validateTokenHeader(httpServletRequest);
+            final TokenUtility tokenUtility = tokenUtilityProvider.getTokenUtility(token);
             if (tokenUtility.isValidateToken()) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(tokenUtility.getEmail());
+                final UserDetails userDetails = userDetailsService.loadUserByUsername(tokenUtility.getEmail());
                 if(userDetails!=null){
                     List&lt;SimpleGrantedAuthority&gt; simpleGrantedAuthorities
                             = tokenUtility.getRoles().stream()
                             .map(role -&gt; new SimpleGrantedAuthority(AUTHORITY_PREFIX + role))
                             .collect(Collectors.toCollection(ArrayList::new));
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, simpleGrantedAuthorities);
+                    final UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, simpleGrantedAuthorities);
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpServletRequest));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     logger.info(&quot;Method doFilterInternal - token is valid&quot;);
@@ -229,18 +233,19 @@ public class SingletonBean {
             }
         } catch (CustomNoHeaderException ex) {
             /**
-            * NPE or if token not found on header no status to return
-            * rejected if @Secure on controller
-            */
+             * NPE or if token not found on header no status to return
+             * rejected if @Secure on controller
+             */
             logger.info(&quot;Method doFilterInternal : &quot; + ex.getMessage());
         }
         filterChain.doFilter(httpServletRequest, httpServletResponse);
     }
 
     private String validateTokenHeader(HttpServletRequest httpServletRequest) {
+        logger.info(&quot;Method validateTokenHeader&quot;);
         try {
             final String requestTokenHeader = httpServletRequest.getHeader(HEADER_STRING);
-            String token = requestTokenHeader.replace(TOKEN_PREFIX, &quot;&quot;);
+            final String token = requestTokenHeader.replace(TOKEN_PREFIX, &quot;&quot;);
             if (token == null) {
                 throw new CustomNoHeaderException(&quot;token not found on header&quot;);
             }
@@ -273,6 +278,7 @@ public class TokenUtilityProvider implements ITools, Serializable {
     }
 
     public TokenUtility getTokenUtility(String token){
+        logger.info(&quot;Method getTokenUtility&quot;);
         try {
             tokenUtility = validateToken(token);
         } catch (CustomMalformedClaimException ex) {
@@ -283,11 +289,11 @@ public class TokenUtilityProvider implements ITools, Serializable {
             tokenUtility.setValidateToken(false);
         } catch (CustomJwtException ex) {
             /**
-            * if exception in :
-            * -TokenUtility.validateToken
-            * -TokenUtilityProvider.validateJsonWebKey
-            * -TokenUtilityProvider.getStringFromJwtNode
-            */
+             * if exception in :
+             * -TokenUtility.validateToken
+             * -TokenUtilityProvider.validateJsonWebKey
+             * -TokenUtilityProvider.getStringFromJwtNode
+             */
             logger.error(ex.getMessage());
             tokenUtility.setValidateToken(false);
         }
@@ -296,24 +302,25 @@ public class TokenUtilityProvider implements ITools, Serializable {
     }
 
     private TokenUtility validateToken(String token) {
+        logger.info(&quot;Method validateToken&quot;);
         tokenUtility = new TokenUtility();
         try {
-            String kid = getStringFromJwtNode(token, 0, &quot;kid&quot;);
-            String issuer = getStringFromJwtNode(token, 1, &quot;iss&quot;);
+            final String kid = getStringFromJwtNode(token, 0, &quot;kid&quot;);
+            final String issuer = getStringFromJwtNode(token, 1, &quot;iss&quot;);
             /**
-            * not in use
-            */
-            String exp = getStringFromJwtNode(token, 1, &quot;exp&quot;);
-            JsonWebKey jsonWebKey = validateJsonWebKey(kid);
+             * not in use
+             */
+            final String exp = getStringFromJwtNode(token, 1, &quot;exp&quot;);
+            final JsonWebKey jsonWebKey = validateJsonWebKey(kid);
             tokenUtility.setKid(Integer.valueOf(kid));
-            JwtConsumer jwtConsumer = new JwtConsumerBuilder()
+            final JwtConsumer jwtConsumer = new JwtConsumerBuilder()
                     .setRequireExpirationTime()
                     .setAllowedClockSkewInSeconds(120)
                     .setRequireSubject()
                     .setExpectedIssuer(issuer)
                     .setVerificationKey(jsonWebKey.getKey())
                     .build();
-            JwtClaims jwtClaims = jwtConsumer.processToClaims(token);
+            final JwtClaims jwtClaims = jwtConsumer.processToClaims(token);
             if (jwtClaims == null) {
                 throw new CustomJwtException(&quot;token is invalid&quot;);
             }
@@ -322,8 +329,8 @@ public class TokenUtilityProvider implements ITools, Serializable {
                 List&lt;String&gt; roleStrings = jwtClaims.getStringListClaimValue(AUTHORITIES_KEY);
                 tokenUtility.setRoles(roleStrings);
                 /**
-                * jwt validation succeeded
-                */
+                 * jwt validation succeeded
+                 */
                 tokenUtility.setValidateToken(true);
                 return tokenUtility;
             }
@@ -337,26 +344,26 @@ public class TokenUtilityProvider implements ITools, Serializable {
     }
 
     /**
-    * to calculate expiration of jwt
-    */
+     * to calculate expiration of jwt
+     */
     private Long millisecondsLeft(String exp) {
-        NumericDate jwtNumericDate = NumericDate.fromSeconds(Long.valueOf(exp));
-        NumericDate numericDateNow = NumericDate.now();
-        Long millisecondsLeft = jwtNumericDate.getValueInMillis() - numericDateNow.getValueInMillis();
+        logger.info(&quot;Method millisecondsLeft&quot;);
+        final NumericDate jwtNumericDate = NumericDate.fromSeconds(Long.valueOf(exp));
+        final NumericDate numericDateNow = NumericDate.now();
+        final Long millisecondsLeft = jwtNumericDate.getValueInMillis() - numericDateNow.getValueInMillis();
         return millisecondsLeft;
     }
 
     private String getStringFromJwtNode(String token, int indice, String nodeName) {
+        logger.info(&quot;Method getStringFromJwtNode&quot;);
         try {
-            String[] tokenTab = token.split(&quot;\\.&quot;);
-            String headerEncoded = tokenTab[indice];
-            byte[] decodeBytesHeader = Base64.getUrlDecoder().decode(headerEncoded);
-            String decodeHeader = new String(decodeBytesHeader);
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode rootNode;
-            rootNode = objectMapper.readValue(decodeHeader, JsonNode.class);
-            JsonNode node = rootNode.path(nodeName);
-            String kid = node.asText();
+            final String[] tokenTab = token.split(&quot;\\.&quot;);
+            final String headerEncoded = tokenTab[indice];
+            final byte[] decodeBytesHeader = Base64.getUrlDecoder().decode(headerEncoded);
+            final String decodeHeader = new String(decodeBytesHeader);
+            final JsonNode rootNode = singletonBean.getObjectMapper().readValue(decodeHeader, JsonNode.class);
+            final JsonNode node = rootNode.path(nodeName);
+            final String kid = node.asText();
             return kid;
         } catch (IOException ex) {
             throw new CustomJwtException(&quot;failed to get infos from the token&quot;);
@@ -366,12 +373,13 @@ public class TokenUtilityProvider implements ITools, Serializable {
     }
 
     private JsonWebKey validateJsonWebKey(String kid) {
+        logger.info(&quot;Method validateJsonWebKey&quot;);
         try {
             /**
-            * get jsonWebKey by kid
-            */
-            JsonWebKeySet jsonWebKeySet = new JsonWebKeySet(singletonBean.getJsonWebKeys());
-            JsonWebKey jsonWebKey = jsonWebKeySet.findJsonWebKey(kid, null, null, null);
+             * get jsonWebKey by kid
+             */
+            final JsonWebKeySet jsonWebKeySet = new JsonWebKeySet(singletonBean.getJsonWebKeys());
+            final JsonWebKey jsonWebKey = jsonWebKeySet.findJsonWebKey(kid, null, null, null);
             return jsonWebKey;
         } catch (NullPointerException ex) {
             throw new CustomJwtException(&quot;failed to created JsonWebKeySet&quot;);
@@ -391,6 +399,7 @@ public class TokenUtilityProvider implements ITools, Serializable {
  */
 @Override
 public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    logger.info(&quot;Method loadUserByUsername&quot;);
     try {
         final User user = manageSelectMyUserByEmailException(username);
         Set&lt;SimpleGrantedAuthority&gt; simpleGrantedAuthorities = roleService.findByUsersEmail(user.getEmail()).stream().map(role -&gt; {
@@ -405,13 +414,16 @@ public UserDetails loadUserByUsername(String username) throws UsernameNotFoundEx
 }
 
 private User manageSelectMyUserByEmailException(String username) {
+    logger.info(&quot;Method manageSelectMyUserByEmailException&quot;);
     final User user = userRepository.selectMyUserByEmail(username);
     if (
             user == null ||
                     user.getId() == null ||
                     user.getEmail() == null ||
-                    user.getPassword() == null ||
-                    user.getRoles() == null
+                    user.getPassword() == null
+                    //toDo to handle
+                    //Unable to evaluate the expression Method threw 'org.hibernate.LazyInitializationException' exception.
+                    //user.getRoles() == null
     ) {
         throw new UsernameNotFoundException(&quot;Invalid user&quot;);
     }
@@ -428,6 +440,7 @@ private User manageSelectMyUserByEmailException(String username) {
 @EnableGlobalMethodSecurity(securedEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+    private final static Logger logger = Logger.getLogger(SecurityConfig.class);
     @Bean
     public JwtRequestFilter jwtRequestFilter() {
         return new JwtRequestFilter();
@@ -435,9 +448,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+        logger.info(&quot;Method configure&quot;);
         /**
-        * return status 403 if not allowed
-        */
+         * return status 403 if not allowed
+         */
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and().
                 authorizeRequests()
                 .antMatchers(HttpMethod.GET, &quot;/api&quot;, &quot;/api/*&quot;).permitAll()
@@ -451,8 +465,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .csrf().disable();
 
         /**
-        * add custom JWT security filter,if not allowing by @Secure return status 403
-        */
+         * add custom JWT security filter,if not allowing by @Secure return status 403
+         */
         http.addFilterBefore(jwtRequestFilter(), UsernamePasswordAuthenticationFilter.class);
     }
 }
@@ -460,17 +474,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 <hr />
 
-<p>Dans notre controlleur il est possible de limiter les accès aux end-points en fonction des rôles utilisateurs, en utilisant l&rsquo;annotaion @Secure.</p>
+<p>Dans notre controlleur il est possible de limiter les accès aux end-points en fonction des rôles utilisateurs, en utilisant l&rsquo;annotaion @Secure :</p>
 
-<p>Le end-point getUsers lui est exclusivement réservé aux utilisateurs disposant du ADMIN.</p>
+<p>Le end-point getUsers est exclusivement réservé aux utilisateurs disposant du ADMIN.</p>
 
 <pre><code>//http://localhost:8080/api/UserWebController/getUsers
 @Secured({AUTHORITY_PREFIX + ADMIN})
 @RequestMapping(path = &quot;/getUsers&quot;, method = RequestMethod.GET)
-public List&lt;UserDTO&gt; getUsers() throws CustomConverterException{
+public List&lt;UserDTO&gt; getUsers() throws CustomConverterException {
+    logger.info(&quot;End point getUsers&quot;);
     List&lt;UserDTO&gt; userDTOS = userService.getUsers();
-    if(userDTOS.isEmpty()||userDTOS==null){
-        logger.info(&quot;end-point getUsers failed&quot;);
+    if (userDTOS.isEmpty() || userDTOS == null) {
+        logger.error(&quot;Internal server error&quot;);
         throw new ResponseStatusException(
                 HttpStatus.INTERNAL_SERVER_ERROR, &quot;Internal server error&quot;
         );
@@ -491,10 +506,11 @@ public List&lt;UserDTO&gt; getUsers() throws CustomConverterException{
 @Secured({AUTHORITY_PREFIX + USER, AUTHORITY_PREFIX + MANAGER, AUTHORITY_PREFIX + ADMIN})
 @RequestMapping(path = &quot;/setUser&quot;, method = RequestMethod.PUT)
 public UserDTO setUser(@RequestBody UserDTO userDTOEntry) {
-        validateThisUser(userDTOEntry.getEmail());
+    logger.info(&quot;End point setUser&quot;);
+    validateThisUser(userDTOEntry.getEmail());
     final UserDTO userDTO = userService.setUser(userDTOEntry);
-    if(userDTO==null){
-        logger.info(&quot;end-point setUser failed&quot;);
+    if (userDTO == null) {
+        logger.error(&quot;Internal server error&quot;);
         throw new ResponseStatusException(
                 HttpStatus.INTERNAL_SERVER_ERROR, &quot;Internal server error&quot;
         );
@@ -515,20 +531,26 @@ public UserDTO setUser(@RequestBody UserDTO userDTOEntry) {
 <pre><code>public class SuperController{
 
     private final static Logger logger = Logger.getLogger(SuperController.class);
-    private static UserDetails userDetails;
 
-    private void getSecurityContextHolder() {
-        UsernamePasswordAuthenticationToken authentication = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        userDetails = (UserDetails) authentication.getPrincipal();
+    private UserDetails getSecurityContextHolder() {
+        logger.info(&quot;Method getSecurityContextHolder&quot;);
+        final UsernamePasswordAuthenticationToken authentication = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        return (UserDetails) authentication.getPrincipal();
+    }
+
+    public String getEmailUser(){
+        logger.info(&quot;Method getEmailUser&quot;);
+        return getSecurityContextHolder().getUsername();
     }
 
     /**
-    * for each @Secure ROLE_USER &amp;&amp; ROLE_MANAGER only themself can access
-    * for all @Secure ROLE_ADMIN can access
-    */
+     * for each @Secure ROLE_USER &amp;&amp; ROLE_MANAGER only themself can access
+     * for all @Secure ROLE_ADMIN can access
+     */
     public void validateThisUser(String emailEntry) {
+        logger.info(&quot;Method validateThisUser&quot;);
         try {
-            getSecurityContextHolder();
+            final UserDetails userDetails = getSecurityContextHolder();
             boolean authorization = false;
             if(userDetails.getAuthorities().contains(new SimpleGrantedAuthority(&quot;ROLE_ADMIN&quot;))){
                 authorization = true;
@@ -538,11 +560,13 @@ public UserDTO setUser(@RequestBody UserDTO userDTOEntry) {
                 }
             }
                 if(authorization==false){
+                    logger.error(&quot;Forbidden&quot;);
                     throw new ResponseStatusException(
                             HttpStatus.FORBIDDEN, &quot;Forbidden&quot;
                     );
                 }
         } catch (NullPointerException ex) {
+            logger.error(&quot;Forbidden&quot;);
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN, &quot;Forbidden&quot;
             );
@@ -560,77 +584,75 @@ public UserDTO setUser(@RequestBody UserDTO userDTOEntry) {
 
 <p>Dans le cas ou l&rsquo;utilisateur résussit à s&rsquo;authentifier, la méthode va retourner le token de session Jwt.</p>
 
-<pre><code>public class AuthProvider implements ITools {
-
-    private final static Logger logger = Logger.getLogger(AuthProvider.class);
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private RoleRepository roleRepository;
-    @Autowired
-    SingletonBean singletonBean;
-
-    public Token validateConnection(Credential credential) {
-        String credentialSha3 = getStringSha3(credential.getPassword());
-        User user = userRepository.selectMyUserByEmail(credential.getEmail());
-        if (user == null) {
-            return null;
-        } else
-        if(credentialSha3.equals(user.getPassword())) {
-            try {
-                String jwt = generateJwt(credential.getEmail());
-                Token token = new Token();
-                token.setToken(jwt);
-                logger.info(&quot;Method validateConnection succeed&quot;);
-                return token;
-            } catch (CustomJoseException ex) {
-                logger.error(ex.getMessage());
-                return null;
-            } catch(CustomTokenException ex){
-                logger.error(ex.getMessage());
-                return null;
-            }
-        }
+<pre><code>public Token validateConnection(Credential credential) {
+    logger.info(&quot;Method validateConnection&quot;);
+    final String credentialSha3 = getStringSha3(credential.getPassword());
+    final User user = userRepository.selectMyUserByEmail(credential.getEmail());
+    if (user == null) {
         return null;
-    }
-
-    private String generateJwt(String email){
+    } else if (credentialSha3.equals(user.getPassword())) {
         try {
-            List&lt;Role&gt; roles = roleRepository.findByUsersEmail(email);
-            if(roles.isEmpty()||roles==null){
-                throw new CustomTokenException(&quot;token must contain at least 1 role&quot;);
-            }
-            List&lt;String&gt; rolesString = roles.stream().map(
-                    role-&gt;{
-                        return role.getName();
-                    }).collect(Collectors.toCollection(ArrayList::new));
-            int kidRandom = generateRandmoKid();
-            RsaJsonWebKey rsaJsonWebKey = (RsaJsonWebKey) singletonBean.getJsonWebKeys().get(kidRandom);
-            /**
-            * Create the Claims, which will be the content of the jwt
-            */
-            JwtClaims jwtClaims = new JwtClaims();
-            jwtClaims.setIssuer(DOMAIN);
-            jwtClaims.setExpirationTimeMinutesInTheFuture(120);
-            jwtClaims.setGeneratedJwtId();
-            jwtClaims.setIssuedAtToNow();
-            jwtClaims.setNotBeforeMinutesInThePast(2);
-            jwtClaims.setSubject(email);
-            jwtClaims.setStringListClaim(AUTHORITIES_KEY, rolesString);
-            JsonWebSignature jsonWebSignature = new JsonWebSignature();
-            jsonWebSignature.setPayload(jwtClaims.toJson());
-            jsonWebSignature.setKeyIdHeaderValue(rsaJsonWebKey.getKeyId());
-            jsonWebSignature.setKey(rsaJsonWebKey.getPrivateKey());
-            jsonWebSignature.setAlgorithmHeaderValue(AlgorithmIdentifiers.RSA_USING_SHA256);
-            return jsonWebSignature.getCompactSerialization();
-
-        } catch (JoseException ex) {
-            throw new CustomJoseException(&quot;Failed to generate token&quot;);
-        }catch (NullPointerException ex){
-            throw new CustomTokenException(&quot;user roles cannot be null&quot;);
+            final String jwt = generateJwt(credential.getEmail());
+            final Token token = new Token();
+            token.setToken(jwt);
+            logger.info(&quot;Method validateConnection succeed&quot;);
+            return token;
+        } catch (CustomJoseException ex) {
+            logger.error(ex.getMessage());
+            return null;
+        } catch (CustomTokenException ex) {
+            logger.error(ex.getMessage());
+            return null;
         }
     }
+    return null;
+}
+</code></pre>
 
+<hr />
+
+<pre><code>private String generateJwt(String email) {
+    logger.info(&quot;Method generateJwt&quot;);
+    try {
+        List&lt;Role&gt; roles = roleRepository.findByUsersEmail(email);
+        if (roles.isEmpty() || roles == null) {
+            throw new CustomTokenException(&quot;email cannot be empty &amp;&amp; token must contain at least 1 role&quot;);
+        }
+        List&lt;String&gt; rolesString = roles.stream().map(
+                role -&gt; {
+                    return role.getName();
+                }).collect(Collectors.toCollection(ArrayList::new));
+        final int kidRandom = generateRandmoKid();
+        final RsaJsonWebKey rsaJsonWebKey = (RsaJsonWebKey) singletonBean.getJsonWebKeys().get(kidRandom);
+        /**
+         * Create the Claims, which will be the content of the jwt
+         */
+        final JwtClaims jwtClaims = new JwtClaims();
+        jwtClaims.setIssuer(DOMAIN);
+        /**
+        *UI request for refresh token 30 min before its expiration
+        *setExpirationTimeMinutesInTheFuture to 29 UI will always request for a new token
+        *setExpirationTimeMinutesInTheFuture to 120 UI will request for a new token after 90 min
+         */
+        jwtClaims.setExpirationTimeMinutesInTheFuture(120);
+        //jwtClaims.setExpirationTimeMinutesInTheFuture(29);
+        jwtClaims.setGeneratedJwtId();
+        jwtClaims.setIssuedAtToNow();
+        jwtClaims.setNotBeforeMinutesInThePast(2);
+        jwtClaims.setSubject(email);
+        jwtClaims.setStringListClaim(AUTHORITIES_KEY, rolesString);
+        final JsonWebSignature jsonWebSignature = new JsonWebSignature();
+        jsonWebSignature.setPayload(jwtClaims.toJson());
+        jsonWebSignature.setKeyIdHeaderValue(rsaJsonWebKey.getKeyId());
+        jsonWebSignature.setKey(rsaJsonWebKey.getPrivateKey());
+        jsonWebSignature.setAlgorithmHeaderValue(AlgorithmIdentifiers.RSA_USING_SHA256);
+        return jsonWebSignature.getCompactSerialization();
+
+    } catch (JoseException ex) {
+        throw new CustomJoseException(&quot;Failed to generate token&quot;);
+    } catch (NullPointerException ex) {
+        throw new CustomTokenException(&quot;all objects must be initialized to build jsonWebSignature&quot;);
+    }
 }
 </code></pre>
 
@@ -714,6 +736,7 @@ public UserDTO setUser(@RequestBody UserDTO userDTOEntry) {
 @EnableGlobalMethodSecurity(securedEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+    private final static Logger logger = Logger.getLogger(SecurityConfig.class);
     @Bean
     public JwtRequestFilter jwtRequestFilter() {
         return new JwtRequestFilter();
@@ -721,9 +744,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+        logger.info(&quot;Method configure&quot;);
         /**
-        * return status 403 if not allowed
-        */
+         * return status 403 if not allowed
+         */
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and().
                 authorizeRequests()
                 .antMatchers(HttpMethod.GET, &quot;/api&quot;, &quot;/api/*&quot;).permitAll()
@@ -737,8 +761,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .csrf().disable();
 
         /**
-        * add custom JWT security filter,if not allowing by @Secure return status 403
-        */
+         * add custom JWT security filter,if not allowing by @Secure return status 403
+         */
         http.addFilterBefore(jwtRequestFilter(), UsernamePasswordAuthenticationFilter.class);
     }
 }
@@ -794,37 +818,34 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 <p>A chaque connexion, le token de session est enregistré en localStorage (mémoire du pc). Un interceptor va récupérer ce token et le renvoyer dans le header de chaques requêtes clientes.</p>
 
-<pre><code>@Injectable({
-providedIn: 'root'
-})
-export class TokenInterceptorService implements HttpInterceptor{
+<pre><code>export class TokenInterceptorService implements HttpInterceptor{
 
-constructor(
+  constructor(
     private router:Router,
     ) { }
 
     intercept(request: HttpRequest&lt;any&gt;, next: HttpHandler): Observable&lt;HttpEvent&lt;any&gt;&gt; {
-    request = request.clone({
+      request = request.clone({
         setHeaders: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         }
-    });
-    return next.handle(request).pipe(
+      });
+      return next.handle(request).pipe(
         catchError((error: HttpErrorResponse) =&gt; {
         if (error.error instanceof ErrorEvent) {
         } else {
-        if (error.status === 403) { 
+          if (error.status === 403) { 
             this.router.navigate( [&quot;/error&quot;] );
-        }
-        if (error.status === 500) { 
+          }
+          if (error.status === 500) { 
             this.router.navigate( [&quot;/error&quot;] );
-        }
+          }
         }
         return throwError(error);
-    })
-    );
+      })
+      );
     }
-}
+  }
 </code></pre>
 
 <hr />
@@ -845,75 +866,88 @@ Vous observez que l&rsquo;utilisateur est redirigé vers une page d&rsquo;erreur
 <p>Il a également été rajoutée la fonction pour déterminer si le token est périmé.
 Ainsi le client déconnecte automatiquement l&rsquo;utilisateur et le route vers la page de re-authentification, et cela sans action du serveur d&rsquo;application.</p>
 
-<pre><code>@Injectable({
-providedIn: 'root'
-})
-export class AuthGuardService implements CanActivate{
+<pre><code>export class AuthGuardService implements CanActivate{
 
-roles:string[];
-role:string;
-email:string;
-exp:string;
+  roles:string[];
+  role:string;
+  email:string;
+  exp:string;
 
-constructor(
+  constructor(
     private router:Router,
     private apiService:ApiService,
     private subscriptionService: SubscriptionService
     ) { }
 
-canActivate(
+  canActivate(
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot): Observable&lt;boolean&gt; | Promise&lt;boolean&gt; | boolean {
-    const expectedRole = route.data.expectedRole;
-    this.role = null;
-    if (localStorage.getItem('token')){
+      const expectedRole = route.data.expectedRole;
+      this.role = null;
+      if (localStorage.getItem('token')){
 
         this.getDecodedAccessToken(localStorage.getItem('token'));
-        if(expectedRole!=null){
+          if(expectedRole!=null){
             this.roles.forEach(element =&gt; {
-            if(element===expectedRole){
+              if(element===expectedRole){
                 this.role = element;
-            }
+              }
             });
             if(this.role==null){
                 this.router.navigate( [&quot;/error&quot;] );
                 return false
             }
-        }
-        var current_time = new Date().getTime() / 1000;
-        if(current_time &gt; parseInt(this.exp)){
+          }
+          var current_time = new Date().getTime() / 1000;
+          var expLeft = parseInt(this.exp) - current_time;
+          //when the token has less than 30 minutes before expiration
+          //client requests for refresh token
+          //server returns new token with a new expiration date and update roles
+          //no action if the token has expired
+          if(expLeft &lt; 1800 &amp;&amp; expLeft &gt; 0){
+            this.apiService.getRefreshToken()
+            .subscribe((resp: any) =&gt; {
+              localStorage.setItem('token', resp.token);
+              this.subscriptionService.emitTokenSubject();
+              this.getDecodedAccessToken(resp.token);
+           }, err =&gt; {
+             console.log(err);
+             alert(err.message);
+           })
+          }
+          if(current_time &gt; parseInt(this.exp)){
             // Destroy local session; redirect to /login
             localStorage.removeItem('token');
             localStorage.removeItem('email');
             this.subscriptionService.emitTokenSubject();
             alert(&quot;Your session has expired, please provide Login!&quot;)
             this.router.navigate( [&quot;/login&quot;] );
-        }
+          }
         return true;
-    }
+      }
         else  {
         this.subscriptionService.emitTokenSubject();
         alert(&quot;You are currently not logged in, please provide Login!&quot;)
         this.router.navigate( [&quot;/login&quot;] );
         return false
-    }
+      }
 }
 
 validateConnection(credential : Credential){
-this.apiService.validateConnection(credential)
-.subscribe((resp: any) =&gt; {
-    localStorage.setItem('token', resp.token);
-    this.subscriptionService.emitTokenSubject();
-    this.getDecodedAccessToken(resp.token);
+  this.apiService.validateConnection(credential)
+  .subscribe((resp: any) =&gt; {
+     localStorage.setItem('token', resp.token);
+     this.subscriptionService.emitTokenSubject();
+     this.getDecodedAccessToken(resp.token);
     this.router.navigate(['/space']);
-}, err =&gt; {
+  }, err =&gt; {
     console.log(err);
     alert(err.message);
-})
+  })
 }
 
 getDecodedAccessToken(token: string): void {
-try{
+  try{
     let jwtData = token.split('.')[1];
     let decodedJwtJsonData = window.atob(jwtData)
     let decodedJwtData = JSON.parse(decodedJwtJsonData)
@@ -922,11 +956,12 @@ try{
     this.roles= roles.split(&quot;,&quot;);
     this.email=decodedJwtData.sub+'';
     localStorage.setItem('email', this.email);
-}
-catch(Error){
+  }
+  catch(Error){
     console.log(Error);
+  }
 }
-}
+
 }
 </code></pre>
 
@@ -935,56 +970,56 @@ catch(Error){
 <p>Enfin c&rsquo;est le module app-routing.module.ts qui définis les pages accessible en fonctions des roles, avec une redirection vers un page d&rsquo;erreur si nécessaire.</p>
 
 <pre><code>const routes: Routes = [
-{
+  {
     path:'',
     component:HomeComponent
-},
-{
+  },
+  {
     path:'home', 
     component:HomeComponent
-},
-{
+  },
+  {
     path:'user', 
     component:SpaceComponent,
     canActivate: [AuthGuardService],
     data:{
-    expectedRole:'USER'
+      expectedRole:'USER'
     }   
-},
-{
+  },
+  {
     path:'manager', 
     component:ManagerComponent,
     canActivate: [AuthGuardService],
     data:{
-    expectedRole:'MANAGER'
+      expectedRole:'MANAGER'
     }   
-},
-{
+  },
+  {
     path:'admin', 
     component:AdminComponent,
     canActivate: [AuthGuardService],
     data:{
-    expectedRole:'ADMIN'
+      expectedRole:'ADMIN'
     }
-},
-{
+  },
+  {
     path:'login',
     component:LoginComponent
-},
-{
+  },
+  {
     path:'register',
     component:RegisterComponent
-},
-{
+  },
+  {
     path:'error',
     component:ErrorComponent
-},
-{ path: '**', redirectTo: '' }
+  },
+  { path: '**', redirectTo: '' }
 ];
 
 @NgModule({
-imports: [RouterModule.forRoot(routes)],
-exports: [RouterModule]
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
 })
 export class AppRoutingModule { }
 </code></pre>
@@ -1016,24 +1051,25 @@ Quelques semaines plus tard en entretien un recruteur m&rsquo;a fait la même r�
 
 <p>Le client va se charger de calculer le temps restant avant que le token arrive à expiration (méthode canActivate).</p>
 
-<p>S&rsquo;il est inférieur à 30 minutes ou 1800 secondes (if(expLeft &lt; 1800)), le front-end va envoyer une requête au serveur pour lui demander un nouveau token.</p>
+<p>S&rsquo;il est inférieur à 30 minutes ou 1800 secondes et non périmé (if(expLeft &lt; 1800 &amp;&amp; expLeft &gt; 0)), le front-end va envoyer une requête au serveur pour lui demander un nouveau token.</p>
 
-<pre><code>  var current_time = new Date().getTime() / 1000;
-  var expLeft = parseInt(this.exp) - current_time;
-  //when the token has less than 30 minutes before expiration
-  //client requests for refresh token
-  //server returns new token with a new expiration date and update roles
-  if(expLeft &lt; 1800){
-    this.apiService.getRefreshToken()
-    .subscribe((resp: any) =&gt; {
-      localStorage.setItem('token', resp.token);
-      this.subscriptionService.emitTokenSubject();
-      this.getDecodedAccessToken(resp.token);
-   }, err =&gt; {
-     console.log(err);
-     alert(err.message);
-   })
-  }
+<pre><code>      var current_time = new Date().getTime() / 1000;
+      var expLeft = parseInt(this.exp) - current_time;
+      //when the token has less than 30 minutes before expiration
+      //client requests for refresh token
+      //server returns new token with a new expiration date and update roles
+      //no action if the token has expired
+      if(expLeft &lt; 1800 &amp;&amp; expLeft &gt; 0){
+        this.apiService.getRefreshToken()
+        .subscribe((resp: any) =&gt; {
+          localStorage.setItem('token', resp.token);
+          this.subscriptionService.emitTokenSubject();
+          this.getDecodedAccessToken(resp.token);
+       }, err =&gt; {
+         console.log(err);
+         alert(err.message);
+       })
+      }
 </code></pre>
 
 <hr />
@@ -1055,9 +1091,11 @@ Quelques semaines plus tard en entretien un recruteur m&rsquo;a fait la même r�
 
 <pre><code>//http://localhost:8080/api/UserWebController/refreshToken
 @RequestMapping(path = &quot;/refreshToken&quot;, method = RequestMethod.GET)
-public Token refreshToken()  {
-    Token token = authProvider.getRefreshToken(getEmailUser());
-    if(token == null){
+public Token refreshToken() {
+    logger.info(&quot;End point refreshToken&quot;);
+    final Token token = authProvider.getRefreshToken(getEmailUser());
+    if (token == null) {
+        logger.error(&quot;Internal server error&quot;);
         throw new ResponseStatusException(
                 HttpStatus.INTERNAL_SERVER_ERROR, &quot;Internal server error&quot;
         );
@@ -1069,11 +1107,13 @@ public Token refreshToken()  {
 <p>Le back-end va d&rsquo;abord récupérer l&rsquo;email utilisateur enregistré dans le context de l&rsquo;application.</p>
 
 <pre><code>private UserDetails getSecurityContextHolder() {
+    logger.info(&quot;Method getSecurityContextHolder&quot;);
     final UsernamePasswordAuthenticationToken authentication = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
     return (UserDetails) authentication.getPrincipal();
 }
 
 public String getEmailUser(){
+    logger.info(&quot;Method getEmailUser&quot;);
     return getSecurityContextHolder().getUsername();
 }
 </code></pre>
@@ -1084,22 +1124,8 @@ public String getEmailUser(){
 
 <p>En cas de réussite ce token disposera des données actualisés (nouveaux rôles), et d&rsquo;une nouvelle date d&rsquo;expiration</p>
 
-<pre><code>public Token getRefreshToken(String email){
-        try {
-            final Token token = new Token();
-            token.setToken(generateJwt(email));
-            logger.info(&quot;refreshToken new : &quot; + token.getToken());
-            return token;
-        } catch (CustomJoseException ex) {
-            logger.error(ex.getMessage());
-            return null;
-        } catch (CustomTokenException ex) {
-            logger.error(ex.getMessage());
-            return null;
-        }
-}
-
-private String generateJwt(String email) {
+<pre><code>private String generateJwt(String email) {
+    logger.info(&quot;Method generateJwt&quot;);
     try {
         List&lt;Role&gt; roles = roleRepository.findByUsersEmail(email);
         if (roles.isEmpty() || roles == null) {
@@ -1109,12 +1135,12 @@ private String generateJwt(String email) {
                 role -&gt; {
                     return role.getName();
                 }).collect(Collectors.toCollection(ArrayList::new));
-        Integer kidRandom = generateRandmoKid();
-        RsaJsonWebKey rsaJsonWebKey = (RsaJsonWebKey) singletonBean.getJsonWebKeys().get(kidRandom);
+        final int kidRandom = generateRandmoKid();
+        final RsaJsonWebKey rsaJsonWebKey = (RsaJsonWebKey) singletonBean.getJsonWebKeys().get(kidRandom);
         /**
          * Create the Claims, which will be the content of the jwt
          */
-        JwtClaims jwtClaims = new JwtClaims();
+        final JwtClaims jwtClaims = new JwtClaims();
         jwtClaims.setIssuer(DOMAIN);
         /**
         *UI request for refresh token 30 min before its expiration
@@ -1122,13 +1148,13 @@ private String generateJwt(String email) {
         *setExpirationTimeMinutesInTheFuture to 120 UI will request for a new token after 90 min
          */
         jwtClaims.setExpirationTimeMinutesInTheFuture(120);
-//            jwtClaims.setExpirationTimeMinutesInTheFuture(29);
+        //jwtClaims.setExpirationTimeMinutesInTheFuture(29);
         jwtClaims.setGeneratedJwtId();
         jwtClaims.setIssuedAtToNow();
         jwtClaims.setNotBeforeMinutesInThePast(2);
         jwtClaims.setSubject(email);
         jwtClaims.setStringListClaim(AUTHORITIES_KEY, rolesString);
-        JsonWebSignature jsonWebSignature = new JsonWebSignature();
+        final JsonWebSignature jsonWebSignature = new JsonWebSignature();
         jsonWebSignature.setPayload(jwtClaims.toJson());
         jsonWebSignature.setKeyIdHeaderValue(rsaJsonWebKey.getKeyId());
         jsonWebSignature.setKey(rsaJsonWebKey.getPrivateKey());
@@ -1161,6 +1187,12 @@ Ainsi le client va automatiquement demander un refresh token à toutes ses requ�
 
 <p><img src="/blog/img/030.png" alt="johny@johny.com page 1" /></p>
 
+<p>Récupérer le token en utilisant le mode debugger de votre navigateur puis recopiez le sur le site <a href="https://jwt.io/">https://jwt.io/</a></p>
+
+<p><img src="/blog/img/041.png" alt="johny@johny.com token" /></p>
+
+<p>L&rsquo;utilisateur dispose du role User que ce soit en récupérant les données de la base ou dans le token.</p>
+
 <hr />
 
 <p>Sur un autre navigateur l&rsquo;admin jean@jean.com va se connecter et changer les rôles de johny@johny.com.</p>
@@ -1169,9 +1201,19 @@ Ainsi le client va automatiquement demander un refresh token à toutes ses requ�
 
 <hr />
 
-<p>Retourner sur le navigateur avec le compte johny@johny.com et faite un clique sur &lsquo;Home&rsquo; puis sur &lsquo;User&rsquo; et la vous constaterez que le Serveur a renvoyé le token avec les rôles qui viennent juste d&rsquo;être mis à jour!</p>
+<p>Retourner sur le navigateur avec le compte johny@johny.com et faite un clique sur &lsquo;Home&rsquo; puis sur &lsquo;User&rsquo; et la vous constaterez que le Serveur a retourné une response avec un DTO qui contient les rôles qui viennent d&rsquo;être mis à jour.</p>
 
 <p><img src="/blog/img/032.png" alt="johny@johny.com page 2" /></p>
+
+<p>Récupérer une nouvelle fois le token en utilisant le mode debugger de votre navigateur puis recopiez le sur le site <a href="https://jwt.io/">https://jwt.io/</a>.</p>
+
+<p>A la 2ème requête client le serveur va retourner un nouveau token avec une nouvelle date d&rsquo;expiration et les roles qui ont été actualisés.</p>
+
+<p><img src="/blog/img/042.png" alt="johny@johny.com token" /></p>
+
+<hr />
+
+<p><img src="/blog/img/043.png" alt="johny@johny.com token" /></p>
 
 <hr />
 
