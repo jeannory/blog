@@ -3,38 +3,38 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>https://jeannory.github.io/blog/</loc>
-    <lastmod>2019-10-09T17:28:02+02:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://jeannory.github.io/blog/articles/</loc>
-    <lastmod>2019-10-08T11:03:17+02:00</lastmod>
+    <lastmod>2019-10-25T15:02:42+02:00</lastmod>
   </url>
   
   <url>
     <loc>https://jeannory.github.io/blog/tags/articles/</loc>
-    <lastmod>2019-10-08T11:03:17+02:00</lastmod>
+    <lastmod>2019-10-25T15:02:42+02:00</lastmod>
   </url>
   
   <url>
     <loc>https://jeannory.github.io/blog/categories/</loc>
-    <lastmod>2019-10-08T11:03:17+02:00</lastmod>
+    <lastmod>2019-10-25T15:02:42+02:00</lastmod>
   </url>
   
   <url>
-    <loc>https://jeannory.github.io/blog/categories/mockito/</loc>
-    <lastmod>2019-10-08T11:03:17+02:00</lastmod>
+    <loc>https://jeannory.github.io/blog/categories/craftsmanship/</loc>
+    <lastmod>2019-10-25T15:02:42+02:00</lastmod>
   </url>
   
   <url>
-    <loc>https://jeannory.github.io/blog/articles/mockito/</loc>
-    <lastmod>2019-10-08T11:03:17+02:00</lastmod>
+    <loc>https://jeannory.github.io/blog/articles/craftsmanship/</loc>
+    <lastmod>2019-10-25T15:02:42+02:00</lastmod>
   </url>
   
   <url>
     <loc>https://jeannory.github.io/blog/tags/</loc>
-    <lastmod>2019-10-08T11:03:17+02:00</lastmod>
+    <lastmod>2019-10-25T15:02:42+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://jeannory.github.io/blog/</loc>
+    <lastmod>2019-10-09T17:28:02+02:00</lastmod>
   </url>
   
   <url>

@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="alternate" href="/index.xml" type="application/rss+xml" title="Jeannory&#39;s blog">
+		<link rel="icon" href="https://jeannory.github.io/blog/favicon.ico">
+		<title>Craftsmanship - Jeannory&#39;s blog</title>
+		
+		<link rel="stylesheet" href="https://jeannory.github.io/blog/css/highlight/default.css">
+		<link rel="stylesheet" href="https://jeannory.github.io/blog/css/bootstrap.min.css">
+		<link rel="stylesheet" href="https://jeannory.github.io/blog/css/bootstrap-theme.min.css">
+		<link rel="stylesheet" href="https://jeannory.github.io/blog/css/theme.css">
+		<link rel="stylesheet" href="https://jeannory.github.io/blog/css/bootie-docs.css">
+		<link rel="stylesheet" href="https://jeannory.github.io/blog/css/site.css">
+	</head>
+
+<body role="document">
+
+	
+	<nav class="navbar navbar-inverse navbar-fixed-top">
+		<div class="container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="https://jeannory.github.io/blog/">Jeannory&#39;s blog</a>
+			</div>
+			<div id="navbar" class="navbar-collapse collapse">
+				<ul class="nav navbar-nav">
+					<li ><a href="https://jeannory.github.io/blog/author">Author</a></li>
+			
+			
+				
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Articles<span class="caret"></span></a>
+						<ul class="dropdown-menu" role="menu">
+						
+							<li><a href="https://jeannory.github.io/blog/categories/craftsmanship">Craftsmanship</a></li>
+						
+							<li><a href="https://jeannory.github.io/blog/categories/spring-security">Spring-Security</a></li>
+						
+						</ul>
+					</li>
+				
+				</ul>
+				
+			</div>
+		</div>
+	</nav>
+
+<div class="container">
+
+
+<div class="row">
+	<div class="col-sm-8 doc-main">
+		<main role="main">
+			<article>
+				<a id="title"></a>
+				<h1 class="doc-entry-title">Craftsmanship</h1>
+				<div class="doc-entry-meta">
+					<span><time datetime="2019-10-25">October 25, 2019</time></span>
+				</div>
+				<section>
+					
+
+<h3 id="introduction">Introduction</h3>
+
+<p>Pour présentation.</p>
+
+<p>Retrouver le dépôt git : <a href="https://github.com/jeannory/SpringSecurityExampleBE">ici</a></p>
+
+<h3 id="sommaire">Sommaire</h3>
+
+<p>toDo</p>
+
+<h3 id="fonctionnalités">Fonctionnalités</h3>
+
+<p>toDo</p>
+
+<h3 id="stack-technique">Stack technique</h3>
+
+<p>toDo</p>
+
+<h2 id="tests-unitaires-junits-mockito">Tests unitaires - Junits &amp; Mockito</h2>
+
+<h3 id="test-d-une-méthode-simple">Test d&rsquo;une méthode simple</h3>
+
+<p>Class SuperModelMapper, Méthode générique simple à tester (conversion d&rsquo;un dto en entité) :</p>
+
+<pre><code>public Optional&lt;E&gt; convertToEntity(final D dto) {
+    logger.info(&quot;Method convertToEntity&quot;);
+    if (dto == null) {
+        return Optional.empty();
+    }
+    E entity = singletonBean.getModelMapper().map(dto, (Type) dto.getEntityClass());
+    if(dto.getClass().equals(UserDTO.class)){
+        entity = convertToUser(entity);
+    }
+    return Optional.of(entity);
+}
+
+//hash password for persistence or authentication
+private E convertToUser(final E entity){
+    logger.info(&quot;Method convertToUser&quot;);
+    final User user = (User) entity;
+    user.setPassword(getStringSha3(user.getPassword()));
+    return (E) user;
+}
+</code></pre>
+
+<hr />
+
+<p>Déclarer la class à tester et ses dépendances (ici un cas simple avec une seule dépendance):</p>
+
+<hr />
+
+<pre><code>public class SuperModelMapperTest1 {
+
+    private SuperModelMapper superModelMapper;
+    private SingletonBean singletonBean;
+
+    @Before
+    public void setUp() throws Exception {
+        this.superModelMapper = Mockito.spy(new SuperModelMapper());
+        singletonBean = Mockito.mock(SingletonBean.class);
+        Whitebox.setInternalState(superModelMapper, &quot;singletonBean&quot;, singletonBean);
+    }
+</code></pre>
+
+<hr />
+
+<p>Jeu de tests ou tous les DTOS sont testés</p>
+
+<ul>
+<li>test_convertToEntity_when_dto_is_RoleDTO_should_return_Role</li>
+<li>test_convertToEntity_when_RoleDTO_is_null_should_return_optional_empty</li>
+<li>test_convertToEntity_when_dto_is_SpaceDTO_should_return_Space</li>
+<li>test_convertToEntity_when_SpaceDTO_is_null_should_return_optional_empty</li>
+<li>test_convertToEntity_when_dto_is_UserDTO_should_return_User_with_password_is_null</li>
+<li>test_convertToEntity_when_UserDTO_is_null_should_return_optional_empty</li>
+</ul>
+
+<hr />
+
+<pre><code>    @Test
+    public void test_convertToEntity_when_dto_is_RoleDTO_should_return_Role(){
+        //given
+        final RoleDTO roleDTO = new RoleDTO();
+        roleDTO.setId(1L);
+        roleDTO.setName(&quot;ADMIN&quot;);
+        Mockito.when(singletonBean.getModelMapper()).thenReturn(new ModelMapper());
+
+        //when
+        final Optional&lt;Role&gt; result = superModelMapper.convertToEntity(roleDTO);
+
+        //then
+        Assert.assertEquals(&quot;ADMIN&quot;, result.get().getName());
+    }
+
+    @Test
+    public void test_convertToEntity_when_RoleDTO_is_null_should_return_optional_empty(){
+        //given
+        final RoleDTO roleDTO = null;
+        Mockito.when(singletonBean.getModelMapper()).thenReturn(new ModelMapper());
+
+        //when
+        final Optional&lt;Role&gt; result = superModelMapper.convertToEntity(roleDTO);
+
+        //then
+        Assert.assertEquals(Optional.empty(), result);
+    }
+
+    @Test
+    public void test_convertToEntity_when_dto_is_SpaceDTO_should_return_Space(){
+        //given
+        final SpaceDTO spaceDTO = new SpaceDTO();
+        spaceDTO.setName(&quot;Espace de Jean&quot;);
+        spaceDTO.setUserEmail(&quot;jean@gmail.com&quot;);
+        Mockito.when(singletonBean.getModelMapper()).thenReturn(new ModelMapper());
+
+        //when
+        final Optional&lt;Space&gt; result = superModelMapper.convertToEntity(spaceDTO);
+
+        //then
+        Assert.assertEquals(&quot;Espace de Jean&quot;, result.get().getName());
+        Assert.assertEquals(&quot;jean@gmail.com&quot;, result.get().getUser().getEmail());
+
+    }
+
+    @Test
+    public void test_convertToEntity_when_SpaceDTO_is_null_should_return_optional_empty(){
+        //given
+        final SpaceDTO spaceDTO = null;
+        Mockito.when(singletonBean.getModelMapper()).thenReturn(new ModelMapper());
+
+        //when
+        final Optional&lt;Space&gt; result = superModelMapper.convertToEntity(spaceDTO);
+
+        //then
+        Assert.assertEquals(Optional.empty(), result);
+    }
+
+    @Test
+    public void test_convertToEntity_when_dto_is_UserDTO_should_return_User_with_password_crypted(){
+        //given
+        final UserDTO userDTO = BuilderUtils1.buildUserDTO(
+                1L, &quot;jean@gmail.com&quot;, &quot;1234&quot;, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;,
+                &quot;0101010101&quot;, &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;,
+                null, &quot;ADMIN, COOKER, USER&quot;, Status.ACTIVE);
+        Mockito.when(singletonBean.getModelMapper()).thenReturn(new ModelMapper());
+
+        //when
+        final Optional&lt;User&gt; result = superModelMapper.convertToEntity(userDTO);
+
+        //then
+        Assert.assertEquals(&quot;jean@gmail.com&quot;, result.get().getEmail());
+        final String sha3Password = getStringSha3(&quot;1234&quot;);
+        Assert.assertEquals(sha3Password, result.get().getPassword());
+        Assert.assertNull(&quot;roles are null&quot;, result.get().getRoles());
+    }
+
+    @Test
+    public void test_convertToEntity_when_UserDTO_is_null_should_return_optional_empty(){
+        //given
+        final UserDTO userDTO = null;
+        Mockito.when(singletonBean.getModelMapper()).thenReturn(new ModelMapper());
+
+        //when
+        final Optional&lt;User&gt; result = superModelMapper.convertToEntity(userDTO);
+
+        //then
+        Assert.assertEquals(Optional.empty(), result);
+    }
+</code></pre>
+
+<hr />
+
+<h3 id="test-d-une-méthode-complexe-authprovider-validateconnection">Test d&rsquo;une méthode complexe AuthProvider.validateConnection</h3>
+
+<p>Comporte plusieurs dépendances</p>
+
+<pre><code>@Component
+public class AuthProvider implements ITools {
+
+    private final static Logger logger = Logger.getLogger(AuthProvider.class);
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private RoleRepository roleRepository;
+    @Autowired
+    SingletonBean singletonBean;
+
+    public Token validateConnection(Credential credential) {
+        logger.info(&quot;Method validateConnection&quot;);
+        try {
+            final User user = validateUser(credential.getEmail());
+            if (credential.getSha3Password().equals(user.getPassword())) {
+                try {
+                    final String jwt = generateJwt(credential.getEmail());
+                    final Token token = new Token();
+                    token.setToken(jwt);
+                    return token;
+                } catch (CustomJoseException ex) {
+                    logger.error(ex.getMessage());
+                    return null;
+                }
+            }
+        } catch (CustomTokenException ex) {
+            logger.error(ex.getMessage());
+            return null;
+        }
+        return null;
+    }
+
+    private User validateUser(String email) {
+        final User user = userRepository.selectMyUserByEmail(email);
+        if (user == null || email.isEmpty() || !isValidEmail(email)) {
+            throw new CustomTokenException(&quot;email not valid or user not found&quot;);
+        }
+        return user;
+    }
+
+    private boolean isValidEmail(String email) {
+        String regex = &quot;^[\\w-_\\.+]*[\\w-_\\.]\\@([\\w]+\\.)+[\\w]+[\\w]$&quot;;
+        return email.matches(regex);
+    }
+
+    private String generateJwt(String email) {
+        logger.info(&quot;Method generateJwt&quot;);
+        try {
+            List&lt;Role&gt; roles = roleRepository.findByUsersEmail(email);
+            if (roles.isEmpty()) {
+                throw new CustomTokenException(&quot;token must contain at least 1 role&quot;);
+            }
+            List&lt;String&gt; rolesString = roles.stream().map(
+                    role -&gt; {
+                        return role.getName();
+                    }).collect(Collectors.toCollection(ArrayList::new));
+            final int kidRandom = generateRandmoKid();
+            final RsaJsonWebKey rsaJsonWebKey = (RsaJsonWebKey) singletonBean.getJsonWebKeys().get(kidRandom);
+            /**
+            * Create the Claims, which will be the content of the jwt
+            */
+            final JwtClaims jwtClaims = new JwtClaims();
+            jwtClaims.setIssuer(DOMAIN);
+            /**
+            *UI request for refresh token 30 min before its expiration
+            *setExpirationTimeMinutesInTheFuture to 29 UI will always request for a new token
+            *setExpirationTimeMinutesInTheFuture to 120 UI will request for a new token after 90 min
+            */
+            jwtClaims.setExpirationTimeMinutesInTheFuture(120);
+            //jwtClaims.setExpirationTimeMinutesInTheFuture(29);
+            jwtClaims.setGeneratedJwtId();
+            jwtClaims.setIssuedAtToNow();
+            jwtClaims.setNotBeforeMinutesInThePast(2);
+            jwtClaims.setSubject(email);
+            jwtClaims.setStringListClaim(AUTHORITIES_KEY, rolesString);
+            final JsonWebSignature jsonWebSignature = new JsonWebSignature();
+            jsonWebSignature.setPayload(jwtClaims.toJson());
+            jsonWebSignature.setKeyIdHeaderValue(rsaJsonWebKey.getKeyId());
+            jsonWebSignature.setKey(rsaJsonWebKey.getPrivateKey());
+            jsonWebSignature.setAlgorithmHeaderValue(AlgorithmIdentifiers.RSA_USING_SHA256);
+            return jsonWebSignature.getCompactSerialization();
+        } catch (JoseException ex) {
+            throw new CustomJoseException(&quot;CustomJoseException - Failed to generate token&quot;);
+        } catch (IndexOutOfBoundsException ex) {
+            throw new CustomJoseException(&quot;singletonBean.jsonWebKeys is null or empty&quot;);
+        }
+    }
+}
+</code></pre>
+
+<hr />
+
+<p>Ecriture de tests</p>
+
+<p>Des Exceptions ont été rajoutés dans la méthode lors de l&rsquo;écriture des tests</p>
+
+<ul>
+<li>test_validateConnection_when_all_parameters_valid</li>
+<li>test_validateConnection_when_credential_not_matching_should_return_null</li>
+<li>test_validateConnection_when_user_not_found_then_throw_CustomTokenException_and_return_null</li>
+<li>test_validateConnection_when_email_is_empty_then_throw_CustomTokenException_and_return_null</li>
+<li>test_validateConnection_when_email_is_null_then_throw_CustomTokenException_and_return_null</li>
+<li>test_validateConnection_when_email_is_null_then_throw_CustomTokenException_and_return_null_bis</li>
+<li>test_validateConnection_when_email_is_not_valid_email_then_throw_CustomTokenException_and_return_null</li>
+<li>test_validateConnection_when_user_Roles_is_empty_then_throw_CustomTokenException_and_return_null</li>
+<li>test_validateConnection_when_jsonWebKeys_isEmpty_throw_CustomJoseException_should_return_null</li>
+<li>test_validateConnection_when_throw_JoseException_and_return_null</li>
+</ul>
+
+<hr />
+
+<pre><code>public class AuthProviderTest2 implements ITools {
+
+    private AuthProvider authProvider;
+    private UserRepository userRepository;
+    private RoleRepository roleRepository;
+    private SingletonBean singletonBean;
+
+    @Before
+    public void setUp() throws Exception {
+        this.authProvider = new AuthProvider();
+        userRepository = Mockito.mock(UserRepository.class);
+        roleRepository = Mockito.mock(RoleRepository.class);
+        singletonBean = Mockito.mock(SingletonBean.class);
+        Whitebox.setInternalState(authProvider, &quot;userRepository&quot;, userRepository);
+        Whitebox.setInternalState(authProvider, &quot;roleRepository&quot;, roleRepository);
+        Whitebox.setInternalState(authProvider, &quot;singletonBean&quot;, singletonBean);
+    }
+
+    @Test
+    public void test_validateConnection_when_all_parameters_valid() throws JoseException {
+        //given
+        final Credential credential = Mockito.spy(new Credential());
+        credential.setEmail(&quot;jean@jean.com&quot;);
+        credential.setPassword(&quot;1234&quot;);
+        final String hashPassword = getStringSha3(&quot;1234&quot;);
+        final User user = BuilderUtils1.buildUser(1L, &quot;jean@jean.com&quot;, hashPassword, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;, &quot;0101010101&quot;,
+                &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE, Collections.singletonList(Arrays.asList(&quot;1&quot;, &quot;USER&quot;)));
+        Mockito.when(userRepository.selectMyUserByEmail(Mockito.eq(credential.getEmail()))).thenReturn(user);
+        final List&lt;Role&gt; roles = Arrays.asList(
+                BuilderUtils1.buildRole(Arrays.asList(&quot;1&quot;, &quot;USER&quot;)),
+                BuilderUtils1.buildRole(Arrays.asList(&quot;2&quot;, &quot;MANAGER&quot;)),
+                BuilderUtils1.buildRole(Arrays.asList(&quot;3&quot;, &quot;ADMIN&quot;)));
+        Mockito.when(roleRepository.findByUsersEmail(Mockito.anyString())).thenReturn(roles);
+        final List&lt;JsonWebKey&gt; jsonWebKeys = Arrays.asList(
+                BuilderUtils1.buildJsonWebKey(0),
+                BuilderUtils1.buildJsonWebKey(1),
+                BuilderUtils1.buildJsonWebKey(2)
+        );
+        Mockito.when(singletonBean.getJsonWebKeys()).thenReturn(jsonWebKeys);
+
+        //when
+        final Token result = authProvider.validateConnection(credential);
+
+        //then
+        Assert.assertNotNull(&quot;return not null&quot;, result.getToken());
+        final String subject = BuilderUtils1.getStringFromJwtNode(result.getToken(), 1, &quot;sub&quot;);
+        Assert.assertEquals(&quot;jean@jean.com&quot;, subject);
+        /**
+        * the token has a new expiration which is always after now
+        */
+        final String expiration = BuilderUtils1.getStringFromJwtNode(result.getToken(), 1, &quot;exp&quot;);
+        final NumericDate jwtNumericDate = NumericDate.fromSeconds(Long.valueOf(expiration));
+        final NumericDate numericDateNow = NumericDate.now();
+        Assert.assertTrue(jwtNumericDate.isOnOrAfter(numericDateNow));
+    }
+
+    @Test
+    public void test_validateConnection_when_credential_not_matching_should_return_null() throws JoseException {
+        //given
+        final Credential credential = new Credential();
+        credential.setEmail(&quot;jean@jean.com&quot;);
+        credential.setPassword(&quot;1234&quot;);
+        final String hashPassword = getStringSha3(credential.getPassword());
+        final User user = BuilderUtils1.buildUser(1L, &quot;jean@jean.com&quot;, &quot;anotherPassword&quot;, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;, &quot;0101010101&quot;,
+                &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE, Collections.singletonList(Arrays.asList(&quot;1&quot;, &quot;USER&quot;)));
+        Mockito.when(userRepository.selectMyUserByEmail(Mockito.eq(credential.getEmail()))).thenReturn(user);
+
+        //when
+        final Token result = authProvider.validateConnection(credential);
+
+        //then
+        Assert.assertNull(&quot;return null&quot;, result);
+    }
+
+    @Test
+    public void test_validateConnection_when_user_not_found_then_throw_CustomTokenException_and_return_null() throws JoseException {
+        //given
+        final Credential credential = new Credential();
+        credential.setEmail(&quot;jean@jean.com&quot;);
+        credential.setPassword(&quot;1234&quot;);
+        final User user = null;
+        Mockito.when(userRepository.selectMyUserByEmail(Mockito.eq(credential.getEmail()))).thenReturn(user);
+
+        //when
+        final Token result = authProvider.validateConnection(credential);
+
+        //then
+        Assert.assertNull(&quot;return null&quot;, result);
+    }
+
+    @Test
+    public void test_validateConnection_when_email_is_empty_then_throw_CustomTokenException_and_return_null() throws JoseException {
+        //given
+        final Credential credential = new Credential();
+        credential.setEmail(&quot;&quot;);
+        credential.setPassword(&quot;1234&quot;);
+        final User user = null;
+        Mockito.when(userRepository.selectMyUserByEmail(Mockito.eq(credential.getEmail()))).thenReturn(user);
+
+        //when
+        final Token result = authProvider.validateConnection(credential);
+
+        //then
+        Assert.assertNull(&quot;return null&quot;, result);
+    }
+
+    @Test
+    public void test_validateConnection_when_email_is_null_then_throw_CustomTokenException_and_return_null() throws JoseException {
+        //given
+        final Credential credential = new Credential();
+        credential.setEmail(null);
+        credential.setPassword(&quot;1234&quot;);
+        final User user = null;
+        Mockito.when(userRepository.selectMyUserByEmail(Mockito.eq(credential.getEmail()))).thenReturn(user);
+
+        //when
+        final Token result = authProvider.validateConnection(credential);
+
+        //then
+        Assert.assertNull(&quot;return null&quot;, result);
+    }
+
+    @Test
+    public void test_validateConnection_when_email_is_null_then_throw_CustomTokenException_and_return_null_bis() throws JoseException {
+        //given
+        final Credential credential = new Credential();
+        credential.setPassword(&quot;1234&quot;);
+        final User user = null;
+        Mockito.when(userRepository.selectMyUserByEmail(Mockito.eq(credential.getEmail()))).thenReturn(user);
+
+        //when
+        final Token result = authProvider.validateConnection(credential);
+
+        //then
+        Assert.assertNull(&quot;return null&quot;, result);
+    }
+
+    @Test
+    public void test_validateConnection_when_email_is_not_valid_email_then_throw_CustomTokenException_and_return_null() throws JoseException {
+        //given
+        final Credential credential = new Credential();
+        credential.setEmail(&quot;not an email&quot;);
+        credential.setPassword(&quot;1234&quot;);
+        final User user = null;
+        Mockito.when(userRepository.selectMyUserByEmail(Mockito.eq(credential.getEmail()))).thenReturn(user);
+
+        //when
+        final Token result = authProvider.validateConnection(credential);
+
+        //then
+        Assert.assertNull(&quot;return null&quot;, result);
+    }
+
+    @Test
+    public void test_validateConnection_when_user_Roles_is_empty_then_throw_CustomTokenException_and_return_null() throws JoseException {
+        //given
+        final Credential credential = new Credential();
+        credential.setEmail(&quot;jean@jean.com&quot;);
+        credential.setPassword(&quot;1234&quot;);
+        final String hashPassword = getStringSha3(credential.getPassword());
+        final User user = BuilderUtils1.buildUser(1L, &quot;jean@jean.com&quot;, hashPassword, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;, &quot;0101010101&quot;,
+                &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE, Collections.singletonList(Arrays.asList(&quot;1&quot;, &quot;USER&quot;)));
+        Mockito.when(userRepository.selectMyUserByEmail(Mockito.eq(credential.getEmail()))).thenReturn(user);
+        Mockito.when(roleRepository.findByUsersEmail(&quot;jean@jean.com&quot;)).thenReturn(Collections.emptyList());
+
+        //when
+        final Token result = authProvider.validateConnection(credential);
+
+        //then
+        Assert.assertNull(&quot;return null&quot;, result);
+    }
+
+    @Test
+    public void test_validateConnection_when_jsonWebKeys_isEmpty_throw_CustomJoseException_should_return_null() throws JoseException {
+        //given
+        final Credential credential = Mockito.spy(new Credential());
+        credential.setEmail(&quot;jean@jean.com&quot;);
+        credential.setPassword(&quot;1234&quot;);
+        final String hashPassword = getStringSha3(credential.getPassword());
+        final User user = BuilderUtils1.buildUser(1L, &quot;jean@jean.com&quot;, hashPassword, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;, &quot;0101010101&quot;,
+                &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE, Collections.singletonList(Arrays.asList(&quot;1&quot;, &quot;USER&quot;)));
+        Mockito.when(userRepository.selectMyUserByEmail(Mockito.eq(credential.getEmail()))).thenReturn(user);
+        List&lt;Role&gt; roles = Arrays.asList(
+                BuilderUtils1.buildRole(Arrays.asList(&quot;1&quot;, &quot;USER&quot;)),
+                BuilderUtils1.buildRole(Arrays.asList(&quot;2&quot;, &quot;MANAGER&quot;)),
+                BuilderUtils1.buildRole(Arrays.asList(&quot;3&quot;, &quot;ADMIN&quot;)));
+        Mockito.when(roleRepository.findByUsersEmail(Mockito.anyString())).thenReturn(roles);
+        Mockito.when(singletonBean.getJsonWebKeys()).thenReturn(Collections.emptyList());
+
+        //when
+        final Token result = authProvider.validateConnection(credential);
+
+        //then
+        Assert.assertNull(&quot;return null&quot;, result);
+    }
+</code></pre>
+
+<hr />
+
+<p>Le test suivant comporte une exception importé JoseException.</p>
+
+<p>Pour throw cet exception, il a été nécessaire de mocker les comportements de chacune des dépendances</p>
+
+<hr />
+
+<pre><code>@Test
+public void test_validateConnection_when_throw_JoseException_and_return_null() throws JoseException{
+    //given
+    final Credential credential = Mockito.spy(new Credential());
+    credential.setEmail(&quot;jean@jean.com&quot;);
+    credential.setPassword(&quot;1234&quot;);
+    final String hashPassword = getStringSha3(&quot;1234&quot;);
+    final User user = BuilderUtils1.buildUser(1L, &quot;jean@jean.com&quot;, hashPassword, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;, &quot;0101010101&quot;,
+            &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE, Collections.singletonList(Arrays.asList(&quot;1&quot;, &quot;USER&quot;)));
+    Mockito.when(userRepository.selectMyUserByEmail(Mockito.eq(credential.getEmail()))).thenReturn(user);
+    final List&lt;Role&gt; roles = Arrays.asList(
+            BuilderUtils1.buildRole(Arrays.asList(&quot;1&quot;, &quot;USER&quot;)),
+            BuilderUtils1.buildRole(Arrays.asList(&quot;2&quot;, &quot;MANAGER&quot;)),
+            BuilderUtils1.buildRole(Arrays.asList(&quot;3&quot;, &quot;ADMIN&quot;)));
+    Mockito.when(roleRepository.findByUsersEmail(Mockito.anyString())).thenReturn(roles);
+    final List&lt;JsonWebKey&gt; jsonWebKeys = Arrays.asList(
+            BuilderUtils1.buildJsonWebKey(0),
+            BuilderUtils1.buildJsonWebKey(1),
+            BuilderUtils1.buildJsonWebKey(2)
+    );
+    Mockito.when(singletonBean.getJsonWebKeys()).thenReturn(jsonWebKeys);
+    Mockito.when(authProvider.validateConnection(credential)).thenThrow(new CustomJoseException(&quot;CustomJoseException - Failed to generate token&quot;));
+
+    //when
+    final Token result = authProvider.validateConnection(credential);
+
+    //then
+    Assert.assertNull(&quot;return null&quot;, result);
+}
+</code></pre>
+
+<h2 id="tests-persistence-datajpatest">Tests persistence - DataJpaTest</h2>
+
+<p>Test des repository avec une base de données embarquée</p>
+
+<p>Dépendance à ajouter</p>
+
+<pre><code>    &lt;!-- https://mvnrepository.com/artifact/com.h2database/h2 --&gt;
+            &lt;dependency&gt;
+                &lt;groupId&gt;com.h2database&lt;/groupId&gt;
+                &lt;artifactId&gt;h2&lt;/artifactId&gt;
+                &lt;version&gt;1.4.200&lt;/version&gt;
+                &lt;scope&gt;test&lt;/scope&gt;
+            &lt;/dependency&gt;
+</code></pre>
+
+<hr />
+
+<p>Repo à tester</p>
+
+<pre><code>@CrossOrigin(&quot;*&quot;)
+@Repository
+public interface UserRepository extends JpaRepository&lt;User, Long&gt; {
+    User findByEmail(String email);
+    @Query(value = &quot;select * from cuisine_user u where u.email ilike :paramEmail&quot;, nativeQuery=true)
+    User selectMyUserByEmail(@Param(&quot;paramEmail&quot;) String email);
+}
+</code></pre>
+
+<hr />
+
+<p>jeu de test</p>
+
+<ul>
+<li>test_findByEmail_when_all_parameters_valid_should_return_result</li>
+<li>test_findByEmail_when_user_no_have_roles_should_return_user</li>
+<li>test_findByEmail_when_no_user_found_should_return_null</li>
+<li>test_selectMyUserByEmail_when_all_parameters_valid_should_return_result</li>
+<li>test_selectMyUserByEmail_when_user_no_have_roles_should_return_user</li>
+<li>test_selectMyUserByEmail_when__no_user_found_should_return_null</li>
+</ul>
+
+<p>La bdd se réinitialise à chaque test</p>
+
+<hr />
+
+<pre><code>@RunWith(SpringRunner.class)
+@DataJpaTest
+public class UserRepositoryTest {
+
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Before
+    public void setUp() throws Exception {
+    }
+
+    @Test
+    public void test_findByEmail_when_all_parameters_valid_should_return_result() {
+        //given
+        final Role role1 = new Role();
+        role1.setName(&quot;USER&quot;);
+        final Role role2 = new Role();
+        role2.setName(&quot;MANAGER&quot;);
+        final Role role3 = new Role();
+        role3.setName(&quot;ADMIN&quot;);
+        final Set&lt;Role&gt; roles  = new HashSet&lt;&gt;(Arrays.asList(role1, role2, role3));
+        roles.forEach(role -&gt; {
+            roleRepository.save(role);
+        });
+        final User user = BuilderUtils1.buildUser(&quot;jean@jean.com&quot;, &quot;1234&quot;, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;,
+                &quot;0101010101&quot;, &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE);
+        user.setRoles(roles);
+        userRepository.save(user);
+
+        //when
+        final User result = userRepository.findByEmail(&quot;jean@jean.com&quot;);
+
+        //then
+        Assert.assertEquals(&quot;jean@jean.com&quot;, result.getEmail());
+        Assert.assertEquals(3, result.getRoles().size());
+    }
+
+    @Test
+    public void test_findByEmail_when_user_no_have_roles_should_return_user() {
+        //given
+        final User user = BuilderUtils1.buildUser(&quot;jean@jean.com&quot;, &quot;1234&quot;, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;,
+                &quot;0101010101&quot;, &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE);
+        userRepository.save(user);
+
+        //when
+        final User result = userRepository.findByEmail(&quot;jean@jean.com&quot;);
+
+        //then
+        Assert.assertEquals(&quot;jean@jean.com&quot;, result.getEmail());
+        Assert.assertEquals(null, result.getRoles());
+    }
+
+    @Test
+    public void test_findByEmail_when_no_user_found_should_return_null() {
+        //given &amp;&amp; when
+        final User result = userRepository.findByEmail(&quot;jean@jean.com&quot;);
+
+        //then
+        Assert.assertNull(&quot;return null&quot;, result);
+    }
+
+    @Test
+    public void test_selectMyUserByEmail_when_all_parameters_valid_should_return_result() {
+        //given
+        final Role role1 = new Role();
+        role1.setName(&quot;USER&quot;);
+        final Role role2 = new Role();
+        role2.setName(&quot;MANAGER&quot;);
+        final Role role3 = new Role();
+        role3.setName(&quot;ADMIN&quot;);
+        final Set&lt;Role&gt; roles  = new HashSet&lt;&gt;(Arrays.asList(role1, role2, role3));
+        roles.forEach(role -&gt; {
+            roleRepository.save(role);
+        });
+        final User user = BuilderUtils1.buildUser(&quot;jean@jean.com&quot;, &quot;1234&quot;, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;, &quot;0101010101&quot;,
+                &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE);
+        user.setRoles(roles);
+        userRepository.save(user);
+
+        //when
+        final User result = userRepository.selectMyUserByEmail(&quot;jean@jean.com&quot;);
+
+        //then
+        Assert.assertEquals(&quot;jean@jean.com&quot;, result.getEmail());
+        Assert.assertEquals(3, result.getRoles().size());
+    }
+
+    @Test
+    public void test_selectMyUserByEmail_when_user_no_have_roles_should_return_user() {
+        //given
+        final User user = BuilderUtils1.buildUser(&quot;jean@jean.com&quot;, &quot;1234&quot;, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;, &quot;0101010101&quot;,
+                &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE);
+        userRepository.save(user);
+
+        //when
+        final User result = userRepository.selectMyUserByEmail(&quot;jean@jean.com&quot;);
+
+        //then
+        Assert.assertEquals(&quot;jean@jean.com&quot;, result.getEmail());
+        Assert.assertEquals(null, result.getRoles());
+    }
+
+    @Test
+    public void test_selectMyUserByEmail_when__no_user_found_should_return_null() {
+        //given &amp;&amp; when
+        final User result = userRepository.selectMyUserByEmail(&quot;jean@jean.com&quot;);
+
+        //then
+        Assert.assertNull(&quot;return null&quot;, result);
+    }
+}
+</code></pre>
+
+<h2 id="tests-de-controleurs-in-container">Tests de controleurs - In-Container</h2>
+
+<p>toDo</p>
+
+<h3 id="test-de-end-point-statut-de-retour">Test de end-point - statut de retour</h3>
+
+<p>toDo</p>
+
+<h3 id="test-de-end-point-rollback-du-transactional">Test de end-point - rollback du transactional</h3>
+
+<p>toDo</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+				</section>
+			</article>
+		</main>
+	</div> 
+
+	
+
+<div class="col-sm-3 col-sm-offset-1 doc-sidebar">
+	<div id="sidebar">
+	<div class="sidebar-module">
+		<div class="sidebar-toc">
+			<h4 class="sidebar-heading">Table of Contents</h4>
+			<ul>
+				<li><strong><a href="#title">Craftsmanship</a></strong></li>
+			</ul>
+			<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#sommaire">Sommaire</a></li>
+<li><a href="#fonctionnalités">Fonctionnalités</a></li>
+<li><a href="#stack-technique">Stack technique</a></li>
+</ul></li>
+<li><a href="#tests-unitaires-junits-mockito">Tests unitaires - Junits &amp; Mockito</a>
+<ul>
+<li><a href="#test-d-une-méthode-simple">Test d&rsquo;une méthode simple</a></li>
+<li><a href="#test-d-une-méthode-complexe-authprovider-validateconnection">Test d&rsquo;une méthode complexe AuthProvider.validateConnection</a></li>
+</ul></li>
+<li><a href="#tests-persistence-datajpatest">Tests persistence - DataJpaTest</a></li>
+<li><a href="#tests-de-controleurs-in-container">Tests de controleurs - In-Container</a>
+<ul>
+<li><a href="#test-de-end-point-statut-de-retour">Test de end-point - statut de retour</a></li>
+<li><a href="#test-de-end-point-rollback-du-transactional">Test de end-point - rollback du transactional</a></li>
+</ul></li>
+<li><a href="#conclusion">Conclusion</a></li>
+</ul></li>
+</ul>
+</nav>
+		</div>
+	</div>
+	<div class="sidebar-module">
+		<h4 class="sidebar-heading">Pages in Categories</h4>
+		<ul class="sidebar-category-list">
+		
+			<li>
+				<a href="https://jeannory.github.io/blog/categories/craftsmanship">
+					<span class="doc-list-category">Craftsmanship</span>
+				</a>
+				<ul>
+					<li>
+						<span class="active">Craftsmanship</span>
+						</li>
+				
+				</ul>
+			</li>
+		
+			<li>
+				<a href="https://jeannory.github.io/blog/categories/spring-security">
+					<span class="doc-list-category">Spring-Security</span>
+				</a>
+				<ul>
+					<li><a href="/blog/articles/spring-security/">Spring Security</a>
+					</li>
+				
+				</ul>
+			</li>
+		
+		</ul>
+	</div>
+	<div class="sidebar-module">
+		<h4 class="sidebar-heading">Tags</h4>
+		<div class="tag-box">
+		
+			<a class="tag-item" href="https://jeannory.github.io/blog/tags/articles">articles</a>
+		
+			<a class="tag-item" href="https://jeannory.github.io/blog/tags/author">author</a>
+		
+		</div>
+	</div>
+	</div>
+</div>
+
+</div> 
+
+
+<hr />
+
+<div class="row">
+	<div class="col-sm-8">
+		<p class="doc-footer-em"><a href="#" onclick="resetSidebarPos()">Back to TOP</a></p>
+	</div>
+</div>
+
+</div> 
+
+<footer class="doc-footer">
+	
+	
+	<p>Powered by <strong><a href="https://github.com/progrhyme/hugo-theme-bootie-docs">Bootie Docs</a></strong> - theme for <a href="http://gohugo.io/">Hugo</a> by <a href="https://github.com/progrhyme/">progrhyme</a>.</p>
+</footer>
+
+
+
+<script src="https://jeannory.github.io/blog/js/jquery.min.js"></script>
+<script src="https://jeannory.github.io/blog/js/bootstrap.min.js"></script>
+
+<script src="https://jeannory.github.io/blog/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script src="https://jeannory.github.io/blog/js/ie10-viewport-bug-workaround.js"></script>
+<script src="https://jeannory.github.io/blog/js/bootie-docs.js"></script>
+
+</body>
+</html>
