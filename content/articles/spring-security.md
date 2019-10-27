@@ -8,18 +8,16 @@ categories: ["Spring Security"]
 ---
 ## Introduction ##
 
-Il s'agit de mon premier article, les avis/critiques sont le bienvenus.
-
-Vous pouvez retrouver les dépôts git,
-
-* Pour le back-end : [ici](https://github.com/jeannory/SpringSecurityExampleBE)
-* Pour le front-end : [ici](https://github.com/jeannory/SpringSecurityExampleFE)
-
-Bonne lecture.
+Initiation à Spring Security/Jwt en développant une application full-stack respectant les prérequis en terme de cybersécurité.
 
 _Article du 23/08/2019 importé en markdown pour Hugo au 08/10/2019._
 
 _MAJ au 12/10/2019 - ajout de la fonction refresh token_
+
+Dépôts github :
+
+* Back-end : [ici](https://github.com/jeannory/SpringSecurityExampleBE)
+* Front-end : [ici](https://github.com/jeannory/SpringSecurityExampleFE)
 
 ---
 
@@ -928,16 +926,19 @@ Vous pourrez observer les redirections réalisées par Angular en fonction des c
 
 _MAJ au 12/10/2019_
 
-Une relation professionnelle sous LinkedIn m'a fait remarqué qu'il y manquait la fonction de refresh token.
-Quelques semaines plus tard en entretien un recruteur m'a fait la même réflexion!
+L'application génère un token qui a une durée de 2 heures. 
 
-Je me suis donc décidé à implémenter cette fonction.
+Après ce laps de temps tout utilisateur connecté qui effectue une nouvelle requête reçoit une erreur 403. 
 
-_Il s'agit d'une méthode "maison" et je ne suis pas en mesure d'affirmer qu'elle soit optimale._
+La fonction refresh token va permettre de pouvoir rester connecté après expiration du token.
+
+Une condition va y être ajoutée, réaliser une requête vers le serveur une demi-heure avant l'expiration du token.
+
+_Pour ce procédé le client va transmettre l'information au serveur qui va se charger de vérifier l'authenticité de la demande pour générer et transmettre un nouveau token._
 
 ---
 
-Le client va se charger de calculer le temps restant avant que le token arrive à expiration (méthode canActivate).
+Tout d'abord, le client va calculer le temps restant avant que le token arrive à expiration (méthode canActivate).
 
 S'il est inférieur à 30 minutes ou 1800 secondes et non périmé (if(expLeft < 1800 && expLeft > 0)), le front-end va envoyer une requête au serveur pour lui demander un nouveau token.
 

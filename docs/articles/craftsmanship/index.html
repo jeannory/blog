@@ -68,25 +68,330 @@
 				<section>
 					
 
-<h3 id="introduction">Introduction</h3>
+<h2 id="introduction">Introduction</h2>
 
-<p>Pour présentation.</p>
+<p><em>Pour présentation</em></p>
 
-<p>Retrouver le dépôt git : <a href="https://github.com/jeannory/SpringSecurityExampleBE">ici</a></p>
+<p>Craftsmanship : Refacto d&rsquo;un projet back-end avec 3 types de tests</p>
 
-<h3 id="sommaire">Sommaire</h3>
+<ul>
+<li>Tests de persistence - DataJpaTest</li>
+<li>Tests unitaires - Mockito</li>
+<li>Tests de controleurs - In-Container</li>
+</ul>
 
-<p>toDo</p>
+<hr />
 
-<h3 id="fonctionnalités">Fonctionnalités</h3>
+<p>Projet legacy ne comportant aucun test,</p>
 
-<p>toDo</p>
+<p><em>Prérecquis : by-passer la sécurité du navigateur pour le site + end-point :</em></p>
 
-<h3 id="stack-technique">Stack technique</h3>
+<ul>
+<li><a href="https://power-ged.com/">https://power-ged.com/</a></li>
+</ul>
 
-<p>toDo</p>
+<p>Fonctionalitées reprises :</p>
 
-<h2 id="tests-unitaires-junits-mockito">Tests unitaires - Junits &amp; Mockito</h2>
+<ul>
+<li>Enregistrement/Modification utilisateur</li>
+<li>Authentification</li>
+<li>Gestion des rôles</li>
+<li>implémentation de Spring Security/Jwt.</li>
+</ul>
+
+<!--Présentation de l'implémentation de Spring Security/Jwt : [ici](https://jeannory.github.io/blog/articles/spring-security/)-->
+
+<p>Présentation de l&rsquo;implémentation de Spring Security/Jwt : <a href="/blog/articles/spring-security/">ici</a></p>
+
+<hr />
+
+<p>Stack technique</p>
+
+<ul>
+<li>Java 8</li>
+<li>Springboot 2</li>
+<li>Spring Security</li>
+<li>Jwt</li>
+<li>Postgresql</li>
+<li>Junit 4</li>
+<li>Mockito 1.9</li>
+<li>H2</li>
+</ul>
+
+<p>Dépôt git du projet back-end : <a href="https://github.com/jeannory/SpringSecurityExampleBE">ici</a></p>
+
+<h2 id="tests-de-persistence-datajpatest">Tests de persistence - DataJpaTest</h2>
+
+<h3 id="test-des-repositories-avec-bdd-embarquée-h2">Test des repositories avec bdd embarquée H2</h3>
+
+<p>Etapes :</p>
+
+<ul>
+<li>Tester pour comprendre le type de retour</li>
+<li>Tester les méthodes génériques de JpaRepository</li>
+<li>Créer et tester les requêtes personnalisées (par noms de méthodes)</li>
+<li>Créer et tester les nativesQuery</li>
+</ul>
+
+<hr />
+
+<p>Avantages :</p>
+
+<ul>
+<li>Aider au développements des services</li>
+<li>Tester les requetes personnalisées sans besoin d&rsquo;interface</li>
+<li>Tester les nativesQuery sans besoin d&rsquo;interface</li>
+</ul>
+
+<hr />
+
+<p>Dépendance à ajouter</p>
+
+<pre><code>    &lt;!-- https://mvnrepository.com/artifact/com.h2database/h2 --&gt;
+            &lt;dependency&gt;
+                &lt;groupId&gt;com.h2database&lt;/groupId&gt;
+                &lt;artifactId&gt;h2&lt;/artifactId&gt;
+                &lt;version&gt;1.4.200&lt;/version&gt;
+                &lt;scope&gt;test&lt;/scope&gt;
+            &lt;/dependency&gt;
+</code></pre>
+
+<hr />
+
+<p>Repository à tester</p>
+
+<pre><code>@CrossOrigin(&quot;*&quot;)
+@Repository
+public interface UserRepository extends JpaRepository&lt;User, Long&gt; {
+    User findByEmail(String email);
+    @Query(value = &quot;select * from cuisine_user u where u.email ilike :paramEmail&quot;, nativeQuery=true)
+    User selectMyUserByEmail(@Param(&quot;paramEmail&quot;) String email);
+}
+</code></pre>
+
+<hr />
+
+<p>jeu de test</p>
+
+<ul>
+<li>test_findById_when_user_exist_should_return_user</li>
+<li>test_findById_when_user_no_exist_should_return_optional_empty</li>
+<li>test_findAll_when_users_exist_should_return_list</li>
+<li>test_findAll_when_users_no_exist_should_return_emptyList</li>
+<li>test_findByEmail_when_all_parameters_valid_should_return_result</li>
+<li>test_findByEmail_when_user_no_have_roles_should_return_user</li>
+<li>test_findByEmail_when_no_user_found_should_return_null</li>
+<li>test_selectMyUserByEmail_when_all_parameters_valid_should_return_result</li>
+<li>test_selectMyUserByEmail_when_user_no_have_roles_should_return_user</li>
+<li>test_selectMyUserByEmail_when_no_user_found_should_return_null</li>
+</ul>
+
+<p>Réinitialisation non automatique de la bdd après chaque test (réinitialisation des données mais pas de l&rsquo;incrémentation, utilisation de @DirtiesContext si besoin).</p>
+
+<hr />
+
+<pre><code>@RunWith(SpringRunner.class)
+@DataJpaTest
+public class UserRepositoryTest {
+
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Before
+    public void setUp() throws Exception {
+    }
+
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
+    @Test
+    public void test_findById_when_user_exist_should_return_user(){
+        //given
+        final User user = BuilderUtils1.buildUser(&quot;jean@jean.com&quot;, &quot;1234&quot;, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;,
+                &quot;0101010101&quot;, &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE);
+        userRepository.save(user);
+
+        //when
+        final Optional&lt;User&gt; result = userRepository.findById(1L);
+
+        //then
+        //incrementing start at 1
+        Assert.assertTrue(1L == result.get().getId());
+        Assert.assertEquals(&quot;jean@jean.com&quot;, result.get().getEmail());
+    }
+
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
+    @Test
+    public void test_findById_when_user_no_exist_should_return_optional_empty(){
+        //given &amp; when
+        final Optional&lt;User&gt; result = userRepository.findById(1L);
+
+        //then
+        Assert.assertEquals(Optional.empty(), result);
+    }
+
+    @Test
+    public void test_findAll_when_users_exist_should_return_list(){
+        //given
+        final User user1 = BuilderUtils1.buildUser(&quot;1-jean@gmail.com&quot;, &quot;1234&quot;, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;,
+                &quot;0101010101&quot;, &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE);
+        final User user2 = BuilderUtils1.buildUser(&quot;2-jean@gmail.com&quot;, &quot;1234&quot;, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;,
+                &quot;0101010101&quot;, &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE);
+        final User user3 = BuilderUtils1.buildUser(&quot;3-jean@gmail.com&quot;, &quot;1234&quot;, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;,
+                &quot;0101010101&quot;, &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE);
+        userRepository.save(user1);
+        userRepository.save(user2);
+        userRepository.save(user3);
+
+        //when
+        final List&lt;User&gt; results = userRepository.findAll();
+
+        //then
+        Assert.assertEquals(3,results.size());
+        /**
+        * all emails have been founded
+        */
+        AtomicInteger emailsFound = new AtomicInteger();
+        results.forEach(
+                user-&gt;{
+                    if(user.getEmail().equals(&quot;1-jean@gmail.com&quot;)){
+                        emailsFound.addAndGet(1);
+                    }
+                    else if(user.getEmail().equals(&quot;2-jean@gmail.com&quot;)){
+                        emailsFound.addAndGet(1);
+                    }
+                    else if(user.getEmail().equals(&quot;3-jean@gmail.com&quot;)){
+                        emailsFound.addAndGet(1);
+                    }
+                }
+        );
+        Assert.assertEquals(3, emailsFound.get());
+    }
+
+    @Test
+    public void test_findAll_when_users_no_exist_should_return_emptyList(){
+        //given &amp; when
+        final List&lt;User&gt; results = userRepository.findAll();
+
+        //then
+        Assert.assertEquals(0, results.size());
+        Assert.assertEquals(Collections.emptyList(), results);
+    }
+
+    @Test
+    public void test_findByEmail_when_all_parameters_valid_should_return_result() {
+        //given
+        final Role role1 = new Role();
+        role1.setName(&quot;USER&quot;);
+        final Role role2 = new Role();
+        role2.setName(&quot;MANAGER&quot;);
+        final Role role3 = new Role();
+        role3.setName(&quot;ADMIN&quot;);
+        final Set&lt;Role&gt; roles  = new HashSet&lt;&gt;(Arrays.asList(role1, role2, role3));
+        roles.forEach(role -&gt; {
+            roleRepository.save(role);
+        });
+        final User user = BuilderUtils1.buildUser(&quot;jean@jean.com&quot;, &quot;1234&quot;, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;,
+                &quot;0101010101&quot;, &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE);
+        user.setRoles(roles);
+        userRepository.save(user);
+
+        //when
+        final User result = userRepository.findByEmail(&quot;jean@jean.com&quot;);
+
+        //then
+        Assert.assertEquals(&quot;jean@jean.com&quot;, result.getEmail());
+        Assert.assertEquals(3, result.getRoles().size());
+    }
+
+    @Test
+    public void test_findByEmail_when_user_no_have_roles_should_return_user() {
+        //given
+        final User user = BuilderUtils1.buildUser(&quot;jean@jean.com&quot;, &quot;1234&quot;, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;,
+                &quot;0101010101&quot;, &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE);
+        userRepository.save(user);
+
+        //when
+        final User result = userRepository.findByEmail(&quot;jean@jean.com&quot;);
+
+        //then
+        Assert.assertEquals(&quot;jean@jean.com&quot;, result.getEmail());
+        Assert.assertEquals(null, result.getRoles());
+    }
+
+    @Test
+    public void test_findByEmail_when_no_user_found_should_return_null() {
+        //given &amp;&amp; when
+        final User result = userRepository.findByEmail(&quot;jean@jean.com&quot;);
+
+        //then
+        Assert.assertNull(&quot;return null&quot;, result);
+    }
+
+    @Test
+    public void test_selectMyUserByEmail_when_all_parameters_valid_should_return_result() {
+        //given
+        final Role role1 = new Role();
+        role1.setName(&quot;USER&quot;);
+        final Role role2 = new Role();
+        role2.setName(&quot;MANAGER&quot;);
+        final Role role3 = new Role();
+        role3.setName(&quot;ADMIN&quot;);
+        final Set&lt;Role&gt; roles  = new HashSet&lt;&gt;(Arrays.asList(role1, role2, role3));
+        roles.forEach(role -&gt; {
+            roleRepository.save(role);
+        });
+        final User user = BuilderUtils1.buildUser(&quot;jean@jean.com&quot;, &quot;1234&quot;, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;, &quot;0101010101&quot;,
+                &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE);
+        user.setRoles(roles);
+        userRepository.save(user);
+
+        //when
+        final User result = userRepository.selectMyUserByEmail(&quot;jean@jean.com&quot;);
+
+        //then
+        Assert.assertEquals(&quot;jean@jean.com&quot;, result.getEmail());
+        Assert.assertEquals(3, result.getRoles().size());
+    }
+
+    @Test
+    public void test_selectMyUserByEmail_when_user_no_have_roles_should_return_user() {
+        //given
+        final User user = BuilderUtils1.buildUser(&quot;jean@jean.com&quot;, &quot;1234&quot;, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;, &quot;0101010101&quot;,
+                &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE);
+        userRepository.save(user);
+
+        //when
+        final User result = userRepository.selectMyUserByEmail(&quot;jean@jean.com&quot;);
+
+        //then
+        Assert.assertEquals(&quot;jean@jean.com&quot;, result.getEmail());
+        Assert.assertEquals(null, result.getRoles());
+    }
+
+    @Test
+    public void test_selectMyUserByEmail_when__no_user_found_should_return_null() {
+        //given &amp;&amp; when
+        final User result = userRepository.selectMyUserByEmail(&quot;jean@jean.com&quot;);
+
+        //then
+        Assert.assertNull(&quot;return null&quot;, result);
+    }
+}
+</code></pre>
+
+<hr />
+
+<h2 id="tests-unitaires-mockito">Tests unitaires - Mockito</h2>
+
+<p>Principes :</p>
+
+<ul>
+<li>Jeu de tests la plus exhaustive possible</li>
+<li>Créer des exceptions personnalisées en fonction du jeu de tests</li>
+<li>Disposer d&rsquo;un taux de couverture de 100 % sur les méthodes testés</li>
+<li>Utiliser Mockito</li>
+</ul>
 
 <h3 id="test-d-une-méthode-simple">Test d&rsquo;une méthode simple</h3>
 
@@ -115,7 +420,7 @@ private E convertToUser(final E entity){
 
 <hr />
 
-<p>Déclarer la class à tester et ses dépendances (ici un cas simple avec une seule dépendance):</p>
+<p>Déclarer la class à tester et ses dépendances</p>
 
 <hr />
 
@@ -160,6 +465,7 @@ private E convertToUser(final E entity){
 
         //then
         Assert.assertEquals(&quot;ADMIN&quot;, result.get().getName());
+        Assert.assertEquals(Role.class, result.get().getClass());
     }
 
     @Test
@@ -189,6 +495,7 @@ private E convertToUser(final E entity){
         //then
         Assert.assertEquals(&quot;Espace de Jean&quot;, result.get().getName());
         Assert.assertEquals(&quot;jean@gmail.com&quot;, result.get().getUser().getEmail());
+        Assert.assertEquals(Space.class, result.get().getClass());
 
     }
 
@@ -219,6 +526,7 @@ private E convertToUser(final E entity){
 
         //then
         Assert.assertEquals(&quot;jean@gmail.com&quot;, result.get().getEmail());
+        Assert.assertEquals(User.class, result.get().getClass());
         final String sha3Password = getStringSha3(&quot;1234&quot;);
         Assert.assertEquals(sha3Password, result.get().getPassword());
         Assert.assertNull(&quot;roles are null&quot;, result.get().getRoles());
@@ -283,11 +591,6 @@ public class AuthProvider implements ITools {
             throw new CustomTokenException(&quot;email not valid or user not found&quot;);
         }
         return user;
-    }
-
-    private boolean isValidEmail(String email) {
-        String regex = &quot;^[\\w-_\\.+]*[\\w-_\\.]\\@([\\w]+\\.)+[\\w]+[\\w]$&quot;;
-        return email.matches(regex);
     }
 
     private String generateJwt(String email) {
@@ -592,179 +895,658 @@ public void test_validateConnection_when_throw_JoseException_and_return_null() t
 }
 </code></pre>
 
-<h2 id="tests-persistence-datajpatest">Tests persistence - DataJpaTest</h2>
-
-<p>Test des repository avec une base de données embarquée</p>
-
-<p>Dépendance à ajouter</p>
-
-<pre><code>    &lt;!-- https://mvnrepository.com/artifact/com.h2database/h2 --&gt;
-            &lt;dependency&gt;
-                &lt;groupId&gt;com.h2database&lt;/groupId&gt;
-                &lt;artifactId&gt;h2&lt;/artifactId&gt;
-                &lt;version&gt;1.4.200&lt;/version&gt;
-                &lt;scope&gt;test&lt;/scope&gt;
-            &lt;/dependency&gt;
-</code></pre>
-
 <hr />
 
-<p>Repo à tester</p>
+<h2 id="tests-de-controleurs-tests-in-container">Tests de controleurs - Tests-In-Container</h2>
 
-<pre><code>@CrossOrigin(&quot;*&quot;)
-@Repository
-public interface UserRepository extends JpaRepository&lt;User, Long&gt; {
-    User findByEmail(String email);
-    @Query(value = &quot;select * from cuisine_user u where u.email ilike :paramEmail&quot;, nativeQuery=true)
-    User selectMyUserByEmail(@Param(&quot;paramEmail&quot;) String email);
-}
-</code></pre>
-
-<hr />
-
-<p>jeu de test</p>
+<p>Les annotations permettent de faire des tests dans un container</p>
 
 <ul>
-<li>test_findByEmail_when_all_parameters_valid_should_return_result</li>
-<li>test_findByEmail_when_user_no_have_roles_should_return_user</li>
-<li>test_findByEmail_when_no_user_found_should_return_null</li>
-<li>test_selectMyUserByEmail_when_all_parameters_valid_should_return_result</li>
-<li>test_selectMyUserByEmail_when_user_no_have_roles_should_return_user</li>
-<li>test_selectMyUserByEmail_when__no_user_found_should_return_null</li>
+<li>@RunWith(SpringRunner.class)</li>
+<li>@SpringBootTest</li>
+<li>@AutoConfigureMockMvc</li>
+<li>@ActiveProfiles(&ldquo;test&rdquo;)</li>
 </ul>
 
-<p>La bdd se réinitialise à chaque test</p>
+<p>@DirtiesContext permet de choisir comment réinitialiser le contexte Spring</p>
+
+<p>Avant chaque test, JdbcTemplate intègre un jeu d&rsquo;essai dans une embedded database.</p>
 
 <hr />
 
 <pre><code>@RunWith(SpringRunner.class)
-@DataJpaTest
-public class UserRepositoryTest {
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles(&quot;test&quot;)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+public class UserWebControllerTest2 implements ITools {
 
+    private static final String BASE_URL = PRE_PATH + USER_CONTROLLER;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private BuilderUtils2 builderUtils2;
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private RoleRepository roleRepository;
+    private JdbcTemplate jdbcTemplate;
 
     @Before
     public void setUp() throws Exception {
+        final String sha3Password = getStringSha3(&quot;0000&quot;);
+        jdbcTemplate.execute(
+                &quot;delete from cuisine_users_roles; &quot;);
+        jdbcTemplate.execute(
+                &quot;delete from cuisine_role; &quot;);
+        jdbcTemplate.execute(
+                &quot;delete from cuisine_space; &quot;);
+        jdbcTemplate.execute(
+                &quot;delete from cuisine_user; &quot;);
+        jdbcTemplate.execute(
+                &quot;insert into cuisine_role(id, name) values (1001, 'USER'); &quot; +
+                        &quot;insert into cuisine_role(id, name) values (1002, 'MANAGER'); &quot; +
+                        &quot;insert into cuisine_role(id, name) values (1003, 'ADMIN'); &quot;
+        );
+        jdbcTemplate.execute(
+                &quot;insert into cuisine_user(id, email, password) values (1001, 'jean@jean.com', '&quot; + sha3Password + &quot;'); &quot; +
+                        &quot;insert into cuisine_user(id, email, password) values (1002, 'johny@johny.com', '&quot; + sha3Password + &quot;'); &quot; +
+                        &quot;insert into cuisine_user(id, email, password) values (1003, 'jeanne@jeanne.com', '&quot; + sha3Password + &quot;'); &quot;
+        );
+        jdbcTemplate.execute(
+                &quot;insert into cuisine_users_roles(cuisine_user_id, cuisine_role_id) values (1001,1001); &quot; +
+                        &quot;insert into cuisine_users_roles(cuisine_user_id, cuisine_role_id) values (1001,1002); &quot; +
+                        &quot;insert into cuisine_users_roles(cuisine_user_id, cuisine_role_id) values (1001,1003); &quot; +
+                        &quot;insert into cuisine_users_roles(cuisine_user_id, cuisine_role_id) values (1002,1001); &quot; +
+                        &quot;insert into cuisine_users_roles(cuisine_user_id, cuisine_role_id) values (1002,1002); &quot; +
+                        &quot;insert into cuisine_users_roles(cuisine_user_id, cuisine_role_id) values (1003,1001); &quot;
+        );
     }
+</code></pre>
 
-    @Test
-    public void test_findByEmail_when_all_parameters_valid_should_return_result() {
-        //given
-        final Role role1 = new Role();
-        role1.setName(&quot;USER&quot;);
-        final Role role2 = new Role();
-        role2.setName(&quot;MANAGER&quot;);
-        final Role role3 = new Role();
-        role3.setName(&quot;ADMIN&quot;);
-        final Set&lt;Role&gt; roles  = new HashSet&lt;&gt;(Arrays.asList(role1, role2, role3));
-        roles.forEach(role -&gt; {
-            roleRepository.save(role);
-        });
-        final User user = BuilderUtils1.buildUser(&quot;jean@jean.com&quot;, &quot;1234&quot;, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;,
-                &quot;0101010101&quot;, &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE);
-        user.setRoles(roles);
-        userRepository.save(user);
+<h3 id="test-de-end-point-test-d-authentification">Test de end-point - Test d&rsquo;authentification</h3>
 
-        //when
-        final User result = userRepository.findByEmail(&quot;jean@jean.com&quot;);
+<p>Demande classique d&rsquo;authentification avec un identifiant et un mot de passe.</p>
 
-        //then
-        Assert.assertEquals(&quot;jean@jean.com&quot;, result.getEmail());
-        Assert.assertEquals(3, result.getRoles().size());
+<hr />
+
+<pre><code>//http://localhost:8080/api/UserWebController/validateConnection
+@RequestMapping(path = &quot;/validateConnection&quot;, method = RequestMethod.POST)
+public Token validateConnection(@RequestBody final Credential credential) {
+    logger.info(&quot;End point validateConnection&quot;);
+    return validateToken(credential);
+}
+</code></pre>
+
+<hr />
+
+<p>Jeu de tests :</p>
+
+<ul>
+<li>Requête ok : retourne Status 200 avec Token</li>
+<li>Requête ko : retourne Status Unauthorized 401</li>
+<li>Requête ko : retourne Status Not found 404</li>
+</ul>
+
+<hr />
+
+<pre><code>@Test
+public void test_validateConnection_when_credential_valid_should_return_status_ok_with_Token() throws Exception {
+    //given
+    final Credential credential = new Credential();
+    credential.setEmail(&quot;jean@jean.com&quot;);
+    credential.setPassword(&quot;0000&quot;);
+
+    //when &amp;&amp; then
+    final MvcResult mvcResult = invokeValidateConnection(credential)
+            .andExpect(status().isOk())
+            .andReturn();
+    final Token result = builderUtils2.fromJsonResult(mvcResult, Token.class);
+    System.out.println(result.getToken());
+    Assert.assertFalse(result.getToken().isEmpty());
+    final String sub = BuilderUtils1.getStringFromJwtNode(result.getToken(), 1, &quot;sub&quot;);
+    Assert.assertEquals(&quot;jean@jean.com&quot;, sub);
+    final String roles = BuilderUtils1.getStringFromJwtNode(result.getToken(), 1, &quot;roles&quot;);
+    Assert.assertEquals(&quot;[\&quot;USER\&quot;,\&quot;MANAGER\&quot;,\&quot;ADMIN\&quot;]&quot;, roles);
+}
+
+@Test
+public void test_validateConnection_when_credential_not_valid_should_return_status_unauthorized_401() throws Exception {
+    //given
+    final Credential credential = new Credential();
+    credential.setEmail(&quot;jean@jean.com&quot;);
+    credential.setPassword(&quot;wrong password&quot;);
+
+    //when &amp;&amp; then
+    final MvcResult mvcResult = invokeValidateConnection(credential)
+            .andExpect(status().isUnauthorized())
+            .andReturn();
+}
+
+@Test
+public void test_validateConnection_when_credential_email_no_exist_should_return_status_unauthorized_401() throws Exception {
+    //given
+    final Credential credential = new Credential();
+    credential.setEmail(&quot;EmailNotOnDatabase@gmail.com&quot;);
+    credential.setPassword(&quot;wrong password&quot;);
+
+    //when &amp;&amp; then
+    final MvcResult mvcResult = invokeValidateConnection(credential)
+            .andExpect(status().isUnauthorized())
+            .andReturn();
+}
+
+@Test
+public void test_validateConnection_when_credential_email_is_empty_should_return_status_404() throws Exception {
+    //given
+    final Credential credential = new Credential();
+    credential.setEmail(&quot;&quot;);
+    credential.setPassword(&quot;1234&quot;);
+
+    //when &amp;&amp; then
+    final MvcResult mvcResult = invokeValidateConnection(credential)
+            .andExpect(status().isNotFound())
+            .andReturn();
+}
+
+@Test
+public void test_validateConnection_when_credential_password_is_empty_should_return_status_404() throws Exception {
+    //given
+    final Credential credential = new Credential();
+    credential.setEmail(&quot;jean@jean.com&quot;);
+    credential.setPassword(&quot;&quot;);
+
+    //when &amp;&amp; then
+    final MvcResult mvcResult = invokeValidateConnection(credential)
+            .andExpect(status().isNotFound())
+            .andReturn();
+}
+
+@Test
+public void test_validateConnection_when_credential_email_is_not_valid_email_should_return_status_404() throws Exception {
+    //given
+    final Credential credential = new Credential();
+    credential.setEmail(&quot;this is not an email&quot;);
+    credential.setPassword(&quot;1234&quot;);
+
+    //when &amp;&amp; then
+    final MvcResult mvcResult = invokeValidateConnection(credential)
+            .andExpect(status().isNotFound())
+            .andReturn();
+}
+</code></pre>
+
+<hr />
+
+<pre><code>private ResultActions invokeValidateConnection(final Credential credential) throws Exception {
+    return mockMvc.perform(post(BASE_URL + &quot;/validateConnection&quot;)
+            .content(builderUtils2.asJsonString(credential))
+            .accept(MediaType.APPLICATION_JSON)
+            .contentType(MediaType.APPLICATION_JSON)
+    );
+}
+</code></pre>
+
+<hr />
+
+<h3 id="test-de-end-point-authorisation-via-le-jwt">Test de end-point - Authorisation via le jwt</h3>
+
+<p>Test d&rsquo;un end-point dont l&rsquo;accès est exclusivement réservé à un utilisateur avec le role ADMIN</p>
+
+<hr />
+
+<pre><code>//http://localhost:8080/api/UserWebController/getRoles
+@Secured({AUTHORITY_PREFIX + ADMIN})
+@RequestMapping(path = &quot;/getRoles&quot;, method = RequestMethod.GET)
+public List&lt;RoleDTO&gt; getRoles() {
+    logger.info(&quot;End point getRoles&quot;);
+    if(getRoles().isEmpty()){
+        logger.error(&quot;Not found 404&quot;);
+        throw new ResponseStatusException(
+                HttpStatus.NOT_FOUND, &quot;Not found 404&quot;
+        );
     }
+    return roleService.getAdminRoleDTOS();
+}
+</code></pre>
 
-    @Test
-    public void test_findByEmail_when_user_no_have_roles_should_return_user() {
-        //given
-        final User user = BuilderUtils1.buildUser(&quot;jean@jean.com&quot;, &quot;1234&quot;, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;,
-                &quot;0101010101&quot;, &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE);
-        userRepository.save(user);
+<hr />
 
-        //when
-        final User result = userRepository.findByEmail(&quot;jean@jean.com&quot;);
+<ul>
+<li>Requête ok : retourne Status 200 avec List<RoleDTO></li>
+<li>Requête ko : retourne Status Unauthorized 403</li>
+<li>Requête ko : retourne Status Not found 404
 
-        //then
-        Assert.assertEquals(&quot;jean@jean.com&quot;, result.getEmail());
-        Assert.assertEquals(null, result.getRoles());
-    }
+<ul>
+<li>dernier cas non testé car difficulté pour simulter une erreur de conversion Role to RoleDTO à ce stade</li>
+</ul></li>
+</ul>
 
-    @Test
-    public void test_findByEmail_when_no_user_found_should_return_null() {
-        //given &amp;&amp; when
-        final User result = userRepository.findByEmail(&quot;jean@jean.com&quot;);
+<hr />
 
-        //then
-        Assert.assertNull(&quot;return null&quot;, result);
-    }
+<pre><code>@Test
+public void test_getRoles_when_has_role_ADMIN_should_return_status_ok_with_roles() throws Exception {
+    //given
+    final Credential credential = new Credential();
+    credential.setEmail(&quot;jean@jean.com&quot;);
+    credential.setPassword(&quot;0000&quot;);
 
-    @Test
-    public void test_selectMyUserByEmail_when_all_parameters_valid_should_return_result() {
-        //given
-        final Role role1 = new Role();
-        role1.setName(&quot;USER&quot;);
-        final Role role2 = new Role();
-        role2.setName(&quot;MANAGER&quot;);
-        final Role role3 = new Role();
-        role3.setName(&quot;ADMIN&quot;);
-        final Set&lt;Role&gt; roles  = new HashSet&lt;&gt;(Arrays.asList(role1, role2, role3));
-        roles.forEach(role -&gt; {
-            roleRepository.save(role);
-        });
-        final User user = BuilderUtils1.buildUser(&quot;jean@jean.com&quot;, &quot;1234&quot;, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;, &quot;0101010101&quot;,
-                &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE);
-        user.setRoles(roles);
-        userRepository.save(user);
+    //when &amp;&amp; then
+    final MvcResult mvcResult = invokeGetRoles(credential)
+            .andExpect(status().isOk())
+            .andExpect(jsonPath(&quot;$&quot;, hasSize(3)))
+            .andExpect(jsonPath(&quot;$[0].name&quot;, is(&quot;USER&quot;)))
+            .andExpect(jsonPath(&quot;$[1].name&quot;, is(&quot;MANAGER&quot;)))
+            .andExpect(jsonPath(&quot;$[2].name&quot;, is(&quot;ADMIN&quot;)))
+            .andReturn();
+    final RoleDTO[] roles = builderUtils2.fromJsonResult(mvcResult, RoleDTO[].class);
+    Assert.assertEquals(&quot;USER&quot;, roles[0].getName());
+    Assert.assertEquals(&quot;MANAGER&quot;, roles[1].getName());
+    Assert.assertEquals(&quot;ADMIN&quot;, roles[2].getName());
+}
 
-        //when
-        final User result = userRepository.selectMyUserByEmail(&quot;jean@jean.com&quot;);
+@Test
+public void test_getRoles_when_has_role_MANAGER_should_return_status_forbidden() throws Exception {
+    //given
+    final Credential credential = new Credential();
+    credential.setEmail(&quot;johny@johny.com&quot;);
+    credential.setPassword(&quot;0000&quot;);
 
-        //then
-        Assert.assertEquals(&quot;jean@jean.com&quot;, result.getEmail());
-        Assert.assertEquals(3, result.getRoles().size());
-    }
+    //when &amp;&amp; then
+    final MvcResult mvcResult = invokeGetRoles(credential)
+            .andExpect(status().isForbidden())
+            .andReturn();
+}
 
-    @Test
-    public void test_selectMyUserByEmail_when_user_no_have_roles_should_return_user() {
-        //given
-        final User user = BuilderUtils1.buildUser(&quot;jean@jean.com&quot;, &quot;1234&quot;, Gender.Monsieur, &quot;Jean&quot;, &quot;Leroy&quot;, &quot;0101010101&quot;,
-                &quot;9 rue du roi&quot;, &quot;75018&quot;, &quot;Paris&quot;, &quot;9ème étage&quot;, Status.ACTIVE);
-        userRepository.save(user);
+@Test
+public void test_getRoles_when_has_role_USER_should_return_status_forbidden() throws Exception {
+    //given
+    final Credential credential = new Credential();
+    credential.setEmail(&quot;jeanne@jeanne.com&quot;);
+    credential.setPassword(&quot;0000&quot;);
 
-        //when
-        final User result = userRepository.selectMyUserByEmail(&quot;jean@jean.com&quot;);
+    //when &amp;&amp; then
+    final MvcResult mvcResult = invokeGetRoles(credential)
+            .andExpect(status().isForbidden())
+            .andReturn();
+}
 
-        //then
-        Assert.assertEquals(&quot;jean@jean.com&quot;, result.getEmail());
-        Assert.assertEquals(null, result.getRoles());
-    }
+@Test
+public void test_getRoles_when_no_token_on_header_should_return_forbidden() throws Exception {
+    //given
+    final ResultActions resultActions = mockMvc.perform(get(BASE_URL + &quot;/getRoles&quot;)
+            .accept(MediaType.APPLICATION_JSON));
 
-    @Test
-    public void test_selectMyUserByEmail_when__no_user_found_should_return_null() {
-        //given &amp;&amp; when
-        final User result = userRepository.selectMyUserByEmail(&quot;jean@jean.com&quot;);
+    //when &amp;&amp; then
+    final MvcResult mvcResult = resultActions
+            .andExpect(status().isForbidden())
+            .andReturn();
+}
+</code></pre>
 
-        //then
-        Assert.assertNull(&quot;return null&quot;, result);
+<hr />
+
+<pre><code>private ResultActions invokeGetRoles(final Credential credential) throws Exception {
+    final String token = getAccessToken(credential);
+    return mockMvc.perform(get(BASE_URL + &quot;/getRoles&quot;)
+            .header(&quot;Authorization&quot;, &quot;Bearer &quot; + token)
+            .accept(MediaType.APPLICATION_JSON));
+}
+
+private String getAccessToken(final Credential credential) throws Exception {
+    final MvcResult mvcResult = invokeValidateConnection(credential)
+            .andReturn();
+    final Token token = builderUtils2.fromJsonResult(mvcResult, Token.class);
+    return token.getToken();
+}
+
+private ResultActions invokeValidateConnection(final Credential credential) throws Exception {
+    return mockMvc.perform(post(BASE_URL + &quot;/validateConnection&quot;)
+        .content(builderUtils2.asJsonString(credential))
+        .accept(MediaType.APPLICATION_JSON)
+        .contentType(MediaType.APPLICATION_JSON)
+);
+}
+</code></pre>
+
+<hr />
+
+<h3 id="test-de-end-point-rollback-du-transactional">Test de end-point - rollback du transactional</h3>
+
+<hr />
+
+<pre><code>//http://localhost:8080/api/UserWebController/getDataTest
+@RequestMapping(path = &quot;/getDataTest&quot;, method = RequestMethod.GET)
+public String getDataTest() {
+    logger.info(&quot;End point getDataTest&quot;);
+    if (userService.getDataTest()) {
+        return &quot;success&quot;;
+    } else {
+        logger.error(&quot;Internal server error 500&quot;);
+        throw new ResponseStatusException(
+                HttpStatus.INTERNAL_SERVER_ERROR, &quot;Internal server error 500&quot;
+        );
     }
 }
 </code></pre>
 
-<h2 id="tests-de-controleurs-in-container">Tests de controleurs - In-Container</h2>
+<hr />
 
-<p>toDo</p>
+<p>Ce end-point sert pour persister le jeu d&rsquo;essai dans la base de donnée. Elle utilise l&rsquo;annotation Transactional avec gestion du rollback.</p>
 
-<h3 id="test-de-end-point-statut-de-retour">Test de end-point - statut de retour</h3>
+<p>Pour notre test l&rsquo;insertion de l&rsquo;user userTest@test.com va permettre de véfifier le comportement du rollback.</p>
 
-<p>toDo</p>
+<hr />
 
-<h3 id="test-de-end-point-rollback-du-transactional">Test de end-point - rollback du transactional</h3>
+<pre><code>@Service(value = &quot;userService&quot;)
+public class UserServiceImpl implements UserDetailsService, IUserService, ITools {
 
-<p>toDo</p>
+    private final static Logger logger = Logger.getLogger(UserServiceImpl.class);
+    @Autowired
+    private TokenUtilityProvider tokenUtilityProvider;
+    @Autowired
+    private AuthProvider authProvider;
+    @Autowired
+    private SuperModelMapper superModelMapper;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private RoleRepository roleRepository;
+    @Autowired
+    private SpaceRepository spaceRepository;
+    @Autowired
+    private IRoleService roleService;
+
+    @Override
+    //catch CustomTransactionalException in this method
+    public boolean getDataTest(){
+        logger.info(&quot;Method getDataTest&quot;);
+        try {
+            testGetDataTest();
+        }catch (CustomTransactionalException ex){
+            logger.error(ex.getMessage());
+            return false;
+        }
+        return true;
+    }
+
+    // Do not catch CustomTransactionalException in this method
+    @Transactional(propagation = Propagation.REQUIRES_NEW,
+            rollbackFor = CustomTransactionalException.class)
+    private void testGetDataTest() throws CustomTransactionalException{
+        validateGetDataTest();
+    }
+
+    // MANDATORY: Transaction must be created before.
+    @Transactional(propagation = Propagation.MANDATORY )
+    private void validateGetDataTest(){
+        try {
+            /**
+            no persistence of userTest when rollback
+            */
+            final User userTest = new User();
+            userTest.setEmail(&quot;userTest@test.com&quot;);
+            userTest.setPassword(getStringSha3(&quot;userTest&quot;));
+            userRepository.save(userTest);
+
+            final Role userRole = new Role();
+            userRole.setName(USER);
+            final Role managerRole = new Role();
+            managerRole.setName(MANAGER);
+            final Role adminRole = new Role();
+            adminRole.setName(ADMIN);
+
+            roleRepository.save(userRole);
+            roleRepository.save(managerRole);
+            roleRepository.save(adminRole);
+
+            final Set&lt;Role&gt; userRoles = roleService.getUserRoleSet();
+            final Set&lt;Role&gt; managerRoles = roleService.getManagerRoleSet();
+            final Set&lt;Role&gt; adminRoles = roleService.getAdminRoleSet();
+
+            final User user1 = new User();
+            user1.setEmail(&quot;jean@jean.com&quot;);
+            user1.setGender(Gender.Monsieur);
+            user1.setFirstName(&quot;Jean&quot;);
+            user1.setLastName(&quot;Leroi&quot;);
+            user1.setPassword(getStringSha3(&quot;0000&quot;));
+            user1.setRoles(adminRoles);
+            user1.setPhoneNumber(&quot;0606060606&quot;);
+            user1.setAddress(&quot;3 rue du Roi&quot;);
+            user1.setZip(&quot;95000&quot;);
+            user1.setCity(&quot;Cergy&quot;);
+            user1.setDeliveryInformation(&quot;2ème étage&quot;);
+            final User user2 = new User();
+            user2.setEmail(&quot;jeanne@jeanne.com&quot;);
+            user2.setPassword(getStringSha3(&quot;0000&quot;));
+            user2.setRoles(managerRoles);
+            final User user3 = new User();
+            user3.setEmail(&quot;john@john.com&quot;);
+            user3.setPassword(getStringSha3(&quot;0000&quot;));
+            user3.setRoles(userRoles);
+            final User user4 = new User();
+            user4.setEmail(&quot;johny@johny.com&quot;);
+            user4.setPassword(getStringSha3(&quot;0000&quot;));
+            user4.setRoles(userRoles);
+            user1.setStatus(Status.ACTIVE);
+            user2.setStatus(Status.ACTIVE);
+            user3.setStatus(Status.ACTIVE);
+            user4.setStatus(Status.INACTIVE);
+
+            userRepository.save(user1);
+            userRepository.save(user2);
+            userRepository.save(user3);
+            userRepository.save(user4);
+
+            final Space space1 = new Space();
+            space1.setName(&quot;Jean@jean.com space&quot;);
+            space1.setUser(user1);
+            spaceRepository.save(space1);
+
+            final Space space2 = new Space();
+            space2.setName(&quot;jeanne@jeanne.com space&quot;);
+            space2.setUser(user2);
+            spaceRepository.save(space2);
+
+            final Space space3 = new Space();
+            space3.setName(&quot;john@john.com space&quot;);
+            space3.setUser(user3);
+            spaceRepository.save(space3);
+
+            final Space space4 = new Space();
+            space4.setName(&quot;johny@johny.com space&quot;);
+            space4.setUser(user4);
+            spaceRepository.save(space4);
+        }catch(Exception ex){
+            throw new CustomTransactionalException(&quot;data tests failed&quot;);
+        }
+    }
+</code></pre>
+
+<hr />
+
+<p>Jeu de test :</p>
+
+<ul>
+<li>Requête ok : retourne Status 200 avec success
+
+<ul>
+<li>objets persistés</li>
+</ul></li>
+<li>Requête ko : retourne Status Internal server error 500
+
+<ul>
+<li>objets non persistés</li>
+</ul></li>
+</ul>
+
+<hr />
+
+<pre><code>/**
+* Initialize spring context at each tests
+*/
+@RunWith(SpringRunner.class)
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles(&quot;test&quot;)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+public class UserWebControllerTest1 implements ITools {
+
+    private static final String BASE_URL = PRE_PATH + USER_CONTROLLER;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private BuilderUtils2 builderUtils2;
+    @Autowired
+    private UserRepository userRepository;
+
+    @Test
+    public void test_getDataTest_should_return_status_200_with_success_and_with_results() throws Exception {
+        //given
+        jdbcTemplate.execute(
+                &quot;delete from cuisine_users_roles; &quot;);
+        jdbcTemplate.execute(
+                &quot;delete from cuisine_role; &quot;);
+        jdbcTemplate.execute(
+                &quot;delete from cuisine_space; &quot;);
+        jdbcTemplate.execute(
+                &quot;delete from cuisine_user; &quot;);
+        //when
+        final ResultActions resultActions = mockMvc.perform(get(BASE_URL + &quot;/getDataTest&quot;).accept(MediaType.APPLICATION_JSON));
+
+        //then
+        final MvcResult mvcResult = resultActions.andExpect(status().isOk())
+                .andExpect(jsonPath(&quot;$&quot;, is(&quot;success&quot;)))
+                .andReturn();
+        final String result = mvcResult.getResponse().getContentAsString();
+        Assert.assertEquals(&quot;success&quot;, result);
+        /**
+        * check persistence of objects in IUserService.getDataTest()
+        */
+        final Credential credential = new Credential();
+        credential.setEmail(&quot;jean@jean.com&quot;);
+        credential.setPassword(&quot;0000&quot;);
+        /**
+        * userTest cannot be retrieved with getUsers because userTest has no roles (UserUserDTOConverter condition)
+        */
+        final MvcResult mvcResult2 = invokeGetUsers(credential)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(&quot;$&quot;, hasSize(4)))
+                .andExpect(jsonPath(&quot;$[0].email&quot;, is(&quot;jean@jean.com&quot;)))
+                .andExpect(jsonPath(&quot;$[1].email&quot;, is(&quot;jeanne@jeanne.com&quot;)))
+                .andExpect(jsonPath(&quot;$[2].email&quot;, is(&quot;john@john.com&quot;)))
+                .andExpect(jsonPath(&quot;$[3].email&quot;, is(&quot;johny@johny.com&quot;)))
+                .andExpect(jsonPath(&quot;$[0].id&quot;, is(2)))
+                .andExpect(jsonPath(&quot;$[1].id&quot;, is(3)))
+                .andExpect(jsonPath(&quot;$[2].id&quot;, is(4)))
+                .andExpect(jsonPath(&quot;$[3].id&quot;, is(5)))
+                .andReturn();
+        /**
+        * userTest cannot be retrieved with getUser because userTest has no roles (UserUserDTOConverter condition)
+        */
+        final ResultActions resultActions3 = invokeGetUser(credential, &quot;userTest@test.com&quot;);
+        final MvcResult mvcResult3 = resultActions3
+                .andExpect(status().isNotFound())
+                .andReturn();
+        /**
+        * userTest exist in memory test (or database) and the entity can be retrieve with userRepository.selectMyUserByEmail
+        */
+        final User user = userRepository.selectMyUserByEmail(&quot;userTest@test.com&quot;);
+        Assert.assertEquals(&quot;userTest@test.com&quot;, user.getEmail());
+    }
+
+    /**
+    * when getDataTest then throw sql exception constraint of unique column + constraint of duplicate key
+    * rollback should works
+    */
+    @Test
+    public void test_getDataTest_transactional_failed_should_status_500_with_no_new_persistence() throws Exception {
+        //given
+        final String sha3Password = getStringSha3(&quot;0000&quot;);
+        jdbcTemplate.execute(
+                &quot;delete from cuisine_users_roles; &quot;);
+        jdbcTemplate.execute(
+                &quot;delete from cuisine_role; &quot;);
+        jdbcTemplate.execute(
+                &quot;delete from cuisine_space; &quot;);
+        jdbcTemplate.execute(
+                &quot;delete from cuisine_user; &quot;);
+        jdbcTemplate.execute(
+                &quot;insert into cuisine_role(id, name) values (1, 'USER'); &quot; +
+                        &quot;insert into cuisine_role(id, name) values (2, 'MANAGER'); &quot; +
+                        &quot;insert into cuisine_role(id, name) values (3, 'ADMIN'); &quot;
+        );
+        jdbcTemplate.execute(
+                &quot;delete from cuisine_user; &quot; +
+                        &quot;insert into cuisine_user(id, email, password) values (1, 'jean@jean.com', '&quot; + sha3Password + &quot;'); &quot;);
+        jdbcTemplate.execute(
+                &quot;insert into cuisine_users_roles(cuisine_user_id, cuisine_role_id) values (1,1); &quot; +
+                        &quot;insert into cuisine_users_roles(cuisine_user_id, cuisine_role_id) values (1,2); &quot; +
+                        &quot;insert into cuisine_users_roles(cuisine_user_id, cuisine_role_id) values (1,3); &quot;
+        );
+        //when
+        final ResultActions resultActions = mockMvc.perform(get(BASE_URL + &quot;/getDataTest&quot;).accept(MediaType.APPLICATION_JSON));
+
+        //then
+        final MvcResult mvcResult = resultActions.andExpect(status().isInternalServerError())
+                .andReturn();
+        /**
+        * check persistence of objects in IUserService.getDataTest()
+        *  only jean@jean.com has been persisted on db (or memory test)
+        */
+        final Credential credential = new Credential();
+        credential.setEmail(&quot;jean@jean.com&quot;);
+        credential.setPassword(&quot;0000&quot;);
+        final MvcResult mvcResult2 = invokeGetUsers(credential)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(&quot;$&quot;, hasSize(1)))
+                .andExpect(jsonPath(&quot;$[0].email&quot;, is(&quot;jean@jean.com&quot;)))
+                .andReturn();
+        final User user = userRepository.selectMyUserByEmail(&quot;userTest@test.com&quot;);
+        Assert.assertNull(&quot;return null&quot;, user);
+    }
+
+    /**
+    * Invoke end-points
+    */
+    private ResultActions invokeGetUser(final Credential credential, final String email) throws Exception{
+        final String token = getAccessToken(credential);
+        return mockMvc.perform(get(BASE_URL + &quot;/getUser&quot;)
+                .param(&quot;email&quot;,email)
+                .header(&quot;Authorization&quot;, &quot;Bearer &quot; + token)
+                .accept(MediaType.APPLICATION_JSON)
+        );
+    }
+
+    private ResultActions invokeGetUsers(final Credential credential) throws Exception {
+        final String token = getAccessToken(credential);
+        return mockMvc.perform(get(BASE_URL + &quot;/getUsers&quot;)
+                .header(&quot;Authorization&quot;, &quot;Bearer &quot; + token)
+                .accept(MediaType.APPLICATION_JSON));
+    }
+
+    private String getAccessToken(final Credential credential) throws Exception {
+        final MvcResult mvcResult = invokeValidateConnection(credential)
+                .andReturn();
+        final Token token = builderUtils2.fromJsonResult(mvcResult, Token.class);
+        return token.getToken();
+    }
+
+    private ResultActions invokeValidateConnection(final Credential credential) throws Exception {
+        return mockMvc.perform(post(BASE_URL + &quot;/validateConnection&quot;)
+                .content(builderUtils2.asJsonString(credential))
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+        );
+    }
+
+}
+</code></pre>
 
 <h2 id="conclusion">Conclusion</h2>
+
+<p>Merci!</p>
 
 				</section>
 			</article>
@@ -785,22 +1567,20 @@ public class UserRepositoryTest {
 <ul>
 <li>
 <ul>
-<li>
-<ul>
 <li><a href="#introduction">Introduction</a></li>
-<li><a href="#sommaire">Sommaire</a></li>
-<li><a href="#fonctionnalités">Fonctionnalités</a></li>
-<li><a href="#stack-technique">Stack technique</a></li>
+<li><a href="#tests-de-persistence-datajpatest">Tests de persistence - DataJpaTest</a>
+<ul>
+<li><a href="#test-des-repositories-avec-bdd-embarquée-h2">Test des repositories avec bdd embarquée H2</a></li>
 </ul></li>
-<li><a href="#tests-unitaires-junits-mockito">Tests unitaires - Junits &amp; Mockito</a>
+<li><a href="#tests-unitaires-mockito">Tests unitaires - Mockito</a>
 <ul>
 <li><a href="#test-d-une-méthode-simple">Test d&rsquo;une méthode simple</a></li>
 <li><a href="#test-d-une-méthode-complexe-authprovider-validateconnection">Test d&rsquo;une méthode complexe AuthProvider.validateConnection</a></li>
 </ul></li>
-<li><a href="#tests-persistence-datajpatest">Tests persistence - DataJpaTest</a></li>
-<li><a href="#tests-de-controleurs-in-container">Tests de controleurs - In-Container</a>
+<li><a href="#tests-de-controleurs-tests-in-container">Tests de controleurs - Tests-In-Container</a>
 <ul>
-<li><a href="#test-de-end-point-statut-de-retour">Test de end-point - statut de retour</a></li>
+<li><a href="#test-de-end-point-test-d-authentification">Test de end-point - Test d&rsquo;authentification</a></li>
+<li><a href="#test-de-end-point-authorisation-via-le-jwt">Test de end-point - Authorisation via le jwt</a></li>
 <li><a href="#test-de-end-point-rollback-du-transactional">Test de end-point - rollback du transactional</a></li>
 </ul></li>
 <li><a href="#conclusion">Conclusion</a></li>

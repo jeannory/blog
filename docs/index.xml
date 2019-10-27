@@ -17,13 +17,12 @@
       <pubDate>Fri, 25 Oct 2019 15:02:42 +0200</pubDate>
       
       <guid>https://jeannory.github.io/blog/articles/craftsmanship/</guid>
-      <description>Introduction Pour présentation.
-Retrouver le dépôt git : ici
-Sommaire toDo
-Fonctionnalités toDo
-Stack technique toDo
-Tests unitaires - Junits &amp;amp; Mockito Test d&amp;rsquo;une méthode simple Class SuperModelMapper, Méthode générique simple à tester (conversion d&amp;rsquo;un dto en entité) :
-public Optional&amp;lt;E&amp;gt; convertToEntity(final D dto) { logger.info(&amp;quot;Method convertToEntity&amp;quot;); if (dto == null) { return Optional.empty(); } E entity = singletonBean.getModelMapper().map(dto, (Type) dto.getEntityClass()); if(dto.getClass().equals(UserDTO.class)){ entity = convertToUser(entity); } return Optional.of(entity); } //hash password for persistence or authentication private E convertToUser(final E entity){ logger.</description>
+      <description>Introduction Pour présentation
+Craftsmanship : Refacto d&amp;rsquo;un projet back-end avec 3 types de tests
+ Tests de persistence - DataJpaTest Tests unitaires - Mockito Tests de controleurs - In-Container  Projet legacy ne comportant aucun test,
+Prérecquis : by-passer la sécurité du navigateur pour le site + end-point :
+ https://power-ged.com/  Fonctionalitées reprises :
+ Enregistrement/Modification utilisateur Authentification Gestion des rôles implémentation de Spring Security/Jwt.  Présentation de l&amp;rsquo;implémentation de Spring Security/Jwt : ici</description>
     </item>
     
     <item>
@@ -32,12 +31,11 @@ public Optional&amp;lt;E&amp;gt; convertToEntity(final D dto) { logger.info(&amp
       <pubDate>Mon, 07 Oct 2019 23:47:25 +0200</pubDate>
       
       <guid>https://jeannory.github.io/blog/articles/spring-security/</guid>
-      <description>Introduction Il s&amp;rsquo;agit de mon premier article, les avis/critiques sont le bienvenus.
-Vous pouvez retrouver les dépôts git,
- Pour le back-end : ici Pour le front-end : ici  Bonne lecture.
+      <description>Introduction Initiation à Spring Security/Jwt en développant une application full-stack respectant les prérequis en terme de cybersécurité.
 Article du 23/08/2019 importé en markdown pour Hugo au 08/10/2019.
 MAJ au 12/10/2019 - ajout de la fonction refresh token
-Protéger son application avec SpringBoot, Angular et Jwt Développer une application full stack en respectant les règles en terme de cyber sécurité.</description>
+Dépôts github :
+ Back-end : ici Front-end : ici  Protéger son application avec SpringBoot, Angular et Jwt Développer une application full stack en respectant les règles en terme de cyber sécurité.</description>
     </item>
     
     <item>
@@ -46,8 +44,8 @@ Protéger son application avec SpringBoot, Angular et Jwt Développer une applic
       <pubDate>Mon, 07 Oct 2019 23:39:08 +0200</pubDate>
       
       <guid>https://jeannory.github.io/blog/author/</guid>
-      <description>--
-A propos de l&amp;rsquo;auteur : passionné de développement, j&amp;rsquo;ai beaucoup appris en naviguant sur le web et à travers de nombreux exemples et MOOC open source. Je souhaite à mon tour contribuer.</description>
+      <description> --
+Auteur  Software engineer passionné par le développement et la cyber-sécurité  Métier  Conception informatique Développement Mise en ligne  Spécialités  SQL Java Angular Infrastructure (Ovh/Ubuntu Server)  </description>
     </item>
     
   </channel>
