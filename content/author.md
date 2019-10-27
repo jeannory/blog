@@ -9,7 +9,26 @@ tags: ["author"]
 ![Jeannory](/blog/img/jeanno_2018.png)
 <!-- <img src = "https://jeannory.github.io/blog/img/jeanno_2018.png", width = "", height = "400"> -->
 
------------------
+---
 
-A propos de l'auteur : passionné de développement, j'ai beaucoup appris en naviguant sur le web et à travers de nombreux exemples et MOOC open source.
-Je souhaite à mon tour contribuer.
+### Auteur ###
+
+* Software engineer passionné par le développement et la cyber-sécurité
+
+---
+
+### Métier ###
+
+* Conception informatique
+* Développement
+* Mise en ligne
+
+---
+
+### Spécialités ###
+
+* SQL
+* Java
+* Angular
+* Infrastructure (Ovh/Ubuntu Server)
+

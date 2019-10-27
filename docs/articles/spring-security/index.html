@@ -70,20 +70,18 @@
 
 <h2 id="introduction">Introduction</h2>
 
-<p>Il s&rsquo;agit de mon premier article, les avis/critiques sont le bienvenus.</p>
-
-<p>Vous pouvez retrouver les dépôts git,</p>
-
-<ul>
-<li>Pour le back-end : <a href="https://github.com/jeannory/SpringSecurityExampleBE">ici</a></li>
-<li>Pour le front-end : <a href="https://github.com/jeannory/SpringSecurityExampleFE">ici</a></li>
-</ul>
-
-<p>Bonne lecture.</p>
+<p>Initiation à Spring Security/Jwt en développant une application full-stack respectant les prérequis en terme de cybersécurité.</p>
 
 <p><em>Article du 23/08/2019 importé en markdown pour Hugo au 08/10/2019.</em></p>
 
 <p><em>MAJ au 12/10/2019 - ajout de la fonction refresh token</em></p>
+
+<p>Dépôts github :</p>
+
+<ul>
+<li>Back-end : <a href="https://github.com/jeannory/SpringSecurityExampleBE">ici</a></li>
+<li>Front-end : <a href="https://github.com/jeannory/SpringSecurityExampleFE">ici</a></li>
+</ul>
 
 <hr />
 
@@ -1040,16 +1038,19 @@ export class AppRoutingModule { }
 
 <p><em>MAJ au 12/10/2019</em></p>
 
-<p>Une relation professionnelle sous LinkedIn m&rsquo;a fait remarqué qu&rsquo;il y manquait la fonction de refresh token.
-Quelques semaines plus tard en entretien un recruteur m&rsquo;a fait la même réflexion!</p>
+<p>L&rsquo;application génère un token qui a une durée de 2 heures.</p>
 
-<p>Je me suis donc décidé à implémenter cette fonction.</p>
+<p>Après ce laps de temps tout utilisateur connecté qui effectue une nouvelle requête reçoit une erreur 403.</p>
 
-<p><em>Il s&rsquo;agit d&rsquo;une méthode &ldquo;maison&rdquo; et je ne suis pas en mesure d&rsquo;affirmer qu&rsquo;elle soit optimale.</em></p>
+<p>La fonction refresh token va permettre de pouvoir rester connecté après expiration du token.</p>
+
+<p>Une condition va y être ajoutée, réaliser une requête vers le serveur une demi-heure avant l&rsquo;expiration du token.</p>
+
+<p><em>Pour ce procédé le client va transmettre l&rsquo;information au serveur qui va se charger de vérifier l&rsquo;authenticité de la demande pour générer et transmettre un nouveau token.</em></p>
 
 <hr />
 
-<p>Le client va se charger de calculer le temps restant avant que le token arrive à expiration (méthode canActivate).</p>
+<p>Tout d&rsquo;abord, le client va calculer le temps restant avant que le token arrive à expiration (méthode canActivate).</p>
 
 <p>S&rsquo;il est inférieur à 30 minutes ou 1800 secondes et non périmé (if(expLeft &lt; 1800 &amp;&amp; expLeft &gt; 0)), le front-end va envoyer une requête au serveur pour lui demander un nouveau token.</p>
 
