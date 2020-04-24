@@ -12,17 +12,26 @@
     
     
     <item>
-      <title>Craftsmanship</title>
-      <link>https://jeannory.github.io/blog/articles/craftsmanship/</link>
+      <title>Keycloak</title>
+      <link>https://jeannory.github.io/blog/articles/keycloak/</link>
+      <pubDate>Thu, 23 Apr 2020 19:40:34 +0200</pubDate>
+      
+      <guid>https://jeannory.github.io/blog/articles/keycloak/</guid>
+      <description>Introduction Keycloak est serveur d&amp;rsquo;authentification standalone. Il est reconnu par la protection qu&amp;rsquo;elle propose en terme de cyber sécurité et de très nombreuses librairies permettent une utilisation étendue (Java, AngularJs, Typescript, Ldap, etc..). Beaucoup d&amp;rsquo;entreprise lui font confiance et délèguent la partie authentification/autorisation à Keycloak. C&amp;rsquo;est un projet open source codé en java, qui fait preuve d&amp;rsquo;une grande maturité (version 9 à ce jour).
+Mohamed Youssfi formateur java explique comment sécuriser des applications en micro service avec Keycloak à travers 11 vidéos.</description>
+    </item>
+    
+    <item>
+      <title>Springboot-tests</title>
+      <link>https://jeannory.github.io/blog/articles/springboot-tests/</link>
       <pubDate>Fri, 25 Oct 2019 15:02:42 +0200</pubDate>
       
-      <guid>https://jeannory.github.io/blog/articles/craftsmanship/</guid>
-      <description>Introduction Pour présentation
-Craftsmanship : Refacto d&amp;rsquo;un projet back-end avec 3 types de tests
- Tests de persistence - DataJpaTest Tests unitaires - Mockito Tests de controleurs - In-Container  Projet legacy ne comportant aucun test,
-Prérecquis : by-passer la sécurité du navigateur pour le site + end-point :
- https://power-ged.com/  Fonctionalitées reprises :
- Enregistrement/Modification utilisateur Authentification Gestion des rôles implémentation de Spring Security/Jwt.  Présentation de l&amp;rsquo;implémentation de Spring Security/Jwt : ici</description>
+      <guid>https://jeannory.github.io/blog/articles/springboot-tests/</guid>
+      <description>Introduction Springboot-tests : Type de tests avec Springboot
+ Tests de persistence - DataJpaTest Tests unitaires - Mockito Tests de controleurs - In-Container  Fonctionalitées du projet :
+ Enregistrement/Modification utilisateur Authentification Gestion des rôles implémentation de Spring Security/Jwt.  Présentation de l&amp;rsquo;implémentation de Spring Security/Jwt : ici
+Stack technique
+ Java 8 Springboot 2 Spring Security Jwt Postgresql Junit 4 Mockito 1.9 H2  Dépôt git du projet back-end : ici</description>
     </item>
     
     <item>

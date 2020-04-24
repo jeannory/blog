@@ -6,7 +6,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<link rel="alternate" href="/index.xml" type="application/rss+xml" title="Jeannory&#39;s blog">
 		<link rel="icon" href="https://jeannory.github.io/blog/favicon.ico">
-		<title>Articles - Jeannory&#39;s blog</title>
+		<title>Keycloak - Jeannory&#39;s blog</title>
 		
 		<link rel="stylesheet" href="https://jeannory.github.io/blog/css/highlight/default.css">
 		<link rel="stylesheet" href="https://jeannory.github.io/blog/css/bootstrap.min.css">
@@ -61,40 +61,93 @@
 <div class="row">
 	<div class="col-sm-8 doc-main">
 		<main role="main">
-			<div class="doc-list-header">
-				<h3>Pages in Articles</h3>
-			</div>
-			<div class="doc-list-entry">
-			<ul>
-	
-				<li><a class="doc-entry" href="/blog/articles/keycloak/">
-					<span class="doc-entry-title">Keycloak</span>
-					<span class="doc-entry-meta in-list">
-						(<time datetime="2020-04-23">April 23, 2020</time>)
-					</span>
-				</a></li>
-	
-				<li><a class="doc-entry" href="/blog/articles/springboot-tests/">
-					<span class="doc-entry-title">Springboot-tests</span>
-					<span class="doc-entry-meta in-list">
-						(<time datetime="2019-10-25">October 25, 2019</time>)
-					</span>
-				</a></li>
-	
-				<li><a class="doc-entry" href="/blog/articles/spring-security/">
-					<span class="doc-entry-title">Spring Security</span>
-					<span class="doc-entry-meta in-list">
-						(<time datetime="2019-10-07">October 07, 2019</time>)
-					</span>
-				</a></li>
-	
-			</ul>
-			</div>
+			<article>
+				<a id="title"></a>
+				<h1 class="doc-entry-title">Keycloak</h1>
+				<div class="doc-entry-meta">
+					<span><time datetime="2020-04-23">April 23, 2020</time></span>
+				</div>
+				<section>
+					
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Keycloak est serveur d&rsquo;authentification standalone.
+Il est reconnu par la protection qu&rsquo;elle propose en terme de cyber sécurité et de très nombreuses librairies permettent une utilisation étendue (Java, AngularJs, Typescript, Ldap, etc..). Beaucoup d&rsquo;entreprise lui font confiance et délèguent la partie authentification/autorisation à Keycloak.
+C&rsquo;est un projet open source codé en java, qui fait preuve d&rsquo;une grande maturité (version 9 à ce jour).</p>
+
+<p>Mohamed Youssfi formateur java explique comment sécuriser des applications en micro service avec Keycloak à travers 11 vidéos.</p>
+
+<!-- <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+  <iframe src="https://www.youtube.com/watch?v=2DYWyE9jkEY" style="position: absolute; top: 0; left: 0; width: 50%; height: 75%; border:0;" allowfullscreen title="YouTube Video"></iframe>
+</div> -->
+
+<h3 id="sécuriser-des-applications-en-micro-service-avec-keycloak-m-mohamed-youssfi">Sécuriser des applications en micro service avec Keycloak - M. Mohamed Youssfi</h3>
+
+<ul>
+<li><a href="https://www.youtube.com/watch?v=2DYWyE9jkEY">Part 1 - Basic Concepts</a></li>
+<li><a href="https://www.youtube.com/watch?v=hiu4uHjdWbY&amp;t=35s">Part 2 - Distributed App Use Case</a></li>
+<li><a href="https://www.youtube.com/watch?v=mFJSxX9d-Cg">Part 3 - Getting Started with Keycloak</a></li>
+<li><a href="https://www.youtube.com/watch?v=QksFYgRUxGQ&amp;t=188s">Part 4 - Spring MVC Application</a></li>
+<li><a href="https://www.youtube.com/watch?v=NvpbR_wvPlQ&amp;t=6s">Part 5 - Spring Security Keycloak Adapter</a></li>
+<li><a href="https://www.youtube.com/watch?v=grvDI2kvgsc&amp;t=4s">Part 6 - Micro Service Rest API Bearer Only case</a></li>
+<li><a href="https://www.youtube.com/watch?v=Seq2qCCwxZ0&amp;t=37s">Part 7 - Angular Application to Secure</a></li>
+<li><a href="https://www.youtube.com/watch?v=5n0DhOdLxPc&amp;t=29s">Part 8 - Keycloak js in Angular App</a></li>
+<li><a href="https://www.youtube.com/watch?v=nIm78BIIeFE&amp;t=27s">Part 9 - Http Authorization Header Interceptor</a></li>
+<li><a href="https://www.youtube.com/watch?v=ObHhIvSILOs&amp;t=21s">Part 10 - Back to some improvements</a></li>
+<li><a href="https://www.youtube.com/watch?v=13vIJR8vT3w&amp;t=110s">Part 11 - Other Concepts Themes</a></li>
+</ul>
+
+<hr />
+
+<p>Après avoir suivi cette formation, je vous propose un exemple d&rsquo;implémentation.
+Le projet va comporter des tests, avec un environnement entièrement portable.</p>
+
+<hr />
+
+<h2 id="projet-spécificités">Projet : spécificités</h2>
+
+<ul>
+<li>Back-end en java avec Springboot</li>
+<li>Front-end en Angular</li>
+<li>Docker de la base de données Postgresql</li>
+<li>Docker du serveur keycloak</li>
+<li>Docker de la base de donnée Mysql de keycloak</li>
+<li>Tests unitaires</li>
+<li>Tests d&rsquo;intégrations</li>
+</ul>
+
+<hr />
+
+				</section>
+			</article>
 		</main>
 	</div> 
 
 	
+
 <div class="col-sm-3 col-sm-offset-1 doc-sidebar">
+	<div id="sidebar">
+	<div class="sidebar-module">
+		<div class="sidebar-toc">
+			<h4 class="sidebar-heading">Table of Contents</h4>
+			<ul>
+				<li><strong><a href="#title">Keycloak</a></strong></li>
+			</ul>
+			<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#introduction">Introduction</a>
+<ul>
+<li><a href="#sécuriser-des-applications-en-micro-service-avec-keycloak-m-mohamed-youssfi">Sécuriser des applications en micro service avec Keycloak - M. Mohamed Youssfi</a></li>
+</ul></li>
+<li><a href="#projet-spécificités">Projet : spécificités</a></li>
+</ul></li>
+</ul>
+</nav>
+		</div>
+	</div>
 	<div class="sidebar-module">
 		<h4 class="sidebar-heading">Pages in Categories</h4>
 		<ul class="sidebar-category-list">
@@ -104,7 +157,9 @@
 					<span class="doc-list-category">Keycloak</span>
 				</a>
 				<ul>
-					<li><a href="/blog/articles/keycloak/">Keycloak</a></li>
+					<li>
+						<span class="active">Keycloak</span>
+						</li>
 				
 				</ul>
 			</li>
@@ -114,7 +169,8 @@
 					<span class="doc-list-category">Spring-Security</span>
 				</a>
 				<ul>
-					<li><a href="/blog/articles/spring-security/">Spring Security</a></li>
+					<li><a href="/blog/articles/spring-security/">Spring Security</a>
+					</li>
 				
 				</ul>
 			</li>
@@ -124,7 +180,8 @@
 					<span class="doc-list-category">Springboot-Tests</span>
 				</a>
 				<ul>
-					<li><a href="/blog/articles/springboot-tests/">Springboot-tests</a></li>
+					<li><a href="/blog/articles/springboot-tests/">Springboot-tests</a>
+					</li>
 				
 				</ul>
 			</li>
@@ -140,6 +197,7 @@
 			<a class="tag-item" href="https://jeannory.github.io/blog/tags/author">author</a>
 		
 		</div>
+	</div>
 	</div>
 </div>
 

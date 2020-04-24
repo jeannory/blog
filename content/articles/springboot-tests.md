@@ -1,16 +1,14 @@
 ---
-title: "Craftsmanship"
+title: "Springboot-tests"
 date: 2019-10-25T15:02:42+02:00
 draft: false
 author: "Jeannory"
 tags: ["articles"]
-categories: ["Craftsmanship"]
+categories: ["Springboot-tests"]
 ---
 ## Introduction ##
 
-_Pour présentation_
-
-Craftsmanship : Refacto d'un projet back-end avec 3 types de tests
+Springboot-tests : Type de tests avec Springboot
 
 * Tests de persistence - DataJpaTest 
 * Tests unitaires - Mockito
@@ -18,20 +16,13 @@ Craftsmanship : Refacto d'un projet back-end avec 3 types de tests
 
 ---
 
-Projet legacy ne comportant aucun test,
-
-_Prérecquis : by-passer la sécurité du navigateur pour le site + end-point :_
-
-* [https://power-ged.com/](https://power-ged.com/) 
-
-Fonctionalitées reprises :
+Fonctionalitées du projet :
 
 * Enregistrement/Modification utilisateur
 * Authentification
 * Gestion des rôles
 * implémentation de Spring Security/Jwt.
 
-<!--Présentation de l'implémentation de Spring Security/Jwt : [ici](https://jeannory.github.io/blog/articles/spring-security/)-->
 Présentation de l'implémentation de Spring Security/Jwt : [ici](/blog/articles/spring-security/)
 
 ---

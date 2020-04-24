@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Keycloak on Jeannory&#39;s blog</title>
+    <link>https://jeannory.github.io/blog/categories/keycloak/</link>
+    <description>Recent content in Keycloak on Jeannory&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 23 Apr 2020 19:40:34 +0200</lastBuildDate>
+    
+	<atom:link href="https://jeannory.github.io/blog/categories/keycloak/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Keycloak</title>
+      <link>https://jeannory.github.io/blog/articles/keycloak/</link>
+      <pubDate>Thu, 23 Apr 2020 19:40:34 +0200</pubDate>
+      
+      <guid>https://jeannory.github.io/blog/articles/keycloak/</guid>
+      <description>Introduction Keycloak est serveur d&amp;rsquo;authentification standalone. Il est reconnu par la protection qu&amp;rsquo;elle propose en terme de cyber sécurité et de très nombreuses librairies permettent une utilisation étendue (Java, AngularJs, Typescript, Ldap, etc..). Beaucoup d&amp;rsquo;entreprise lui font confiance et délèguent la partie authentification/autorisation à Keycloak. C&amp;rsquo;est un projet open source codé en java, qui fait preuve d&amp;rsquo;une grande maturité (version 9 à ce jour).
+Mohamed Youssfi formateur java explique comment sécuriser des applications en micro service avec Keycloak à travers 11 vidéos.</description>
+    </item>
+    
+  </channel>
+</rss>
