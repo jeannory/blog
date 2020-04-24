@@ -73,16 +73,18 @@
 <h2 id="introduction">Introduction</h2>
 
 <p>Keycloak est serveur d&rsquo;authentification standalone.
-Il est reconnu par la protection qu&rsquo;elle propose en terme de cyber sécurité et de très nombreuses librairies permettent une utilisation étendue (Java, AngularJs, Typescript, Ldap, etc..). Beaucoup d&rsquo;entreprise lui font confiance et délèguent la partie authentification/autorisation à Keycloak.
+Il est reconnu pour la protection qu&rsquo;il propose en termes de cyber sécurité et aussi par les très nombreuses librairies/fonctionnalités qui permettent une utilisation étendue (Java, AngularJs, Typescript, Ldap, etc..). Beaucoup d&rsquo;entreprises lui font confiance et lui délèguent la partie authentification/autorisation.
 C&rsquo;est un projet open source codé en java, qui fait preuve d&rsquo;une grande maturité (version 9 à ce jour).</p>
 
-<p>Mohamed Youssfi formateur java explique comment sécuriser des applications en micro service avec Keycloak à travers 11 vidéos.</p>
+<p>Mohamed Youssfi formateur java explique comment sécuriser des applications en micro-service avec Keycloak à travers 11 vidéos.</p>
 
 <!-- <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
   <iframe src="https://www.youtube.com/watch?v=2DYWyE9jkEY" style="position: absolute; top: 0; left: 0; width: 50%; height: 75%; border:0;" allowfullscreen title="YouTube Video"></iframe>
 </div> -->
 
-<h3 id="sécuriser-des-applications-en-micro-service-avec-keycloak-m-mohamed-youssfi">Sécuriser des applications en micro service avec Keycloak - M. Mohamed Youssfi</h3>
+<h3 id="vidéos-de-m-mohamed-youssfi">Vidéos de M. Mohamed Youssfi</h3>
+
+<p>Sécuriser des applications en micro-service avec Keycloak</p>
 
 <ul>
 <li><a href="https://www.youtube.com/watch?v=2DYWyE9jkEY">Part 1 - Basic Concepts</a></li>
@@ -90,7 +92,7 @@ C&rsquo;est un projet open source codé en java, qui fait preuve d&rsquo;une gra
 <li><a href="https://www.youtube.com/watch?v=mFJSxX9d-Cg">Part 3 - Getting Started with Keycloak</a></li>
 <li><a href="https://www.youtube.com/watch?v=QksFYgRUxGQ&amp;t=188s">Part 4 - Spring MVC Application</a></li>
 <li><a href="https://www.youtube.com/watch?v=NvpbR_wvPlQ&amp;t=6s">Part 5 - Spring Security Keycloak Adapter</a></li>
-<li><a href="https://www.youtube.com/watch?v=grvDI2kvgsc&amp;t=4s">Part 6 - Micro Service Rest API Bearer Only case</a></li>
+<li><a href="https://www.youtube.com/watch?v=grvDI2kvgsc&amp;t=4s">Part 6 - Micro-Service Rest API Bearer Only case</a></li>
 <li><a href="https://www.youtube.com/watch?v=Seq2qCCwxZ0&amp;t=37s">Part 7 - Angular Application to Secure</a></li>
 <li><a href="https://www.youtube.com/watch?v=5n0DhOdLxPc&amp;t=29s">Part 8 - Keycloak js in Angular App</a></li>
 <li><a href="https://www.youtube.com/watch?v=nIm78BIIeFE&amp;t=27s">Part 9 - Http Authorization Header Interceptor</a></li>
@@ -103,19 +105,55 @@ C&rsquo;est un projet open source codé en java, qui fait preuve d&rsquo;une gra
 <p>Après avoir suivi cette formation, je vous propose un exemple d&rsquo;implémentation.
 Le projet va comporter des tests, avec un environnement entièrement portable.</p>
 
+<h3 id="dépôts-gitlab">Dépôts Gitlab</h3>
+
+<ul>
+<li><a href="https://gitlab.com/phou.jeannory/keycloak-back-end.git">Back-end</a></li>
+<li>Front-end toDo</li>
+</ul>
+
 <hr />
 
-<h2 id="projet-spécificités">Projet : spécificités</h2>
+<h3 id="projet-spécificités-techniques">Projet : spécificités techniques</h3>
 
 <ul>
 <li>Back-end en java avec Springboot</li>
-<li>Front-end en Angular</li>
+<li>Front-end en Angular Material</li>
 <li>Docker de la base de données Postgresql</li>
 <li>Docker du serveur keycloak</li>
-<li>Docker de la base de donnée Mysql de keycloak</li>
+<li>Docker de la base de données Mysql de keycloak</li>
 <li>Tests unitaires</li>
-<li>Tests d&rsquo;intégrations</li>
+<li>Tests d&rsquo;intégration</li>
 </ul>
+
+<h3 id="projet-spécificités-fonctionnelles">Projet : spécificités fonctionnelles</h3>
+
+<ul>
+<li>L&rsquo;utilisateur peut se connecter/déconnecter</li>
+<li>L&rsquo;utilisateur peut créer un compte</li>
+<li>L&rsquo;utilisateur peut accéder/modifier à son profil</li>
+<li>L&rsquo;utilisateur disposant du rôle manager peut accéder à la liste de tous les utilisateurs</li>
+</ul>
+
+<hr />
+
+<h2 id="le-projet-back-end">Le projet back-end</h2>
+
+<h3 id="l-implémentation-de-keycloak">L&rsquo;implémentation de Keycloak</h3>
+
+<p>toDo</p>
+
+<h3 id="application-100-portable-avec-docker">Application 100 % portable avec docker</h3>
+
+<p>toDo</p>
+
+<h3 id="les-profils-maven-et-springboot">Les profils maven et springboot</h3>
+
+<p>toDo</p>
+
+<h3 id="les-tests">Les tests</h3>
+
+<p>toDo</p>
 
 <hr />
 
@@ -140,9 +178,18 @@ Le projet va comporter des tests, avec un environnement entièrement portable.</
 <ul>
 <li><a href="#introduction">Introduction</a>
 <ul>
-<li><a href="#sécuriser-des-applications-en-micro-service-avec-keycloak-m-mohamed-youssfi">Sécuriser des applications en micro service avec Keycloak - M. Mohamed Youssfi</a></li>
+<li><a href="#vidéos-de-m-mohamed-youssfi">Vidéos de M. Mohamed Youssfi</a></li>
+<li><a href="#dépôts-gitlab">Dépôts Gitlab</a></li>
+<li><a href="#projet-spécificités-techniques">Projet : spécificités techniques</a></li>
+<li><a href="#projet-spécificités-fonctionnelles">Projet : spécificités fonctionnelles</a></li>
 </ul></li>
-<li><a href="#projet-spécificités">Projet : spécificités</a></li>
+<li><a href="#le-projet-back-end">Le projet back-end</a>
+<ul>
+<li><a href="#l-implémentation-de-keycloak">L&rsquo;implémentation de Keycloak</a></li>
+<li><a href="#application-100-portable-avec-docker">Application 100 % portable avec docker</a></li>
+<li><a href="#les-profils-maven-et-springboot">Les profils maven et springboot</a></li>
+<li><a href="#les-tests">Les tests</a></li>
+</ul></li>
 </ul></li>
 </ul>
 </nav>
