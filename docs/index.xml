@@ -12,6 +12,23 @@
     
     
     <item>
+      <title>Gitlab</title>
+      <link>https://jeannory.github.io/blog/articles/gitlab/</link>
+      <pubDate>Sun, 26 Apr 2020 16:20:53 +0200</pubDate>
+      
+      <guid>https://jeannory.github.io/blog/articles/gitlab/</guid>
+      <description>Introduction toDo
+Dépôts Gitlab  Back-end Front-end  Gitlab-CI toDo
+Build du projet back-end toDo
+Les tests unitaires back-end toDo
+Qualité du code back-end toDo
+Les tests d&amp;rsquo;intégration back-end  Ouvrir le menu Settings/CI/CD/Variables et enregistrer la clef privée  Affichage de la couverture de test back-end toDo
+Gitlab-CD toDo
+Build de l&amp;rsquo;application back-end toDo
+Déploiement de l&amp;rsquo;application back-end toDo</description>
+    </item>
+    
+    <item>
       <title>Keycloak</title>
       <link>https://jeannory.github.io/blog/articles/keycloak/</link>
       <pubDate>Thu, 23 Apr 2020 19:40:34 +0200</pubDate>

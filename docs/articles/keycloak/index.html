@@ -40,6 +40,8 @@
 						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Categories<span class="caret"></span></a>
 						<ul class="dropdown-menu" role="menu">
 						
+							<li><a href="https://jeannory.github.io/blog/categories/gitlab">Gitlab</a></li>
+						
 							<li><a href="https://jeannory.github.io/blog/categories/keycloak">Keycloak</a></li>
 						
 							<li><a href="https://jeannory.github.io/blog/categories/spring-security">Spring-Security</a></li>
@@ -109,7 +111,7 @@ Le projet va comporter des tests, avec un environnement entièrement portable.</
 
 <ul>
 <li><a href="https://gitlab.com/phou.jeannory/keycloak-back-end.git">Back-end</a></li>
-<li>Front-end toDo</li>
+<li><a href="https://gitlab.com/phou.jeannory/keycloak-front-end.git">Front-end</a></li>
 </ul>
 
 <hr />
@@ -131,7 +133,7 @@ Le projet va comporter des tests, avec un environnement entièrement portable.</
 <ul>
 <li>L&rsquo;utilisateur peut se connecter/déconnecter</li>
 <li>L&rsquo;utilisateur peut créer un compte</li>
-<li>L&rsquo;utilisateur peut accéder/modifier à son profil</li>
+<li>L&rsquo;utilisateur peut accéder/modifier son profil</li>
 <li>L&rsquo;utilisateur disposant du rôle manager peut accéder à la liste de tous les utilisateurs</li>
 </ul>
 
@@ -145,7 +147,103 @@ Le projet va comporter des tests, avec un environnement entièrement portable.</
 
 <h3 id="application-100-portable-avec-docker">Application 100 % portable avec docker</h3>
 
-<p>toDo</p>
+<p>Lancer l&rsquo;environnement de recette :</p>
+
+<p>Se connecter à la VM</p>
+
+<pre><code>ssh -p 18380 digital@192.168.1.35
+</code></pre>
+
+<p>Build les images de Postgresql, Keycloak et sa bdd (Mysql)</p>
+
+<pre><code>cd /home/digital/keycloak-project/docker-back-end-environment
+docker-compose -f docker-compose.yml up -d
+</code></pre>
+
+<p>Vérifier que les images ont bien été déployées</p>
+
+<pre><code>docker ps -a
+</code></pre>
+
+<p>Affichage</p>
+
+<pre><code>CONTAINER ID        IMAGE                COMMAND                  CREATED             STATUS                             PORTS                                                                    NAMES
+de2face102da        jboss/keycloak       &quot;/opt/jboss/tools/do…&quot;   22 seconds ago      Up 16 seconds                      0.0.0.0:8443-&gt;8443/tcp, 0.0.0.0:9990-&gt;9990/tcp, 0.0.0.0:8099-&gt;8080/tcp   keycloak-dev-docker
+2909874a449a        postgres             &quot;docker-entrypoint.s…&quot;   33 seconds ago      Up 24 seconds                      0.0.0.0:5432-&gt;5432/tcp                                                   postgresql-dev-docker
+1cef41fa3f93        mysql/mysql-server   &quot;/entrypoint.sh mysq…&quot;   33 seconds ago      Up 23 seconds (health: starting)   0.0.0.0:3306-&gt;3306/tcp, 33060/tcp                                        mysql-dev-docker
+</code></pre>
+
+<p>Récupérer l&rsquo;ip de l&rsquo;image mysql-dev-docker</p>
+
+<pre><code>docker inspect mysql-dev-docker
+</code></pre>
+
+<p>Affichage</p>
+
+<pre><code>&quot;NetworkID&quot;: &quot;909b56f4c2caa1c594f8d691e0204cc236849fb25ddb2302bb75fcba516a8698&quot;,
+&quot;EndpointID&quot;: &quot;21d1c92defc16198b971ecf87be244bcff13c3e8bb5750753c8d2c428a85685e&quot;,
+&quot;Gateway&quot;: &quot;172.25.0.1&quot;,
+&quot;IPAddress&quot;: &quot;172.25.0.3&quot;,
+</code></pre>
+
+<p>Restaurer la base de données Mysql</p>
+
+<pre><code>cat backup.sql | docker exec -i mysql-dev-docker /usr/bin/mysql -h '172.25.0.3' -u keycloak -ppassword keycloak
+</code></pre>
+
+<p>Un warning indique quil n&rsquo;est pas indiqué de renseigner le password dans une ligne de commande&hellip;</p>
+
+<pre><code>mysql: [Warning] Using a password on the command line interface can be insecure.
+</code></pre>
+
+<p>Vérifier que la sauvegarde a bien été réalisée</p>
+
+<pre><code>cd /home/digital/keycloak-project/target
+ls
+</code></pre>
+
+<p>Affichage</p>
+
+<pre><code>keycloak-dev-docker  mysql-dev-docker
+</code></pre>
+
+<p>Si soucis de lancement de keycloak apres la restauration de la base de données</p>
+
+<pre><code>CONTAINER ID        IMAGE                COMMAND                  CREATED             STATUS                          PORTS                               NAMES
+c3246b20fde4        jboss/keycloak       &quot;/opt/jboss/tools/do…&quot;   3 minutes ago       Restarting (1) 11 seconds ago                                       keycloak-dev-docker
+99c412204936        postgres             &quot;docker-entrypoint.s…&quot;   3 minutes ago       Up 3 minutes                    0.0.0.0:5432-&gt;5432/tcp              postgresql-dev-docker
+ed42957b5ff5        mysql/mysql-server   &quot;/entrypoint.sh mysq…&quot;   3 minutes ago       Up 3 minutes (healthy)          0.0.0.0:3306-&gt;3306/tcp, 33060/tcp   mysql-dev-docker
+</code></pre>
+
+<p>Il faut arrêter/supprimer les images</p>
+
+<pre><code>docker stop keycloak-dev-docker
+docker rm keycloak-dev-docker
+docker stop postgresql-dev-docker
+docker rm postgresql-dev-docker
+docker mysql-dev-docker
+docker mysql-dev-docker
+docker system prune -a
+</code></pre>
+
+<p>Affichage</p>
+
+<pre><code>Total reclaimed space: 1.339GB
+</code></pre>
+
+<p>Et rebuild les images</p>
+
+<pre><code>cd /home/digital/keycloak-project/docker-back-end-environment
+docker-compose -f docker-compose.yml up -d
+</code></pre>
+
+<p>En relancant la commande docker ps -a nous voyons que tout est rentré dans l&rsquo;ordre</p>
+
+<pre><code>CONTAINER ID        IMAGE                COMMAND                  CREATED             STATUS                             PORTS                                                                    NAMES
+97b1d64bf536        jboss/keycloak       &quot;/opt/jboss/tools/do…&quot;   25 seconds ago      Up 18 seconds                      0.0.0.0:8443-&gt;8443/tcp, 0.0.0.0:9990-&gt;9990/tcp, 0.0.0.0:8099-&gt;8080/tcp   keycloak-dev-docker
+3b9e6f4a82e3        postgres             &quot;docker-entrypoint.s…&quot;   38 seconds ago      Up 23 seconds                      0.0.0.0:5432-&gt;5432/tcp                                                   postgresql-dev-docker
+2bd8051a1850        mysql/mysql-server   &quot;/entrypoint.sh mysq…&quot;   38 seconds ago      Up 24 seconds (health: starting)   0.0.0.0:3306-&gt;3306/tcp, 33060/tcp                                        mysql-dev-docker
+</code></pre>
 
 <h3 id="les-profils-maven-et-springboot">Les profils maven et springboot</h3>
 
@@ -198,6 +296,17 @@ Le projet va comporter des tests, avec un environnement entièrement portable.</
 	<div class="sidebar-module">
 		<h4 class="sidebar-heading">Pages in Categories</h4>
 		<ul class="sidebar-category-list">
+		
+			<li>
+				<a href="https://jeannory.github.io/blog/categories/gitlab">
+					<span class="doc-list-category">Gitlab</span>
+				</a>
+				<ul>
+					<li><a href="/blog/articles/gitlab/">Gitlab</a>
+					</li>
+				
+				</ul>
+			</li>
 		
 			<li>
 				<a href="https://jeannory.github.io/blog/categories/keycloak">

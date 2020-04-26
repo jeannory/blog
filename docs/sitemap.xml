@@ -3,6 +3,11 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://jeannory.github.io/blog/articles/gitlab/</loc>
+    <lastmod>2020-04-26T16:20:53+02:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://jeannory.github.io/blog/articles/keycloak/</loc>
     <lastmod>2020-04-23T19:40:34+02:00</lastmod>
   </url>
@@ -29,13 +34,13 @@
   
   <url>
     <loc>https://jeannory.github.io/blog/articles/</loc>
-    <lastmod>2020-04-23T19:40:34+02:00</lastmod>
+    <lastmod>2020-04-26T16:20:53+02:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://jeannory.github.io/blog/tags/articles/</loc>
-    <lastmod>2020-04-23T19:40:34+02:00</lastmod>
+    <lastmod>2020-04-26T16:20:53+02:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -47,6 +52,12 @@
   
   <url>
     <loc>https://jeannory.github.io/blog/categories/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jeannory.github.io/blog/categories/gitlab/</loc>
+    <lastmod>2020-04-26T16:20:53+02:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -70,7 +81,7 @@
   
   <url>
     <loc>https://jeannory.github.io/blog/tags/</loc>
-    <lastmod>2020-04-23T19:40:34+02:00</lastmod>
+    <lastmod>2020-04-26T16:20:53+02:00</lastmod>
     <priority>0</priority>
   </url>
   

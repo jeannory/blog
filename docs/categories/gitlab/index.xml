@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Gitlab on Jeannory&#39;s blog</title>
+    <link>https://jeannory.github.io/blog/categories/gitlab/</link>
+    <description>Recent content in Gitlab on Jeannory&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 26 Apr 2020 16:20:53 +0200</lastBuildDate>
+    
+	<atom:link href="https://jeannory.github.io/blog/categories/gitlab/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Gitlab</title>
+      <link>https://jeannory.github.io/blog/articles/gitlab/</link>
+      <pubDate>Sun, 26 Apr 2020 16:20:53 +0200</pubDate>
+      
+      <guid>https://jeannory.github.io/blog/articles/gitlab/</guid>
+      <description>Introduction toDo
+Dépôts Gitlab  Back-end Front-end  Gitlab-CI toDo
+Build du projet back-end toDo
+Les tests unitaires back-end toDo
+Qualité du code back-end toDo
+Les tests d&amp;rsquo;intégration back-end  Ouvrir le menu Settings/CI/CD/Variables et enregistrer la clef privée  Affichage de la couverture de test back-end toDo
+Gitlab-CD toDo
+Build de l&amp;rsquo;application back-end toDo
+Déploiement de l&amp;rsquo;application back-end toDo</description>
+    </item>
+    
+  </channel>
+</rss>
