@@ -17,10 +17,9 @@
       <pubDate>Sun, 26 Apr 2020 16:20:53 +0200</pubDate>
       
       <guid>https://jeannory.github.io/blog/articles/gitlab/</guid>
-      <description>Introduction toDo
+      <description>Introduction Gitlab fournit un ensemble de service complet pour l&amp;rsquo;intégration et le déploiement continue. Exemple d&amp;rsquo;utilisation avec le projet Back-end de Keycloak.
 Dépôts Gitlab  Back-end Front-end  Gitlab-CI A chaque commit, Gitlab va lancer les tâches (stages) à partir du fichier .gitlab-ci.yml enregistré à la racine du projet.
-Build du projet back-end L&amp;rsquo;image maven/java sera utilisé dans différents stages. Gitlab va mettre en cache les dépendances maven et le contenu du target ce qui va engendrer un gain de temps, ressources et de connexion.
-image: maven:3.3.9-jdk-8 variables: MAVEN_CLI_OPTS: &amp;quot;--batch-mode --errors --fail-at-end --show-version&amp;quot; MAVEN_OPTS: &amp;quot;-Dmaven.</description>
+Build du projet L&amp;rsquo;image maven:3.3.9-jdk-8 sera utilisé dans différents stages. Gitlab va mettre en cache les dépendances maven et le contenu du target ce qui va engendrer un gain de temps, ressources et de connexion.</description>
     </item>
     
     <item>

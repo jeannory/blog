@@ -74,7 +74,8 @@
 
 <h2 id="introduction">Introduction</h2>
 
-<p>toDo</p>
+<p>Gitlab fournit un ensemble de service complet pour l&rsquo;intégration et le déploiement continue.
+Exemple d&rsquo;utilisation avec le projet Back-end de <a href="/blog/articles/keycloak/">Keycloak</a>.</p>
 
 <h3 id="dépôts-gitlab">Dépôts Gitlab</h3>
 
@@ -87,9 +88,9 @@
 
 <p>A chaque commit, Gitlab va lancer les tâches (stages) à partir du fichier .gitlab-ci.yml enregistré à la racine du projet.</p>
 
-<h3 id="build-du-projet-back-end">Build du projet back-end</h3>
+<h3 id="build-du-projet">Build du projet</h3>
 
-<p>L&rsquo;image maven/java sera utilisé dans différents stages.
+<p>L&rsquo;image maven:3.3.9-jdk-8 sera utilisé dans différents stages.
 Gitlab va mettre en cache les dépendances maven et le contenu du target ce qui va engendrer un gain de temps, ressources et de connexion.</p>
 
 <pre><code>image: maven:3.3.9-jdk-8
@@ -131,7 +132,7 @@ Uploading artifacts for successful job
 Job succeeded
 </code></pre>
 
-<h3 id="les-tests-unitaires-back-end">Les tests unitaires back-end</h3>
+<h3 id="les-tests-unitaires">Les tests unitaires</h3>
 
 <p>Lancement des tests unitaires en utilisant le profile dev-docker</p>
 
@@ -228,23 +229,143 @@ Job succeeded
 
 <p><img src="/blog/img/gitlab-02.png" alt="chemin" /></p>
 
+<p>Les différents coverages sont détaillés dans un dashboard.</p>
+
 <p><img src="/blog/img/gitlab-03.png" alt="rapport tests unitaires" /></p>
 
-<h3 id="qualité-du-code-back-end">Qualité du code back-end</h3>
+<h3 id="qualité-du-code">Qualité du code</h3>
 
-<p>toDo</p>
+<p>La qualité du code, une aide non négligeable pour tous développeur.</p>
 
-<h3 id="les-tests-d-intégration-back-end">Les tests d&rsquo;intégration back-end</h3>
+<pre><code>code_quality_job:
+    stage: quality
+    image: docker:stable
+    allow_failure: true
+    services:
+        - docker:stable-dind
+    script:
+        - mkdir codequality-results
+        - docker run
+        --env CODECLIMATE_CODE=&quot;$PWD&quot;
+        --volume &quot;$PWD&quot;:/code
+        --volume /var/run/docker.sock:/var/run/docker.sock
+        --volume /tmp/cc:/tmp/cc
+        codeclimate/codeclimate analyze -f html &gt; ./codequality-results/index.html
+    artifacts:
+        paths:
+        - codequality-results/
+    only:
+        - dev-docker
+</code></pre>
 
-<ul>
-<li>Ouvrir le menu Settings/CI/CD/Variables et enregistrer la clef privée</li>
-</ul>
+<p>Affichage du rapport</p>
+
+<p><img src="/blog/img/gitlab-04.png" alt="rapport qualité de code" /></p>
+
+<h3 id="les-tests-d-intégration">Les tests d&rsquo;intégration</h3>
+
+<p>Pour les tests d&rsquo;intégration, il est nécessaire de se connecter à un serveur. Pour cela nous allons utiliser une clef privée.
+Ouvrir le menu Settings/CI/CD/Variables et enregistrer la clef</p>
 
 <p><img src="/blog/img/gitlab-01.png" alt="private key" /></p>
 
-<h3 id="affichage-de-la-couverture-de-test-back-end">Affichage de la couverture de test back-end</h3>
+<p>Pour les tests gitlab va ouvrir le port du serveur postgresql, puis le refermer. Il s&rsquo;agit d&rsquo;une solution provisoire en attendant de créer un tunnel ssh&hellip;</p>
 
-<p>toDo</p>
+<pre><code>enable-remote-bdd:
+    stage: enable-remote-bdd
+    image: ubuntu:latest
+    before_script:
+        - 'which ssh-agent || ( apt-get update -y &amp;&amp; apt-get install openssh-client -y)'
+        - mkdir -p ~/.ssh
+        - echo &quot;$SSH_PRIVATE_KEY&quot; | tr -d '\r' &gt; ~/.ssh/id_rsa
+        - chmod 700 ~/.ssh/id_rsa
+        - eval &quot;$(ssh-agent -s)&quot;
+        - ssh-add ~/.ssh/id_rsa
+        - '[[ -f /.dockerenv ]] &amp;&amp; echo -e &quot;Host *\n\tStrictHostKeyChecking no\n\n&quot; &gt; ~/.ssh/config'
+    script:
+        - ssh-copy-id digital@$X230_SERVER_1 -p &quot;18380&quot;
+        - ssh -t digital@$X230_SERVER_1 -p &quot;18380&quot; &lt;&lt; END
+        - pwd
+        - exec 3&gt;&amp;1 1&gt;/dev/null 2&gt;&amp;1
+        - echo &quot;$X230_PASSWORD_1&quot; | sudo -S ufw allow 5432
+        - sudo -S ufw status &gt;&amp;3
+        - END
+    only:
+        - dev-docker
+</code></pre>
+
+<p>Les tests d&rsquo;intégration nécessitent une connexion vers base de données et vers le serveur d&rsquo;authentification Keycloak (utilisation du profil maven dev-docker-integration-testing et du profil Springboot dev-docker-integration-testing)</p>
+
+<pre><code>integration-tests:
+    stage: integration-tests
+    script:
+        - 'mvn $MAVEN_CLI_OPTS clean verify -Pdev-docker-integration-testing -Dspring.profiles.active=dev-docker-integration-testing'
+    only:
+        - dev-docker
+</code></pre>
+
+<p>pom.xml</p>
+
+<pre><code>&lt;profile&gt;
+    &lt;id&gt;dev-docker-integration-testing&lt;/id&gt;
+    &lt;activation&gt;
+        &lt;activeByDefault&gt;false&lt;/activeByDefault&gt;
+    &lt;/activation&gt;
+    &lt;dependencies&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
+            &lt;scope&gt;test&lt;/scope&gt;
+        &lt;/dependency&gt;
+    &lt;/dependencies&gt;
+    &lt;build&gt;
+        &lt;plugins&gt;
+            &lt;!-- only integration tests--&gt;
+            &lt;plugin&gt;
+                &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+                &lt;artifactId&gt;maven-surefire-plugin&lt;/artifactId&gt;
+                &lt;version&gt;3.0.0-M1&lt;/version&gt;
+                &lt;configuration&gt;
+                    &lt;excludes&gt;
+                        &lt;exclude&gt;**/SpaceSpaceDtoConverterTest*.java&lt;/exclude&gt;
+                        &lt;exclude&gt;**/UserUserDtoConverterTest*.java&lt;/exclude&gt;
+                        &lt;exclude&gt;**/UserServiceImplTest*.java&lt;/exclude&gt;
+                        &lt;exclude&gt;**/UserServiceImplTest*.java&lt;/exclude&gt;
+                    &lt;/excludes&gt;
+                &lt;/configuration&gt;
+            &lt;/plugin&gt;
+        &lt;/plugins&gt;
+    &lt;/build&gt;
+&lt;/profile&gt;
+</code></pre>
+
+<p>fichier application.yml</p>
+
+<pre><code>spring:
+    profiles: dev-docker-integration-testing
+
+    jpa:
+        database: POSTGRESQL
+        show-sql: true
+        hibernate:
+        ddl-auto: create-drop
+
+    datasource:
+        platform: postgres
+        url: jdbc:postgresql://jeannory.dynamic-dns.net:5432/keycloak_back_end_db
+        username: user1
+</code></pre>
+
+<p>Résultat des tests</p>
+
+<pre><code>[INFO] Results:
+[INFO] 
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0
+</code></pre>
+
+<p>Affichage du rapport</p>
+
+<p><img src="/blog/img/gitlab-05.png" alt="rapport tests d'intégration" /></p>
 
 <h2 id="gitlab-cd">Gitlab-CD</h2>
 
@@ -283,12 +404,11 @@ Job succeeded
 </ul></li>
 <li><a href="#gitlab-ci">Gitlab-CI</a>
 <ul>
-<li><a href="#build-du-projet-back-end">Build du projet back-end</a></li>
-<li><a href="#les-tests-unitaires-back-end">Les tests unitaires back-end</a></li>
+<li><a href="#build-du-projet">Build du projet</a></li>
+<li><a href="#les-tests-unitaires">Les tests unitaires</a></li>
 <li><a href="#affichage-de-couverture-de-code">Affichage de couverture de code</a></li>
-<li><a href="#qualité-du-code-back-end">Qualité du code back-end</a></li>
-<li><a href="#les-tests-d-intégration-back-end">Les tests d&rsquo;intégration back-end</a></li>
-<li><a href="#affichage-de-la-couverture-de-test-back-end">Affichage de la couverture de test back-end</a></li>
+<li><a href="#qualité-du-code">Qualité du code</a></li>
+<li><a href="#les-tests-d-intégration">Les tests d&rsquo;intégration</a></li>
 </ul></li>
 <li><a href="#gitlab-cd">Gitlab-CD</a>
 <ul>
