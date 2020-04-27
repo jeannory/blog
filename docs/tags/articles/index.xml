@@ -18,14 +18,9 @@
       
       <guid>https://jeannory.github.io/blog/articles/gitlab/</guid>
       <description>Introduction toDo
-Dépôts Gitlab  Back-end Front-end  Gitlab-CI toDo
-Build du projet back-end toDo
-Les tests unitaires back-end toDo
-Qualité du code back-end toDo
-Les tests d&amp;rsquo;intégration back-end  Ouvrir le menu Settings/CI/CD/Variables et enregistrer la clef privée  Affichage de la couverture de test back-end toDo
-Gitlab-CD toDo
-Build de l&amp;rsquo;application back-end toDo
-Déploiement de l&amp;rsquo;application back-end toDo</description>
+Dépôts Gitlab  Back-end Front-end  Gitlab-CI A chaque commit, Gitlab va lancer les tâches (stages) à partir du fichier .gitlab-ci.yml enregistré à la racine du projet.
+Build du projet back-end L&amp;rsquo;image maven/java sera utilisé dans différents stages. Gitlab va mettre en cache les dépendances maven et le contenu du target ce qui va engendrer un gain de temps, ressources et de connexion.
+image: maven:3.3.9-jdk-8 variables: MAVEN_CLI_OPTS: &amp;quot;--batch-mode --errors --fail-at-end --show-version&amp;quot; MAVEN_OPTS: &amp;quot;-Dmaven.</description>
     </item>
     
     <item>

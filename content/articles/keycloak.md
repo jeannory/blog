@@ -35,8 +35,7 @@ Sécuriser des applications en micro-service avec Keycloak
 
 ---
 
-Après avoir suivi cette formation, je vous propose un exemple d'implémentation.
-Le projet va comporter des tests, avec un environnement entièrement portable.
+Exemple d'implémentation, avec des tests et un environnement entièrement portable en docker.
 
 ### Dépôts Gitlab ###
 

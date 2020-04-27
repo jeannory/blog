@@ -85,15 +85,150 @@
 
 <h2 id="gitlab-ci">Gitlab-CI</h2>
 
-<p>toDo</p>
+<p>A chaque commit, Gitlab va lancer les tâches (stages) à partir du fichier .gitlab-ci.yml enregistré à la racine du projet.</p>
 
 <h3 id="build-du-projet-back-end">Build du projet back-end</h3>
 
-<p>toDo</p>
+<p>L&rsquo;image maven/java sera utilisé dans différents stages.
+Gitlab va mettre en cache les dépendances maven et le contenu du target ce qui va engendrer un gain de temps, ressources et de connexion.</p>
+
+<pre><code>image: maven:3.3.9-jdk-8
+
+variables:
+    MAVEN_CLI_OPTS: &quot;--batch-mode --errors --fail-at-end --show-version&quot;
+    MAVEN_OPTS: &quot;-Dmaven.repo.local=${CI_PROJECT_DIR}/.m2&quot;
+
+cache:
+    key: ${CI_COMMIT_REF_SLUG} # cache is for per branch
+    paths:
+        - ${CI_PROJECT_DIR}/.m2
+        - target/
+
+stages:
+    - build
+
+build_job:
+    stage: build
+    script:
+        - 'mvn $MAVEN_CLI_OPTS package -Pdev -DskipTests'
+    only:
+        - dev-docker
+</code></pre>
+
+<p>Au prochain commit sur la branche dev-docker, les dépendances et le build du projet ont bien été mis dans le cache.</p>
+
+<pre><code>Running after_script
+00:02
+Saving cache
+00:14
+Creating cache dev-docker...
+/builds/phou.jeannory/keycloak-back-end/.m2: found 3366 matching files 
+target/: found 200 matching files                  
+Uploading cache.zip to https://storage.googleapis.com/gitlab-com-runners-cache/project/18369362/dev-docker 
+Created cache
+Uploading artifacts for successful job
+00:01
+Job succeeded
+</code></pre>
 
 <h3 id="les-tests-unitaires-back-end">Les tests unitaires back-end</h3>
 
-<p>toDo</p>
+<p>Lancement des tests unitaires en utilisant le profile dev-docker</p>
+
+<pre><code>&lt;profile&gt;
+    &lt;id&gt;dev-docker&lt;/id&gt;
+    &lt;activation&gt;
+        &lt;activeByDefault&gt;false&lt;/activeByDefault&gt;
+    &lt;/activation&gt;
+    &lt;dependencies&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
+            &lt;scope&gt;test&lt;/scope&gt;
+        &lt;/dependency&gt;
+    &lt;/dependencies&gt;
+    &lt;build&gt;
+        &lt;plugins&gt;
+            &lt;!-- exclude integration tests--&gt;
+            &lt;plugin&gt;
+                &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+                &lt;artifactId&gt;maven-surefire-plugin&lt;/artifactId&gt;
+                &lt;version&gt;3.0.0-M1&lt;/version&gt;
+                &lt;configuration&gt;
+                    &lt;excludes&gt;
+                        &lt;exclude&gt;**/KeycloakApplicationTests*.java&lt;/exclude&gt;
+                        &lt;exclude&gt;**/UserControllerContextTest*.java&lt;/exclude&gt;
+                        &lt;exclude&gt;**/SpaceControllerContextTest*.java&lt;/exclude&gt;
+                    &lt;/excludes&gt;
+                &lt;/configuration&gt;
+            &lt;/plugin&gt;
+        &lt;/plugins&gt;
+    &lt;/build&gt;
+&lt;/profile&gt;
+</code></pre>
+
+<hr />
+
+<pre><code>junit-tests:
+    stage: junit-tests
+    script:
+        - 'mvn $MAVEN_CLI_OPTS test -Pdev-docker'
+    only:
+        - dev-docker
+</code></pre>
+
+<p>Les logs affichent une opération réussis</p>
+
+<pre><code>[INFO] Results:
+[INFO] 
+[INFO] Tests run: 20, Failures: 0, Errors: 0, Skipped: 0
+</code></pre>
+
+<h3 id="affichage-de-couverture-de-code">Affichage de couverture de code</h3>
+
+<p>Utilisation du pluglin jacoco pour afficher le coverage dans Gitlab</p>
+
+<pre><code>&lt;plugin&gt;
+    &lt;groupId&gt;org.jacoco&lt;/groupId&gt;
+    &lt;artifactId&gt;jacoco-maven-plugin&lt;/artifactId&gt;
+    &lt;version&gt;0.8.5&lt;/version&gt;
+    &lt;executions&gt;
+        &lt;execution&gt;
+            &lt;goals&gt;
+                &lt;goal&gt;prepare-agent&lt;/goal&gt;
+            &lt;/goals&gt;
+        &lt;/execution&gt;
+        &lt;!-- attached to Maven test phase --&gt;
+        &lt;execution&gt;
+            &lt;id&gt;report&lt;/id&gt;
+            &lt;phase&gt;test&lt;/phase&gt;
+            &lt;goals&gt;
+                &lt;goal&gt;report&lt;/goal&gt;
+            &lt;/goals&gt;
+        &lt;/execution&gt;
+    &lt;/executions&gt;
+&lt;/plugin&gt;
+</code></pre>
+
+<p>Récupération du site static généré par jacoco dans le target pour l&rsquo;afficher dans le répertoire junit-tests de Gitlab</p>
+
+<pre><code>junit-tests-coverage:
+    stage: junit-tests-coverage
+    script:
+        - mkdir public
+        - mv target/site/* junit-tests
+    artifacts:
+        paths:
+        - junit-tests
+    only:
+        - dev-docker
+</code></pre>
+
+<p>Affichage du rapport : cliquez sur Browse et naviguez jusqu&rsquo;à index.html</p>
+
+<p><img src="/blog/img/gitlab-02.png" alt="chemin" /></p>
+
+<p><img src="/blog/img/gitlab-03.png" alt="rapport tests unitaires" /></p>
 
 <h3 id="qualité-du-code-back-end">Qualité du code back-end</h3>
 
@@ -150,6 +285,7 @@
 <ul>
 <li><a href="#build-du-projet-back-end">Build du projet back-end</a></li>
 <li><a href="#les-tests-unitaires-back-end">Les tests unitaires back-end</a></li>
+<li><a href="#affichage-de-couverture-de-code">Affichage de couverture de code</a></li>
 <li><a href="#qualité-du-code-back-end">Qualité du code back-end</a></li>
 <li><a href="#les-tests-d-intégration-back-end">Les tests d&rsquo;intégration back-end</a></li>
 <li><a href="#affichage-de-la-couverture-de-test-back-end">Affichage de la couverture de test back-end</a></li>
