@@ -126,6 +126,8 @@ build_job:
         - dev-docker
 </code></pre>
 
+<hr />
+
 <p>Au prochain commit sur la branche dev-docker, les dépendances et le build du projet sont enregistrés dans le cache.</p>
 
 <pre><code>Running after_script
@@ -225,6 +227,8 @@ Job succeeded
 &lt;/plugin&gt;
 </code></pre>
 
+<hr />
+
 <p>Jacoco édite un rapport complet dans le target du projet. Le runner va le récupérer du cache pour le copier dans un autre répertoire (junit-tests), accessible depuis l&rsquo;IHM de Gitlab.</p>
 
 <pre><code>junit-tests-coverage:
@@ -239,9 +243,13 @@ Job succeeded
         - dev-docker
 </code></pre>
 
+<hr />
+
 <p>Affichage du rapport : cliquez sur Browse et naviguez jusqu&rsquo;à index.html.</p>
 
 <p><img src="/blog/img/gitlab-02.png" alt="chemin" /></p>
+
+<hr />
 
 <p>Les différents coverages sont détaillés dans un dashboard.</p>
 
@@ -274,6 +282,8 @@ Job succeeded
         - dev-docker
 </code></pre>
 
+<hr />
+
 <p>Affichage du rapport.</p>
 
 <p><img src="/blog/img/gitlab-04.png" alt="rapport qualité de code" /></p>
@@ -290,6 +300,8 @@ Pour cela nous allons utiliser une clef privée.</p>
 <p>Ouvrir le menu Settings/CI/CD/Variables et enregistrer la clef.</p>
 
 <p><img src="/blog/img/gitlab-01.png" alt="private key" /></p>
+
+<hr />
 
 <p>Le runner va ouvrir une connexion distante vers la VM, et ouvrir le port du serveur Postgresql le temps du test. Il s&rsquo;agit d&rsquo;une solution provisoire en attendant de créer un tunnel ssh&hellip;
 Il est nécessaire pour cette opération de lancer la commande en super utilisateur, le mot de passe est enregistré dans une variable et non affiché dans les logs.</p>
@@ -317,8 +329,11 @@ Il est nécessaire pour cette opération de lancer la commande en super utilisat
         - dev-docker
 </code></pre>
 
-<p>Utilisation du profil maven dev-docker-integration-testing et du profil Springboot dev-docker-integration-testing) pour lancer les cycles clean verify.
-Le clean est dans cette étape nécessaire pour effacer le rapport des tests unitaires du cache.</p>
+<hr />
+
+<p>Utilisation du profil maven dev-docker-integration-testing et du profil Springboot dev-docker-integration-testing pour lancer les cycles clean verify.</p>
+
+<p>Le clean est dans cette étape nécessaire pour effacer le rapport des tests unitaires du cache.</p>
 
 <pre><code>integration-tests:
     stage: integration-tests
@@ -395,7 +410,7 @@ Le clean est dans cette étape nécessaire pour effacer le rapport des tests uni
 
 <hr />
 
-<p>Au prochain stage Gitlab ferme le port de la Base de données au niveau de la VM.</p>
+<p>Fermeture du port de la Base de données au niveau de la VM.</p>
 
 <pre><code>deny-remote-bdd:
     stage: deny-remote-bdd

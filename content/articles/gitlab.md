@@ -57,6 +57,8 @@ Le runner va mettre en cache les dépendances maven et le contenu du target ce q
         only:
             - dev-docker
 
+---
+
 Au prochain commit sur la branche dev-docker, les dépendances et le build du projet sont enregistrés dans le cache.
 
     Running after_script
@@ -151,6 +153,8 @@ Utilisation du pluglin Jacoco pour afficher le coverage dans Gitlab.
         </executions>
     </plugin>
 
+---
+
 Jacoco édite un rapport complet dans le target du projet. Le runner va le récupérer du cache pour le copier dans un autre répertoire (junit-tests), accessible depuis l'IHM de Gitlab.
 
     junit-tests-coverage:
@@ -164,9 +168,13 @@ Jacoco édite un rapport complet dans le target du projet. Le runner va le récu
         only:
             - dev-docker
 
+---
+
 Affichage du rapport : cliquez sur Browse et naviguez jusqu'à index.html.
 
 ![chemin](/blog/img/gitlab-02.png)
+
+---
 
 Les différents coverages sont détaillés dans un dashboard.
 
@@ -198,6 +206,8 @@ La qualité du code, une aide non négligeable pour tous développeurs.
         only:
             - dev-docker
 
+---
+
 Affichage du rapport.
 
 ![rapport qualité de code](/blog/img/gitlab-04.png)
@@ -214,6 +224,8 @@ Pour cela nous allons utiliser une clef privée.
 Ouvrir le menu Settings/CI/CD/Variables et enregistrer la clef.
 
 ![private key](/blog/img/gitlab-01.png)
+
+---
 
 Le runner va ouvrir une connexion distante vers la VM, et ouvrir le port du serveur Postgresql le temps du test. Il s'agit d'une solution provisoire en attendant de créer un tunnel ssh...
 Il est nécessaire pour cette opération de lancer la commande en super utilisateur, le mot de passe est enregistré dans une variable et non affiché dans les logs.
@@ -241,7 +253,10 @@ Il est nécessaire pour cette opération de lancer la commande en super utilisat
         only:
             - dev-docker
 
-Utilisation du profil maven dev-docker-integration-testing et du profil Springboot dev-docker-integration-testing) pour lancer les cycles clean verify.
+---
+
+Utilisation du profil maven dev-docker-integration-testing et du profil Springboot dev-docker-integration-testing pour lancer les cycles clean verify.
+
 Le clean est dans cette étape nécessaire pour effacer le rapport des tests unitaires du cache.
 
 
@@ -316,7 +331,7 @@ Résultat des tests.
 
 ---
 
-Au prochain stage Gitlab ferme le port de la Base de données au niveau de la VM.
+Fermeture du port de la Base de données au niveau de la VM.
 
     deny-remote-bdd:
         stage: deny-remote-bdd
