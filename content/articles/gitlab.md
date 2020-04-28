@@ -11,8 +11,6 @@ categories: ["Gitlab"]
 Gitlab fournit un ensemble de services complet pour l'intégration et le déploiement continue.
 Il est nécessaire de créer et de renseigner le fichier .gitlab-ci.yml à la racine du projet, pour qu'à chaque commit sur une branche cible, Gitlab exécute les tâches (stages). 
 
-![pipelines-jobs](/blog/img/gitlab-07.png)
-
 Exemple d'utilisation avec le projet Back-end de <a href="/blog/articles/keycloak/">Keycloak</a> pour la réalisation des différentes étapes CI/CD.
 
 ---
@@ -27,6 +25,8 @@ Exemple d'utilisation avec le projet Back-end de <a href="/blog/articles/keycloa
 
 L'intégration continue permet à chaque commit de tester le build du projet, l'exécution des tests, les affichages de différents rapports (qualité de code et couverture des tests) et l'archivage des différents artifacts.
 Les pipelines correspond à un cycle complet, qui contiennent des jobs (stages).
+
+![pipelines-jobs](/blog/img/gitlab-07.png)
 
 ---
 
