@@ -86,7 +86,7 @@ C&rsquo;est un projet open source codé en java, qui fait preuve d&rsquo;une gra
 
 <h3 id="vidéos-de-m-mohamed-youssfi">Vidéos de M. Mohamed Youssfi</h3>
 
-<p>Sécuriser des applications en micro-service avec Keycloak</p>
+<p>Sécuriser des applications en micro-service avec Keycloak.</p>
 
 <ul>
 <li><a href="https://www.youtube.com/watch?v=2DYWyE9jkEY">Part 1 - Basic Concepts</a></li>
@@ -104,7 +104,7 @@ C&rsquo;est un projet open source codé en java, qui fait preuve d&rsquo;une gra
 
 <hr />
 
-<p>Exemple d&rsquo;implémentation, avec des tests et un environnement entièrement portable en docker.</p>
+<p>Exemple d&rsquo;implémentation, avec des tests et une application entièrement portable en docker.</p>
 
 <h3 id="dépôts-gitlab">Dépôts Gitlab</h3>
 
@@ -140,31 +140,50 @@ C&rsquo;est un projet open source codé en java, qui fait preuve d&rsquo;une gra
 
 <h2 id="le-projet-back-end">Le projet back-end</h2>
 
+<p>toDo</p>
+
+<hr />
+
 <h3 id="l-implémentation-de-keycloak">L&rsquo;implémentation de Keycloak</h3>
 
 <p>toDo</p>
 
+<hr />
+
 <h3 id="application-100-portable-avec-docker">Application 100 % portable avec docker</h3>
 
-<p>Lancer l&rsquo;environnement de recette :</p>
+<p>Toute l&rsquo;infrastructure de l&rsquo;application fonctionne sous docker. Elle est donc portable d&rsquo;un environnement à un autre.
+Elle comprend l&rsquo;application principale, sa base de données PostgreSql, le serveur d&rsquo;authentification Keycloak et sa base de données MySql.</p>
 
-<p>Se connecter à la VM</p>
+<hr />
 
-<pre><code>ssh -p 18380 digital@192.168.1.35
+<h3 id="exemple-de-déploiement-sur-une-vm-distante">Exemple de déploiement sur une VM distante</h3>
+
+<p>Le répertoire /home/digital/keycloak-project/docker-back-end-environment/ a le même contenu que le répertoire du même nom du projet.</p>
+
+<hr />
+
+<p>Se connecter à la VM.</p>
+
+<pre><code>ssh -p 18380 digital@jeannory.dynamic-dns.net
 </code></pre>
 
-<p>Build les images de Postgresql, Keycloak et sa bdd (Mysql)</p>
+<hr />
+
+<p>Build les images de Postgresql, Keycloak et sa bdd (Mysql).</p>
 
 <pre><code>cd /home/digital/keycloak-project/docker-back-end-environment
 docker-compose -f docker-compose.yml up -d
 </code></pre>
 
-<p>Vérifier que les images ont bien été déployées</p>
+<hr />
+
+<p>Vérifier que les images ont bien été déployées.</p>
 
 <pre><code>docker ps -a
 </code></pre>
 
-<p>Affichage</p>
+<hr />
 
 <pre><code>CONTAINER ID        IMAGE                COMMAND                  CREATED             STATUS                             PORTS                                                                    NAMES
 de2face102da        jboss/keycloak       &quot;/opt/jboss/tools/do…&quot;   22 seconds ago      Up 16 seconds                      0.0.0.0:8443-&gt;8443/tcp, 0.0.0.0:9990-&gt;9990/tcp, 0.0.0.0:8099-&gt;8080/tcp   keycloak-dev-docker
@@ -172,12 +191,14 @@ de2face102da        jboss/keycloak       &quot;/opt/jboss/tools/do…&quot;   22
 1cef41fa3f93        mysql/mysql-server   &quot;/entrypoint.sh mysq…&quot;   33 seconds ago      Up 23 seconds (health: starting)   0.0.0.0:3306-&gt;3306/tcp, 33060/tcp                                        mysql-dev-docker
 </code></pre>
 
-<p>Récupérer l&rsquo;ip de l&rsquo;image mysql-dev-docker</p>
+<hr />
+
+<p>Récupérer l&rsquo;ip de l&rsquo;image mysql-dev-docker.</p>
 
 <pre><code>docker inspect mysql-dev-docker
 </code></pre>
 
-<p>Affichage</p>
+<hr />
 
 <pre><code>&quot;NetworkID&quot;: &quot;909b56f4c2caa1c594f8d691e0204cc236849fb25ddb2302bb75fcba516a8698&quot;,
 &quot;EndpointID&quot;: &quot;21d1c92defc16198b971ecf87be244bcff13c3e8bb5750753c8d2c428a85685e&quot;,
@@ -185,28 +206,36 @@ de2face102da        jboss/keycloak       &quot;/opt/jboss/tools/do…&quot;   22
 &quot;IPAddress&quot;: &quot;172.25.0.3&quot;,
 </code></pre>
 
-<p>Restaurer la base de données Mysql</p>
+<hr />
+
+<p>Restaurer la base de données Mysql.</p>
 
 <pre><code>cat backup.sql | docker exec -i mysql-dev-docker /usr/bin/mysql -h '172.25.0.3' -u keycloak -ppassword keycloak
 </code></pre>
 
-<p>Un warning indique quil n&rsquo;est pas indiqué de renseigner le password dans une ligne de commande&hellip;</p>
+<hr />
+
+<p>Un warning indique qu&rsquo;il n&rsquo;est pas recommandé de renseigner le password dans une ligne de commande&hellip;</p>
 
 <pre><code>mysql: [Warning] Using a password on the command line interface can be insecure.
 </code></pre>
 
-<p>Vérifier que la sauvegarde a bien été réalisée</p>
+<hr />
+
+<p>Vérifier que la sauvegarde a bien été réalisée.</p>
 
 <pre><code>cd /home/digital/keycloak-project/target
 ls
 </code></pre>
 
-<p>Affichage</p>
+<hr />
 
 <pre><code>keycloak-dev-docker  mysql-dev-docker
 </code></pre>
 
-<p>Si soucis de lancement de keycloak apres la restauration de la base de données</p>
+<hr />
+
+<p>Si soucis de lancement de keycloak apres la restauration de la base de données.</p>
 
 <pre><code>CONTAINER ID        IMAGE                COMMAND                  CREATED             STATUS                          PORTS                               NAMES
 c3246b20fde4        jboss/keycloak       &quot;/opt/jboss/tools/do…&quot;   3 minutes ago       Restarting (1) 11 seconds ago                                       keycloak-dev-docker
@@ -214,29 +243,35 @@ c3246b20fde4        jboss/keycloak       &quot;/opt/jboss/tools/do…&quot;   3 
 ed42957b5ff5        mysql/mysql-server   &quot;/entrypoint.sh mysq…&quot;   3 minutes ago       Up 3 minutes (healthy)          0.0.0.0:3306-&gt;3306/tcp, 33060/tcp   mysql-dev-docker
 </code></pre>
 
-<p>Il faut arrêter/supprimer les images</p>
+<hr />
+
+<p>Il faut arrêter/supprimer les images.</p>
 
 <pre><code>docker stop keycloak-dev-docker
 docker rm keycloak-dev-docker
 docker stop postgresql-dev-docker
 docker rm postgresql-dev-docker
-docker mysql-dev-docker
-docker mysql-dev-docker
+docker stop mysql-dev-docker
+docker rm mysql-dev-docker
 docker system prune -a
 </code></pre>
 
-<p>Affichage</p>
+<hr />
 
 <pre><code>Total reclaimed space: 1.339GB
 </code></pre>
 
-<p>Et rebuild les images</p>
+<hr />
+
+<p>Rebuild les images.</p>
 
 <pre><code>cd /home/digital/keycloak-project/docker-back-end-environment
 docker-compose -f docker-compose.yml up -d
 </code></pre>
 
-<p>En relancant la commande docker ps -a nous voyons que tout est rentré dans l&rsquo;ordre</p>
+<hr />
+
+<p>En relancant la commande docker ps -a nous constatons que tout est rentré dans l&rsquo;ordre.</p>
 
 <pre><code>CONTAINER ID        IMAGE                COMMAND                  CREATED             STATUS                             PORTS                                                                    NAMES
 97b1d64bf536        jboss/keycloak       &quot;/opt/jboss/tools/do…&quot;   25 seconds ago      Up 18 seconds                      0.0.0.0:8443-&gt;8443/tcp, 0.0.0.0:9990-&gt;9990/tcp, 0.0.0.0:8099-&gt;8080/tcp   keycloak-dev-docker
@@ -244,7 +279,9 @@ docker-compose -f docker-compose.yml up -d
 2bd8051a1850        mysql/mysql-server   &quot;/entrypoint.sh mysq…&quot;   38 seconds ago      Up 24 seconds (health: starting)   0.0.0.0:3306-&gt;3306/tcp, 33060/tcp                                        mysql-dev-docker
 </code></pre>
 
-<h3 id="les-profils-maven-et-springboot">Les profils maven et springboot</h3>
+<p>&ndash;</p>
+
+<h3 id="les-profils-maven-et-springboot">Les profils maven et Springboot</h3>
 
 <p>toDo</p>
 
@@ -284,7 +321,8 @@ docker-compose -f docker-compose.yml up -d
 <ul>
 <li><a href="#l-implémentation-de-keycloak">L&rsquo;implémentation de Keycloak</a></li>
 <li><a href="#application-100-portable-avec-docker">Application 100 % portable avec docker</a></li>
-<li><a href="#les-profils-maven-et-springboot">Les profils maven et springboot</a></li>
+<li><a href="#exemple-de-déploiement-sur-une-vm-distante">Exemple de déploiement sur une VM distante</a></li>
+<li><a href="#les-profils-maven-et-springboot">Les profils maven et Springboot</a></li>
 <li><a href="#les-tests">Les tests</a></li>
 </ul></li>
 </ul></li>

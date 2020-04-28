@@ -74,24 +74,34 @@
 
 <h2 id="introduction">Introduction</h2>
 
-<p>Gitlab fournit un ensemble de service complet pour l&rsquo;intégration et le déploiement continue.
-Exemple d&rsquo;utilisation avec le projet Back-end de <a href="/blog/articles/keycloak/">Keycloak</a>.</p>
+<p>Gitlab fournit un ensemble de services complet pour l&rsquo;intégration et le déploiement continue.
+Il est nécessaire de créer et de renseigner le fichier .gitlab-ci.yml à la racine du projet, pour qu&rsquo;à chaque commit sur une branche cible, Gitlab exécute les tâches (stages).</p>
+
+<p><img src="/blog/img/gitlab-07.png" alt="pipelines-jobs" /></p>
+
+<p>Exemple d&rsquo;utilisation avec le projet Back-end de <a href="/blog/articles/keycloak/">Keycloak</a> pour la réalisation des différentes étapes CI/CD.</p>
+
+<hr />
 
 <h3 id="dépôts-gitlab">Dépôts Gitlab</h3>
 
 <ul>
 <li><a href="https://gitlab.com/phou.jeannory/keycloak-back-end.git">Back-end</a></li>
-<li><a href="https://gitlab.com/phou.jeannory/keycloak-front-end.git">Front-end</a></li>
 </ul>
+
+<hr />
 
 <h2 id="gitlab-ci">Gitlab-CI</h2>
 
-<p>A chaque commit, Gitlab va lancer les tâches (stages) à partir du fichier .gitlab-ci.yml enregistré à la racine du projet.</p>
+<p>L&rsquo;intégration continue permet à chaque commit de tester le build du projet, l&rsquo;exécution des tests, les affichages de différents rapports (qualité de code et couverture des tests) et l&rsquo;archivage des différents artifacts.
+Les pipelines correspond à un cycle complet, qui contiennent des jobs (stages).</p>
+
+<hr />
 
 <h3 id="build-du-projet">Build du projet</h3>
 
-<p>L&rsquo;image maven:3.3.9-jdk-8 sera utilisé dans différents stages.
-Gitlab va mettre en cache les dépendances maven et le contenu du target ce qui va engendrer un gain de temps, ressources et de connexion.</p>
+<p>L&rsquo;image maven:3.3.9-jdk-8 sera utilisée dans différents stages.
+Le runner va mettre en cache les dépendances maven et le contenu du target ce qui va engendrer un gain de temps, ressources et de connexion.</p>
 
 <pre><code>image: maven:3.3.9-jdk-8
 
@@ -116,7 +126,7 @@ build_job:
         - dev-docker
 </code></pre>
 
-<p>Au prochain commit sur la branche dev-docker, les dépendances et le build du projet ont bien été mis dans le cache.</p>
+<p>Au prochain commit sur la branche dev-docker, les dépendances et le build du projet sont enregistrés dans le cache.</p>
 
 <pre><code>Running after_script
 00:02
@@ -132,9 +142,11 @@ Uploading artifacts for successful job
 Job succeeded
 </code></pre>
 
+<hr />
+
 <h3 id="les-tests-unitaires">Les tests unitaires</h3>
 
-<p>Lancement des tests unitaires en utilisant le profile dev-docker</p>
+<p>Lancement des tests unitaires en utilisant le profil dev-docker.</p>
 
 <pre><code>&lt;profile&gt;
     &lt;id&gt;dev-docker&lt;/id&gt;
@@ -178,16 +190,18 @@ Job succeeded
         - dev-docker
 </code></pre>
 
-<p>Les logs affichent une opération réussis</p>
+<p>Les logs affichent une opération réussie.</p>
 
 <pre><code>[INFO] Results:
 [INFO] 
 [INFO] Tests run: 20, Failures: 0, Errors: 0, Skipped: 0
 </code></pre>
 
-<h3 id="affichage-de-couverture-de-code">Affichage de couverture de code</h3>
+<hr />
 
-<p>Utilisation du pluglin jacoco pour afficher le coverage dans Gitlab</p>
+<h3 id="couverture-de-code">Couverture de code</h3>
+
+<p>Utilisation du pluglin Jacoco pour afficher le coverage dans Gitlab.</p>
 
 <pre><code>&lt;plugin&gt;
     &lt;groupId&gt;org.jacoco&lt;/groupId&gt;
@@ -211,7 +225,7 @@ Job succeeded
 &lt;/plugin&gt;
 </code></pre>
 
-<p>Récupération du site static généré par jacoco dans le target pour l&rsquo;afficher dans le répertoire junit-tests de Gitlab</p>
+<p>Jacoco édite un rapport complet dans le target du projet. Le runner va le récupérer du cache pour le copier dans un autre répertoire (junit-tests), accessible depuis l&rsquo;IHM de Gitlab.</p>
 
 <pre><code>junit-tests-coverage:
     stage: junit-tests-coverage
@@ -225,7 +239,7 @@ Job succeeded
         - dev-docker
 </code></pre>
 
-<p>Affichage du rapport : cliquez sur Browse et naviguez jusqu&rsquo;à index.html</p>
+<p>Affichage du rapport : cliquez sur Browse et naviguez jusqu&rsquo;à index.html.</p>
 
 <p><img src="/blog/img/gitlab-02.png" alt="chemin" /></p>
 
@@ -233,9 +247,11 @@ Job succeeded
 
 <p><img src="/blog/img/gitlab-03.png" alt="rapport tests unitaires" /></p>
 
+<hr />
+
 <h3 id="qualité-du-code">Qualité du code</h3>
 
-<p>La qualité du code, une aide non négligeable pour tous développeur.</p>
+<p>La qualité du code, une aide non négligeable pour tous développeurs.</p>
 
 <pre><code>code_quality_job:
     stage: quality
@@ -258,18 +274,25 @@ Job succeeded
         - dev-docker
 </code></pre>
 
-<p>Affichage du rapport</p>
+<p>Affichage du rapport.</p>
 
 <p><img src="/blog/img/gitlab-04.png" alt="rapport qualité de code" /></p>
 
+<hr />
+
 <h3 id="les-tests-d-intégration">Les tests d&rsquo;intégration</h3>
 
-<p>Pour les tests d&rsquo;intégration, il est nécessaire de se connecter à un serveur. Pour cela nous allons utiliser une clef privée.
-Ouvrir le menu Settings/CI/CD/Variables et enregistrer la clef</p>
+<p>Les tests d&rsquo;intégration nécessitent une connexion vers base de données et vers le serveur d&rsquo;authentification Keycloak.
+Pour cela nous allons utiliser une clef privée.</p>
+
+<hr />
+
+<p>Ouvrir le menu Settings/CI/CD/Variables et enregistrer la clef.</p>
 
 <p><img src="/blog/img/gitlab-01.png" alt="private key" /></p>
 
-<p>Pour les tests gitlab va ouvrir le port du serveur postgresql, puis le refermer. Il s&rsquo;agit d&rsquo;une solution provisoire en attendant de créer un tunnel ssh&hellip;</p>
+<p>Le runner va ouvrir une connexion distante vers la VM, et ouvrir le port du serveur Postgresql le temps du test. Il s&rsquo;agit d&rsquo;une solution provisoire en attendant de créer un tunnel ssh&hellip;
+Il est nécessaire pour cette opération de lancer la commande en super utilisateur, le mot de passe est enregistré dans une variable et non affiché dans les logs.</p>
 
 <pre><code>enable-remote-bdd:
     stage: enable-remote-bdd
@@ -294,7 +317,8 @@ Ouvrir le menu Settings/CI/CD/Variables et enregistrer la clef</p>
         - dev-docker
 </code></pre>
 
-<p>Les tests d&rsquo;intégration nécessitent une connexion vers base de données et vers le serveur d&rsquo;authentification Keycloak (utilisation du profil maven dev-docker-integration-testing et du profil Springboot dev-docker-integration-testing)</p>
+<p>Utilisation du profil maven dev-docker-integration-testing et du profil Springboot dev-docker-integration-testing) pour lancer les cycles clean verify.
+Le clean est dans cette étape nécessaire pour effacer le rapport des tests unitaires du cache.</p>
 
 <pre><code>integration-tests:
     stage: integration-tests
@@ -304,7 +328,9 @@ Ouvrir le menu Settings/CI/CD/Variables et enregistrer la clef</p>
         - dev-docker
 </code></pre>
 
-<p>pom.xml</p>
+<hr />
+
+<p>Fichier pom.xml.</p>
 
 <pre><code>&lt;profile&gt;
     &lt;id&gt;dev-docker-integration-testing&lt;/id&gt;
@@ -339,7 +365,9 @@ Ouvrir le menu Settings/CI/CD/Variables et enregistrer la clef</p>
 &lt;/profile&gt;
 </code></pre>
 
-<p>fichier application.yml</p>
+<hr />
+
+<p>Fichier application.yml.</p>
 
 <pre><code>spring:
     profiles: dev-docker-integration-testing
@@ -356,24 +384,214 @@ Ouvrir le menu Settings/CI/CD/Variables et enregistrer la clef</p>
         username: user1
 </code></pre>
 
-<p>Résultat des tests</p>
+<hr />
+
+<p>Résultat des tests.</p>
 
 <pre><code>[INFO] Results:
 [INFO] 
 [INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0
 </code></pre>
 
-<p>Affichage du rapport</p>
+<hr />
+
+<p>Au prochain stage Gitlab ferme le port de la Base de données au niveau de la VM.</p>
+
+<pre><code>deny-remote-bdd:
+    stage: deny-remote-bdd
+    image: ubuntu:latest
+    before_script:
+        - 'which ssh-agent || ( apt-get update -y &amp;&amp; apt-get install openssh-client -y)'
+        - mkdir -p ~/.ssh
+        - echo &quot;$SSH_PRIVATE_KEY&quot; | tr -d '\r' &gt; ~/.ssh/id_rsa
+        - chmod 700 ~/.ssh/id_rsa
+        - eval &quot;$(ssh-agent -s)&quot;
+        - ssh-add ~/.ssh/id_rsa
+        - '[[ -f /.dockerenv ]] &amp;&amp; echo -e &quot;Host *\n\tStrictHostKeyChecking no\n\n&quot; &gt; ~/.ssh/config'
+    script:
+        - ssh-copy-id digital@$X230_SERVER_1 -p &quot;18380&quot;
+        - ssh -t digital@$X230_SERVER_1 -p &quot;18380&quot; &lt;&lt; END
+        - pwd
+        - exec 3&gt;&amp;1 1&gt;/dev/null 2&gt;&amp;1
+        - echo &quot;$X230_PASSWORD_1&quot; | sudo -S ufw deny 5432
+        - sudo -S ufw status &gt;&amp;3
+        - END
+    only:
+        - dev-docker
+</code></pre>
+
+<hr />
+
+<p>Le port 5432 est en DENY.</p>
+
+<pre><code>$ pwd
+/home/digital
+$ exec 3&gt;&amp;1 1&gt;/dev/null 2&gt;&amp;1
+Status: active
+To                         Action      From
+--                         ------      ----
+18317                      DENY        Anywhere                  
+8080                       DENY        Anywhere                  
+18380                      ALLOW       Anywhere                  
+8099                       ALLOW       Anywhere                  
+8090                       DENY        Anywhere                  
+8081                       ALLOW       Anywhere                  
+5432                       DENY        Anywhere                  
+18317 (v6)                 DENY        Anywhere (v6)             
+8080 (v6)                  DENY        Anywhere (v6)             
+18380 (v6)                 ALLOW       Anywhere (v6)             
+8099 (v6)                  ALLOW       Anywhere (v6)             
+8090 (v6)                  DENY        Anywhere (v6)             
+8081 (v6)                  ALLOW       Anywhere (v6)             
+5432 (v6)                  DENY        Anywhere (v6)
+</code></pre>
+
+<hr />
+
+<p>Affichage du nouveau rapport de coverage de tests qui ne contient que ceux des tests d&rsquo;intégration.</p>
+
+<pre><code>integration-tests-coverage:
+    stage: integration-tests-coverage
+    script:
+        - mkdir public
+        - mv target/site/* integration-tests
+    artifacts:
+        paths:
+        - integration-tests
+    only:
+        - dev-docker
+</code></pre>
+
+<hr />
 
 <p><img src="/blog/img/gitlab-05.png" alt="rapport tests d'intégration" /></p>
 
-<h2 id="gitlab-cd">Gitlab-CD</h2>
+<hr />
+
+<h3 id="archivage">Archivage</h3>
 
 <p>toDo</p>
+
+<hr />
+
+<h2 id="gitlab-cd">Gitlab-CD</h2>
+
+<p>À partir du package généré, le runner va build une image de l&rsquo;application et le déployer sur un serveur distant.</p>
 
 <h3 id="build-de-l-application-back-end">Build de l&rsquo;application back-end</h3>
 
-<p>toDo</p>
+<p>Le dépôt Gitlab comprend un container registry, qui permet de déposer sa propre image.
+Pour cela le runner va récupérer le jar généré (keycloakApplication.jar), et build l&rsquo;image en utilisant les instructions du Dockerfile.</p>
+
+<p>Fichier pom.xml.</p>
+
+<pre><code>&lt;build&gt;
+    &lt;finalName&gt;keycloakApplication&lt;/finalName&gt;
+    &lt;plugins&gt;
+        &lt;plugin&gt;
+            &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-boot-maven-plugin&lt;/artifactId&gt;
+        &lt;/plugin&gt;
+        &lt;!-- create executable jar --&gt;
+        &lt;plugin&gt;
+            &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+            &lt;artifactId&gt;maven-jar-plugin&lt;/artifactId&gt;
+            &lt;version&gt;3.2.0&lt;/version&gt;
+            &lt;configuration&gt;
+                &lt;archive&gt;
+                    &lt;manifest&gt;
+                        &lt;addClasspath&gt;true&lt;/addClasspath&gt;
+                        &lt;mainClass&gt;example.KeycloakApplication&lt;/mainClass&gt;
+                        &lt;classpathPrefix&gt;lib/&lt;/classpathPrefix&gt;
+                    &lt;/manifest&gt;
+                &lt;/archive&gt;
+            &lt;/configuration&gt;
+        &lt;/plugin&gt;
+        &lt;!-- copy dependencies / jars to ${project.build.directory}/lib/ --&gt;
+        &lt;plugin&gt;
+            &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+            &lt;artifactId&gt;maven-dependency-plugin&lt;/artifactId&gt;
+            &lt;version&gt;3.1.1&lt;/version&gt;
+            &lt;executions&gt;
+                &lt;execution&gt;
+                    &lt;id&gt;copy-dependencies&lt;/id&gt;
+                    &lt;phase&gt;package&lt;/phase&gt;
+                    &lt;goals&gt;
+                        &lt;goal&gt;copy-dependencies&lt;/goal&gt;
+                    &lt;/goals&gt;
+                    &lt;configuration&gt;
+                        &lt;outputDirectory&gt;
+                            ${project.build.directory}/lib/
+                        &lt;/outputDirectory&gt;
+                    &lt;/configuration&gt;
+                &lt;/execution&gt;
+            &lt;/executions&gt;
+        &lt;/plugin&gt;
+...
+</code></pre>
+
+<hr />
+
+<p>Fichier Dockerfile.</p>
+
+<pre><code>FROM openjdk:8-jdk-alpine
+ARG JAR_FILE=target/keycloakApplication.jar
+ARG JAR_LIB_FILE=target/lib/
+
+# cd /usr/local/runme
+WORKDIR /usr/local/runme
+
+# cp target/keycloakApplication.jar /usr/local/runme/keycloakApplication.jar
+COPY ${JAR_FILE} keycloakApplication.jar
+
+# cp -rf target/lib/  /usr/local/runme/lib
+ADD ${JAR_LIB_FILE} lib/
+
+# java -jar /usr/local/runme/keycloakApplication.jar
+ENTRYPOINT [&quot;java&quot;,&quot;-jar&quot;,&quot;keycloakApplication.jar&quot;]
+</code></pre>
+
+<hr />
+
+<p>Le runner va build l&rsquo;image et le déposer dans le container registry du dépôt gitlab.</p>
+
+<pre><code>build-app-image:
+    stage: build-app-image
+    image: docker:latest
+    services:
+        - docker:dind
+    before_script:
+        - docker login -u &quot;$CI_REGISTRY_USER&quot; -p &quot;$CI_REGISTRY_PASSWORD&quot; $CI_REGISTRY
+    script:
+        - docker build --pull -t &quot;$CI_REGISTRY_IMAGE&quot; .
+        - docker push &quot;$CI_REGISTRY_IMAGE&quot;
+    only:
+        - dev-docker
+</code></pre>
+
+<hr />
+
+<p>Logs de gitlab.</p>
+
+<pre><code>Step 6/7 : ADD ${JAR_LIB_FILE} lib/
+---&gt; 4b121b6cf9d4
+Step 7/7 : ENTRYPOINT [&quot;java&quot;,&quot;-jar&quot;,&quot;keycloakApplication.jar&quot;]
+---&gt; Running in 2750afc0520d
+Removing intermediate container 2750afc0520d
+---&gt; 7d038e792089
+Successfully built 7d038e792089
+Successfully tagged registry.gitlab.com/phou.jeannory/keycloak-back-end:latest
+$ docker push &quot;$CI_REGISTRY_IMAGE&quot;
+The push refers to repository [registry.gitlab.com/phou.jeannory/keycloak-back-end]
+</code></pre>
+
+<hr />
+
+<p>L&rsquo;image a été déposé dans le container registry.</p>
+
+<p><img src="/blog/img/gitlab-08.png" alt="container registry" /></p>
+
+<hr />
 
 <h3 id="déploiement-de-l-application-back-end">Déploiement de l&rsquo;application back-end</h3>
 
@@ -406,9 +624,10 @@ Ouvrir le menu Settings/CI/CD/Variables et enregistrer la clef</p>
 <ul>
 <li><a href="#build-du-projet">Build du projet</a></li>
 <li><a href="#les-tests-unitaires">Les tests unitaires</a></li>
-<li><a href="#affichage-de-couverture-de-code">Affichage de couverture de code</a></li>
+<li><a href="#couverture-de-code">Couverture de code</a></li>
 <li><a href="#qualité-du-code">Qualité du code</a></li>
 <li><a href="#les-tests-d-intégration">Les tests d&rsquo;intégration</a></li>
+<li><a href="#archivage">Archivage</a></li>
 </ul></li>
 <li><a href="#gitlab-cd">Gitlab-CD</a>
 <ul>

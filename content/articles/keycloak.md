@@ -19,7 +19,7 @@ Mohamed Youssfi formateur java explique comment sécuriser des applications en m
 </div> -->
 
 ### Vidéos de M. Mohamed Youssfi ###
-Sécuriser des applications en micro-service avec Keycloak
+Sécuriser des applications en micro-service avec Keycloak.
 
 * [Part 1 - Basic Concepts](https://www.youtube.com/watch?v=2DYWyE9jkEY)
 * [Part 2 - Distributed App Use Case](https://www.youtube.com/watch?v=hiu4uHjdWbY&t=35s)
@@ -35,7 +35,7 @@ Sécuriser des applications en micro-service avec Keycloak
 
 ---
 
-Exemple d'implémentation, avec des tests et un environnement entièrement portable en docker.
+Exemple d'implémentation, avec des tests et une application entièrement portable en docker.
 
 ### Dépôts Gitlab ###
 
@@ -65,101 +65,133 @@ Exemple d'implémentation, avec des tests et un environnement entièrement porta
 
 ## Le projet back-end ##
 
+toDo
+
+---
+
 ### L'implémentation de Keycloak ###
 
 toDo
 
+---
+
 ### Application 100 % portable avec docker ###
 
-Lancer l'environnement de recette :
+Toute l'infrastructure de l'application fonctionne sous docker. Elle est donc portable d'un environnement à un autre.
+Elle comprend l'application principale, sa base de données PostgreSql, le serveur d'authentification Keycloak et sa base de données MySql.
 
-  Se connecter à la VM
+---
 
-    ssh -p 18380 digital@192.168.1.35
+### Exemple de déploiement sur une VM distante ###
 
-  Build les images de Postgresql, Keycloak et sa bdd (Mysql)
+Le répertoire /home/digital/keycloak-project/docker-back-end-environment/ a le même contenu que le répertoire du même nom du projet. 
+
+---
+
+Se connecter à la VM.
+
+    ssh -p 18380 digital@jeannory.dynamic-dns.net
+
+---
+
+Build les images de Postgresql, Keycloak et sa bdd (Mysql).
 
     cd /home/digital/keycloak-project/docker-back-end-environment
     docker-compose -f docker-compose.yml up -d
 
-  Vérifier que les images ont bien été déployées
+---
+
+Vérifier que les images ont bien été déployées.
 
     docker ps -a
 
-  Affichage
+---
 
     CONTAINER ID        IMAGE                COMMAND                  CREATED             STATUS                             PORTS                                                                    NAMES
     de2face102da        jboss/keycloak       "/opt/jboss/tools/do…"   22 seconds ago      Up 16 seconds                      0.0.0.0:8443->8443/tcp, 0.0.0.0:9990->9990/tcp, 0.0.0.0:8099->8080/tcp   keycloak-dev-docker
     2909874a449a        postgres             "docker-entrypoint.s…"   33 seconds ago      Up 24 seconds                      0.0.0.0:5432->5432/tcp                                                   postgresql-dev-docker
     1cef41fa3f93        mysql/mysql-server   "/entrypoint.sh mysq…"   33 seconds ago      Up 23 seconds (health: starting)   0.0.0.0:3306->3306/tcp, 33060/tcp                                        mysql-dev-docker
 
-  Récupérer l'ip de l'image mysql-dev-docker
+---
+
+Récupérer l'ip de l'image mysql-dev-docker.
 
     docker inspect mysql-dev-docker
 
-  Affichage
+---
 
     "NetworkID": "909b56f4c2caa1c594f8d691e0204cc236849fb25ddb2302bb75fcba516a8698",
     "EndpointID": "21d1c92defc16198b971ecf87be244bcff13c3e8bb5750753c8d2c428a85685e",
     "Gateway": "172.25.0.1",
     "IPAddress": "172.25.0.3",
 
-  Restaurer la base de données Mysql
+---
+
+Restaurer la base de données Mysql.
 
     cat backup.sql | docker exec -i mysql-dev-docker /usr/bin/mysql -h '172.25.0.3' -u keycloak -ppassword keycloak
 
-  Un warning indique quil n'est pas indiqué de renseigner le password dans une ligne de commande...
+---
+
+Un warning indique qu'il n'est pas recommandé de renseigner le password dans une ligne de commande...
 
     mysql: [Warning] Using a password on the command line interface can be insecure.
 
-  Vérifier que la sauvegarde a bien été réalisée
+---
+
+Vérifier que la sauvegarde a bien été réalisée.
 
     cd /home/digital/keycloak-project/target
     ls
 
-  Affichage
+---
 
     keycloak-dev-docker  mysql-dev-docker
 
-  Si soucis de lancement de keycloak apres la restauration de la base de données
+---
+
+Si soucis de lancement de keycloak apres la restauration de la base de données.
 
     CONTAINER ID        IMAGE                COMMAND                  CREATED             STATUS                          PORTS                               NAMES
     c3246b20fde4        jboss/keycloak       "/opt/jboss/tools/do…"   3 minutes ago       Restarting (1) 11 seconds ago                                       keycloak-dev-docker
     99c412204936        postgres             "docker-entrypoint.s…"   3 minutes ago       Up 3 minutes                    0.0.0.0:5432->5432/tcp              postgresql-dev-docker
     ed42957b5ff5        mysql/mysql-server   "/entrypoint.sh mysq…"   3 minutes ago       Up 3 minutes (healthy)          0.0.0.0:3306->3306/tcp, 33060/tcp   mysql-dev-docker
 
-  Il faut arrêter/supprimer les images
+---
+
+Il faut arrêter/supprimer les images.
 
     docker stop keycloak-dev-docker
     docker rm keycloak-dev-docker
     docker stop postgresql-dev-docker
     docker rm postgresql-dev-docker
-    docker mysql-dev-docker
-    docker mysql-dev-docker
+    docker stop mysql-dev-docker
+    docker rm mysql-dev-docker
     docker system prune -a
 
-  Affichage
+---
 
     Total reclaimed space: 1.339GB
 
-  Et rebuild les images
+---
+
+Rebuild les images.
 
     cd /home/digital/keycloak-project/docker-back-end-environment
     docker-compose -f docker-compose.yml up -d
 
-  En relancant la commande docker ps -a nous voyons que tout est rentré dans l'ordre
+---
+
+En relancant la commande docker ps -a nous constatons que tout est rentré dans l'ordre.
 
     CONTAINER ID        IMAGE                COMMAND                  CREATED             STATUS                             PORTS                                                                    NAMES
     97b1d64bf536        jboss/keycloak       "/opt/jboss/tools/do…"   25 seconds ago      Up 18 seconds                      0.0.0.0:8443->8443/tcp, 0.0.0.0:9990->9990/tcp, 0.0.0.0:8099->8080/tcp   keycloak-dev-docker
     3b9e6f4a82e3        postgres             "docker-entrypoint.s…"   38 seconds ago      Up 23 seconds                      0.0.0.0:5432->5432/tcp                                                   postgresql-dev-docker
     2bd8051a1850        mysql/mysql-server   "/entrypoint.sh mysq…"   38 seconds ago      Up 24 seconds (health: starting)   0.0.0.0:3306->3306/tcp, 33060/tcp                                        mysql-dev-docker
 
+--
 
-
-
-
-
-### Les profils maven et springboot ###
+### Les profils maven et Springboot ###
 
 toDo
 
