@@ -159,10 +159,6 @@ Elle comprend l&rsquo;application principale, sa base de données PostgreSql, le
 
 <h3 id="exemple-de-déploiement-sur-une-vm-distante">Exemple de déploiement sur une VM distante</h3>
 
-<p>Le répertoire /home/digital/keycloak-project/docker-back-end-environment/ a le même contenu que le répertoire du même nom du projet.</p>
-
-<hr />
-
 <p>Se connecter à la VM.</p>
 
 <pre><code>ssh -p 18380 digital@jeannory.dynamic-dns.net
@@ -171,6 +167,8 @@ Elle comprend l&rsquo;application principale, sa base de données PostgreSql, le
 <hr />
 
 <p>Build les images de Postgresql, Keycloak et sa bdd (Mysql).</p>
+
+<p>Le répertoire /home/digital/keycloak-project/docker-back-end-environment/ a le même contenu que le répertoire du même nom du projet.</p>
 
 <pre><code>cd /home/digital/keycloak-project/docker-back-end-environment
 docker-compose -f docker-compose.yml up -d
