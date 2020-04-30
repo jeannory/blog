@@ -35,7 +35,7 @@ Sécuriser des applications en micro-service avec Keycloak.
 
 ---
 
-Exemple d'implémentation, avec des tests et une application entièrement portable en docker.
+Exemple d'implémentation, avec des tests et une application entièrement portable grâce aux containers.
 
 ### Dépôts Gitlab ###
 
@@ -92,10 +92,62 @@ Se connecter à la VM.
 
 Build les images de Postgresql, Keycloak et sa bdd (Mysql).
 
-Le répertoire /home/digital/keycloak-project/docker-back-end-environment/ a le même contenu que le répertoire du même nom du projet.
-
     cd /home/digital/keycloak-project/docker-back-end-environment
     docker-compose -f docker-compose.yml up -d
+
+Le répertoire /home/digital/keycloak-project/docker-back-end-environment/ a le même contenu que le répertoire du même nom du projet.
+
+    version: '3.1'
+    services:
+        db:
+            image: postgres
+            container_name: postgresql-dev-docker
+            restart: always
+            environment:
+            POSTGRES_DB: keycloak_back_end_db
+            POSTGRES_PASSWORD: 1234!*MyJea@99
+            POSTGRES_USER: user1
+            volumes:
+            - ./../target/postgresql-dev-docker:/var/lib/postgresql/data
+            ports:
+            - 5432:5432
+        lab-mysql:
+            container_name: mysql-dev-docker
+            restart: always
+            image: mysql/mysql-server
+            environment:
+            MYSQL_ROOT_PASSWORD: password
+            MYSQL_ROOT_HOST: "%"
+            MYSQL_DATABASE: keycloak
+            MYSQL_USER: keycloak
+            MYSQL_PASSWORD: password
+            volumes:
+            - ./../target/mysql-dev-docker:/var/lib/mysql
+            ports:
+            - 3306:3306
+        keycloak:
+            container_name: keycloak-dev-docker
+            restart: always
+            image: jboss/keycloak
+            depends_on:
+            - lab-mysql
+            environment:
+            DB_VENDOR: MYSQL
+            DB_ADDR: lab-mysql
+            DB_PORT: 3306
+            DB_DATABASE: keycloak
+            DB_USER: keycloak
+            DB_PASSWORD: password
+            KEYCLOAK_USER: admin
+            KEYCLOAK_PASSWORD: 1234
+            ports:
+            - 8099:8080
+            - 8443:8443
+            - 9990:9990
+            volumes:
+            - ./../target/keycloak-dev-docker:/data
+            links:
+            - lab-mysql
 
 ---
 
@@ -144,7 +196,7 @@ Vérifier que la sauvegarde a bien été réalisée.
 
 ---
 
-    keycloak-dev-docker  mysql-dev-docker
+    keycloak-dev-docker  mysql-dev-docker  postgresql-dev-docker
 
 ---
 

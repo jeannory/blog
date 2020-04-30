@@ -216,18 +216,67 @@ Affichage du rapport.
 
 ### Les tests d'intégration ###
 
-Les tests d'intégration nécessitent une connexion vers base de données et vers le serveur d'authentification Keycloak.
-Pour cela nous allons utiliser une clef privée.
+Les tests d'intégration nécessitent une connexion vers un serveur distant et vers le serveur d'authentification Keycloak.
+
+Pour une fonctionnement adéquat il est nécessaire que chacun des serveurs disposent de son propre domaine.
+
+* Le serveur applicatif : Machine avec Ubuntu Server 18, ip dynamique et DNS, i5 8Go de ram
+* Le serveur d'authentification : VM de Google Cloud Plateform avec Ubuntu Server 18, 1 vCPU, 1,7 Go de mémoire
+
+Google offre un crédit de 268€70 ce qui laisse une certaine marge pour utiliser ses serveurs.
 
 ---
 
-Ouvrir le menu Settings/CI/CD/Variables et enregistrer la clef.
+Connection à la VM de GCP.
+
+Générer une paire clef privé/public pour le user enregisté dans le VM (exemple: phou_jeannory).
+Je vous recommande de choisir un répertoire différent de celui de .ssh.
+Il n'est pas nécessaire d'attribuer un passphrase.
+
+    ssh-keygen -t rsa -b 4096 -C "phou_jeannory"
+
+Filezilla, ouvrir edition/paramètre/sftp/ajouter un fichier de clé. Ajouter la clef privée, soit id_rsa
+
+![filezilla](/blog/img/gitlab-10.png)
+
+Dans la console d'admin de GCP, ouvrir Compute engine/Métadonnées, sélectionner ajouter un élément et saisir la clef public (id_rsa.pub).
+
+![Gcp consol](/blog/img/gitlab-11.png)
+
+Déposer le fichier contenant les images de Keycloak et de sa base de données (répertoire docker-keycloak-gcp)
+
+---
+
+Depuis la console d'admin de GCP, ouvrir une connexion ssh et installer docker
+
+    sudo apt-get update
+    sudo apt-get install docker-compose
+    sudo apt-get install docker.io
+
+Builder et Runner les images
+
+    cd /home/phou_jeannory/docker-keycloak-gcp
+    sudo docker-compose -f docker-compose.yml up -d
+
+Restaurer la base de données.
+
+    sudo cat backup.sql | docker exec -i mysql-dev-docker /usr/bin/mysql -u keycloak -ppassword keycloak
+
+Le service keycloak est accessible sur le port 8099. Il faut modifier les règles de parefeu pour que ce service soit accessible au protocol http (se référer à la doc officielle https://cloud.google.com/vpc/docs/using-firewalls?hl=fr).
+
+Le serveur d'authentification est prêt pour recevoir les tests d'intégration.
+
+---
+
+Configuration de Gitlab pour la connexion vers le serveur d'application.
+
+Ouvrir le menu Settings/CI/CD/Variables
 
 ![private key](/blog/img/gitlab-01.png)
 
 ---
 
-Le runner va ouvrir une connexion distante vers la VM, et ouvrir le port du serveur Postgresql le temps du test. Il s'agit d'une solution provisoire en attendant de créer un tunnel ssh...
+Le runner doit ouvrir une connexion distante vers la VM, et ouvrir le port du serveur Postgresql le temps du test. Il s'agit d'une solution provisoire en attendant de créer un tunnel ssh...
 Il est nécessaire pour cette opération de lancer la commande en super utilisateur, le mot de passe est enregistré dans une variable et non affiché dans les logs.
 
 
@@ -255,15 +304,14 @@ Il est nécessaire pour cette opération de lancer la commande en super utilisat
 
 ---
 
-Utilisation du profil maven dev-docker-integration-testing et du profil Springboot dev-docker-integration-testing pour lancer les cycles clean verify.
+Utilisation du profil maven dev-docker-integration-testing et du profil Springboot dev-docker-integration pour lancer les cycles clean verify.
 
 Le clean est dans cette étape nécessaire pour effacer le rapport des tests unitaires du cache.
-
 
     integration-tests:
         stage: integration-tests
         script:
-            - 'mvn $MAVEN_CLI_OPTS clean verify -Pdev-docker-integration-testing -Dspring.profiles.active=dev-docker-integration-testing'
+            - 'mvn $MAVEN_CLI_OPTS clean verify -Pdev-docker-integration-testing -Dspring.profiles.active=dev-docker-integration'
         only:
             - dev-docker
 
@@ -308,7 +356,7 @@ Fichier pom.xml.
 Fichier application.yml.
 
     spring:
-        profiles: dev-docker-integration-testing
+        profiles: dev-docker-integration
 
         jpa:
             database: POSTGRESQL
@@ -320,6 +368,7 @@ Fichier application.yml.
             platform: postgres
             url: jdbc:postgresql://jeannory.dynamic-dns.net:5432/keycloak_back_end_db
             username: user1
+            ...
 
 ---
 
@@ -357,7 +406,7 @@ Fermeture du port de la Base de données au niveau de la VM.
 
 ---
 
-Le port 5432 est en DENY.
+Port 5432 en DENY.
 
     $ pwd
     /home/digital
@@ -462,11 +511,11 @@ Fichier pom.xml.
 			</plugin>
     ...
 
----
+Build de l'image avec le profil Springboot dev-docker.
 
 Fichier Dockerfile.
 
-    FROM openjdk:8-jdk-alpine
+    FROM java:8
     ARG JAR_FILE=target/keycloakApplication.jar
     ARG JAR_LIB_FILE=target/lib/
 
@@ -524,4 +573,138 @@ L'image a été déposé dans le container registry.
 
 ### Déploiement de l'application back-end ###
 
-toDo
+Les différentes étapes du stage deploy-app:
+
+* Connexion sur la VM distante
+* Arrêt de l'application déployé
+* Connexion au container registry de Gitlab
+* Execution du docker-compose.yml qui va redéployer la dernière version de l'app
+
+---
+
+    deploy-app:
+        stage: deploy-app
+        image: ubuntu:latest
+        before_script:
+            - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y)'
+            - mkdir -p ~/.ssh
+            - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+            - chmod 700 ~/.ssh/id_rsa
+            - eval "$(ssh-agent -s)"
+            - ssh-add ~/.ssh/id_rsa
+            - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+        script:
+            - ssh-copy-id digital@$X230_SERVER_1 -p "18380"
+            - ssh -t digital@$X230_SERVER_1 -p "18380" << END
+            - pwd
+            - docker stop devdockerintegrationapp_java_1 # stop and delete the image of app
+            - docker rm devdockerintegrationapp_java_1
+            - echo "y" | docker system prune -a
+            - docker login registry.gitlab.com -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" # build new image of app from container registry
+            - cd /home/digital/keycloak-project/dev-docker-integration-app
+            - docker-compose -f docker-compose.yml up -d # name of image is the folder + java_1 ==> devdockerintegrationapp_java_1
+            - docker ps -a
+            - docker images ls
+            - END
+        only:
+            - dev-docker
+
+---
+
+Docker-compose.yml du répertoire /home/digital/keycloak-project/dev-docker-integration-app.
+
+Il est important de spécifier dans le docker-compose que le service est "host" concernant le "network_mode", cela évite des plantages, notamment à cause d'un échec de connexion avec la base de données PostgreSql.
+Le profil Springboot pour le déploiement est dev-docker-integration.
+
+    version: '3.1'
+        services:
+        java:
+            image: registry.gitlab.com/phou.jeannory/keycloak-back-end:latest
+            restart: always
+            network_mode: "host"
+            environment:
+            - "SPRING_PROFILES_ACTIVE=dev-docker-integration-deploy"
+
+application.yml
+
+    spring:
+        profiles: dev-docker-integration-deploy
+
+        jpa:
+            database: POSTGRESQL
+            show-sql: true
+            hibernate:
+            ddl-auto: create-drop
+
+        datasource:
+            platform: postgres
+            url: jdbc:postgresql://localhost:5432/keycloak_back_end_db
+            username: user1
+            password: 1234!*MyJea@99
+            driverClassName: org.postgresql.Driver
+            initialization-mode: always
+
+    keycloak:
+        realm: Sc-project
+        auth-server-url: http://34.66.229.220/auth/
+        resource: sc-user
+        public-client: false
+        bearer-only: true
+        cors: true
+
+    sc-properties:
+        authServerUrl: http://34.66.229.220/auth/
+        authServerParameters: realms/Sc-project/protocol/openid-connect/token
+
+---
+
+Les logs de Gitlab indique que l'opération a été un succès.
+L'application java est correctement déployé. Son appelation est devdockerintegrationapp_java_1. La commande docker ps -a ne nous donne pas d'indication concernant son exposition (colonne port).
+
+Ce service utilise le port spécifié dans le fichier de configuration application.yml, soit le port 8081 en localhost.
+
+    $ docker ps -a
+    CONTAINER ID        IMAGE                                                        COMMAND                  CREATED             STATUS                  PORTS                    NAMES
+    d4fbbbdf0933        registry.gitlab.com/phou.jeannory/keycloak-back-end:latest   "java -jar keycloakA…"   8 seconds ago       Up Less than a second                            devdockerintegrationapp_java_1
+    b2eab32d7a21        postgres                                                     "docker-entrypoint.s…"   2 hours ago         Up 2 hours              0.0.0.0:5432->5432/tcp   postgresql-dev-docker
+    $ docker images ls
+    REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+    $ END
+    Running after_script
+    00:02
+    Saving cache
+    00:13
+    Creating cache dev-docker-05...
+    /builds/phou.jeannory/keycloak-back-end/.m2: found 3681 matching files 
+    target/: found 199 matching files                  
+    Uploading cache.zip to https://storage.googleapis.com/gitlab-com-runners-cache/project/18369362/dev-docker-05 
+    Created cache
+    Uploading artifacts for successful job
+    00:02
+    Job succeeded
+
+### Test du projet déployé ###
+
+Sur un navigateur.
+
+    http://jeannory.dynamic-dns.net:8081/api/test
+
+---
+
+Autre test à faire en attendant de déployer le Front-end sur le serveur, exécuter le client sur le poste du développeur avec le profil prod.
+
+    ng serve --prod
+
+Le UI va se connecter au serveur d'application jeannory.dynamic-dns.net, et vers le serveur d'authentification 34.66.229.220.
+
+    export const environment = {
+        SC_USER_BASE_URL: 'jeannory.dynamic-dns.net',
+        SC_USER_PORT: '8081',
+        AUTH_BASE_URL: '34.66.229.220',
+        AUTH_PORT: '8099',
+        // APP_VERSION: version,
+        production: true,
+    };
+
+---
+
