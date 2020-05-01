@@ -622,7 +622,7 @@ Différentes étapes du stage deploy-app:
 
 docker-compose.yml du répertoire /home/digital/keycloak-project/dev-docker-integration-app.
 
-Il est important de spécifier dans le docker-compose d'ajouter la ligne 'network_mode: "host"', cela évite des plantages, notamment à cause d'un échec de connexion avec la base de données PostgreSql.
+Il est important d'ajouter la ligne 'network_mode: "host"', cela évite des plantages, notamment à cause d'un échec de connexion avec la base de données PostgreSql.
 Le profil Springboot pour le déploiement est dev-docker-integration.
 
     version: '3.1'

@@ -13,22 +13,29 @@ tags: ["author"]
 
 ### Auteur ###
 
-* Software engineer passionné par le développement et la cyber-sécurité
+* Ingénieur informatique
 
 ---
 
-### Métier ###
+### Compétences ###
 
-* Conception informatique
+* Conception
 * Développement
-* Mise en ligne
+* Dévops
 
 ---
 
-### Spécialités ###
+### Technologies ###
 
 * SQL
 * Java
+* SpringBoot
+* Spring Security
+* Junit
+* Jms
+* JPA
+* Web services
 * Angular
-* Infrastructure (Ovh/Ubuntu Server)
-
+* Keycloak
+* Jenkins/Gitlab
+* Docker
