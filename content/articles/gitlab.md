@@ -695,7 +695,7 @@ Ce service utilise le port spécifié dans le fichier de configuration applicati
 
 ### Test du projet déployé ###
 
-Test à faire en attendant de déployer le front-end sur un serveur, exécuter le client sur le poste du développeur avec le profil prod.
+Test à faire en attendant de déployer le front-end sur un serveur, exécuter le client sur le poste du développeur avec le profil prod ([dépôt git] (https://gitlab.com/phou.jeannory/keycloak-front-end.git)).
 
     ng serve --prod
 
