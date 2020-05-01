@@ -623,7 +623,7 @@ Différentes étapes du stage deploy-app:
 docker-compose.yml du répertoire /home/digital/keycloak-project/dev-docker-integration-app.
 
 Il est important d'ajouter la ligne 'network_mode: "host"', cela évite des plantages, notamment à cause d'un échec de connexion avec la base de données PostgreSql.
-Le profil Springboot pour le déploiement est dev-docker-integration.
+Le profil Springboot pour le déploiement est dev-docker-integration-deploy.
 
     version: '3.1'
         services:
@@ -669,7 +669,9 @@ application.yml.
 ---
 
 Les logs de Gitlab indiquent que l'opération a été un succès.
-L'application java est correctement déployée. Son appelation est devdockerintegrationapp_java_1. La commande docker ps -a ne nous donne pas d'indication concernant son exposition (colonne port).
+L'application java est correctement déployée. Son appelation est devdockerintegrationapp_java_1. 
+
+La commande 'docker ps -a' ne nous donne pas d'indication concernant son exposition (colonne port).
 
 Ce service utilise le port spécifié dans le fichier de configuration application.yml, soit le port 8081 en localhost.
 
@@ -699,7 +701,7 @@ Test à faire en attendant de déployer le front-end sur un serveur, exécuter l
 
     ng serve --prod
 
-L'UI va se connecter au serveur d'application jeannory.dynamic-dns.net, et vers le serveur d'authentification jeannory.ovh.
+L'UI va se connecter au serveur d'application jeannory.dynamic-dns.net et d'authentification jeannory.ovh.
 
     export const environment = {
         SC_USER_BASE_URL: 'jeannory.dynamic-dns.net',
@@ -712,7 +714,8 @@ L'UI va se connecter au serveur d'application jeannory.dynamic-dns.net, et vers 
 
 ---
 
-L'utilisateur s'authentifie via le serveur Keycloak et le serveur d'application répond avec un statut code 200.
+L'utilisateur s'authentifie via le serveur Keycloak et le serveur d'applications répond avec un statut code 200 et les données demandées.
+
 Le test est un succès.
 
 ![keycloak-ui](/blog/img/gitlab-14.png)

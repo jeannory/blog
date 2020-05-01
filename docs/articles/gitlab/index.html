@@ -721,7 +721,7 @@ The push refers to repository [registry.gitlab.com/phou.jeannory/keycloak-back-e
 <p>docker-compose.yml du répertoire /home/digital/keycloak-project/dev-docker-integration-app.</p>
 
 <p>Il est important d&rsquo;ajouter la ligne &lsquo;network_mode: &ldquo;host&rdquo;&lsquo;, cela évite des plantages, notamment à cause d&rsquo;un échec de connexion avec la base de données PostgreSql.
-Le profil Springboot pour le déploiement est dev-docker-integration.</p>
+Le profil Springboot pour le déploiement est dev-docker-integration-deploy.</p>
 
 <pre><code>version: '3.1'
     services:
@@ -769,7 +769,9 @@ sc-properties:
 <hr />
 
 <p>Les logs de Gitlab indiquent que l&rsquo;opération a été un succès.
-L&rsquo;application java est correctement déployée. Son appelation est devdockerintegrationapp_java_1. La commande docker ps -a ne nous donne pas d&rsquo;indication concernant son exposition (colonne port).</p>
+L&rsquo;application java est correctement déployée. Son appelation est devdockerintegrationapp_java_1.</p>
+
+<p>La commande &lsquo;docker ps -a&rsquo; ne nous donne pas d&rsquo;indication concernant son exposition (colonne port).</p>
 
 <p>Ce service utilise le port spécifié dans le fichier de configuration application.yml, soit le port 8081 en localhost.</p>
 
@@ -801,7 +803,7 @@ Job succeeded
 <pre><code>ng serve --prod
 </code></pre>
 
-<p>L&rsquo;UI va se connecter au serveur d&rsquo;application jeannory.dynamic-dns.net, et vers le serveur d&rsquo;authentification jeannory.ovh.</p>
+<p>L&rsquo;UI va se connecter au serveur d&rsquo;application jeannory.dynamic-dns.net et d&rsquo;authentification jeannory.ovh.</p>
 
 <pre><code>export const environment = {
     SC_USER_BASE_URL: 'jeannory.dynamic-dns.net',
@@ -815,8 +817,9 @@ Job succeeded
 
 <hr />
 
-<p>L&rsquo;utilisateur s&rsquo;authentifie via le serveur Keycloak et le serveur d&rsquo;application répond avec un statut code 200.
-Le test est un succès.</p>
+<p>L&rsquo;utilisateur s&rsquo;authentifie via le serveur Keycloak et le serveur d&rsquo;applications répond avec un statut code 200 et les données demandées.</p>
+
+<p>Le test est un succès.</p>
 
 <p><img src="/blog/img/gitlab-14.png" alt="keycloak-ui" /></p>
 
