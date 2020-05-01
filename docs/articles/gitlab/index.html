@@ -294,27 +294,25 @@ Job succeeded
 
 <p>Les tests d&rsquo;intégration nécessitent une connexion vers un serveur distant et vers le serveur d&rsquo;authentification Keycloak.</p>
 
-<p>Pour une fonctionnement adéquat il est nécessaire que chacun des serveurs disposent de son propre domaine.</p>
-
 <ul>
-<li>Le serveur applicatif : Machine avec Ubuntu Server 18, ip dynamique et DNS, i5 8Go de ram</li>
-<li>Le serveur d&rsquo;authentification : VM de Google Cloud Plateform avec Ubuntu Server 18, 1 vCPU, 1,7 Go de mémoire</li>
+<li>Le serveur applicatif : Machine avec Ubuntu Server 18, ip dynamique et DNS, i5 8Go de ram.</li>
+<li>Le serveur d&rsquo;authentification : VM de Google Cloud Plateform avec Ubuntu Server 18, 1 vCPU, 1,7 Go de mémoire.</li>
 </ul>
 
 <p>Google offre un crédit de 268€70 ce qui laisse une certaine marge pour utiliser ses serveurs.</p>
 
 <hr />
 
-<p>Connection à la VM de GCP.</p>
+<p>Connexion sftp (transfert de fichier sécurisé) à la VM de GCP.</p>
 
-<p>Générer une paire clef privé/public pour le user enregisté dans le VM (exemple: phou_jeannory).
+<p>Générer une paire clef privée/publique pour l&rsquo;user enregistré dans la VM (exemple: phou_jeannory).
 Je vous recommande de choisir un répertoire différent de celui de .ssh.
 Il n&rsquo;est pas nécessaire d&rsquo;attribuer un passphrase.</p>
 
 <pre><code>ssh-keygen -t rsa -b 4096 -C &quot;phou_jeannory&quot;
 </code></pre>
 
-<p>Filezilla, ouvrir edition/paramètre/sftp/ajouter un fichier de clé. Ajouter la clef privée, soit id_rsa</p>
+<p>Filezilla, ouvrir edition/paramètre/sftp/ajouter un fichier de clé. Ajouter la clef privée, soit id_rsa.</p>
 
 <p><img src="/blog/img/gitlab-10.png" alt="filezilla" /></p>
 
@@ -322,37 +320,48 @@ Il n&rsquo;est pas nécessaire d&rsquo;attribuer un passphrase.</p>
 
 <p><img src="/blog/img/gitlab-11.png" alt="Gcp consol" /></p>
 
-<p>Déposer le fichier contenant les images de Keycloak et de sa base de données (répertoire docker-keycloak-gcp)</p>
+<p>Déposer le fichier contenant les images de Keycloak et de sa base de données (répertoires dev-docker-integration-keycloak et keycloak-config)</p>
 
 <hr />
 
-<p>Depuis la console d&rsquo;admin de GCP, ouvrir une connexion ssh et installer docker</p>
+<p>Depuis la console d&rsquo;admin de GCP, ouvrir une connexion ssh et installer docker.</p>
 
 <pre><code>sudo apt-get update
 sudo apt-get install docker-compose
 sudo apt-get install docker.io
 </code></pre>
 
-<p>Builder et Runner les images</p>
+<p>Builder et Runner les images.</p>
 
-<pre><code>cd /home/phou_jeannory/docker-keycloak-gcp
+<pre><code>cd /home/phou_jeannory/dev-docker-integration-keycloak
 sudo docker-compose -f docker-compose.yml up -d
 </code></pre>
 
 <p>Restaurer la base de données.</p>
 
-<pre><code>sudo cat backup.sql | docker exec -i mysql-dev-docker /usr/bin/mysql -u keycloak -ppassword keycloak
+<pre><code>sudo cd /home/phou_jeannory/keycloak-config
+sudo cat backup.sql | docker exec -i mysql-dev-docker /usr/bin/mysql -u keycloak -ppassword keycloak
 </code></pre>
 
-<p>Le service keycloak est accessible sur le port 8099. Il faut modifier les règles de parefeu pour que ce service soit accessible au protocol http (se référer à la doc officielle <a href="https://cloud.google.com/vpc/docs/using-firewalls?hl=fr">https://cloud.google.com/vpc/docs/using-firewalls?hl=fr</a>).</p>
-
-<p>Le serveur d&rsquo;authentification est prêt pour recevoir les tests d&rsquo;intégration.</p>
+<p>Le service keycloak est accessible sur le port 8099. Il faut modifier les règles de pare-feu pour que ce service soit accessible au protocole http (se référer à la <a href="https://cloud.google.com/vpc/docs/using-firewalls?hl=fr">documentation</a>).</p>
 
 <hr />
 
-<p>Configuration de Gitlab pour la connexion vers le serveur d&rsquo;application.</p>
+<p>Prérecquis pour le serveur d&rsquo;applications:</p>
 
-<p>Ouvrir le menu Settings/CI/CD/Variables</p>
+<ul>
+<li>Définir des règles de pare-feu pour la base de données.</li>
+<li>Installer Docker.</li>
+<li>Générer une paire clé privée/publique pour partage avec Gitlab.</li>
+<li>Transférer le contenu du répertoire dev-docker-integration-app-environment.</li>
+<li>Générer et exécuter l&rsquo;image du docker-compose.yml.</li>
+</ul>
+
+<hr />
+
+<p>Configuration de Gitlab pour la connexion vers le serveur d&rsquo;applications.</p>
+
+<p>Ouvrir le menu Settings/CI/CD/Variables et affecter la clé privée à une variable.</p>
 
 <p><img src="/blog/img/gitlab-01.png" alt="private key" /></p>
 
@@ -539,7 +548,7 @@ To                         Action      From
 
 <hr />
 
-<h3 id="archivage">Archivage</h3>
+<h3 id="archivage-d-artifacts">Archivage d&rsquo;artifacts</h3>
 
 <p>toDo</p>
 
@@ -549,7 +558,9 @@ To                         Action      From
 
 <p>À partir du package généré, le runner va build une image de l&rsquo;application et le déployer sur un serveur distant.</p>
 
-<h3 id="build-de-l-application-back-end">Build de l&rsquo;application back-end</h3>
+<hr />
+
+<h3 id="container-registry">Container registry</h3>
 
 <p>Le dépôt Gitlab comprend un container registry, qui permet de déposer sa propre image.
 Pour cela le runner va récupérer le jar généré (keycloakApplication.jar), et build l&rsquo;image en utilisant les instructions du Dockerfile.</p>
@@ -601,7 +612,7 @@ Pour cela le runner va récupérer le jar généré (keycloakApplication.jar), e
 ...
 </code></pre>
 
-<p>Build de l&rsquo;image avec le profil Springboot dev-docker.</p>
+<p>Build de l&rsquo;image.</p>
 
 <p>Fichier Dockerfile.</p>
 
@@ -658,7 +669,7 @@ The push refers to repository [registry.gitlab.com/phou.jeannory/keycloak-back-e
 
 <hr />
 
-<p>L&rsquo;image a été déposé dans le container registry.</p>
+<p>L&rsquo;image a été déposée dans le container registry.</p>
 
 <p><img src="/blog/img/gitlab-08.png" alt="container registry" /></p>
 
@@ -666,13 +677,13 @@ The push refers to repository [registry.gitlab.com/phou.jeannory/keycloak-back-e
 
 <h3 id="déploiement-de-l-application-back-end">Déploiement de l&rsquo;application back-end</h3>
 
-<p>Les différentes étapes du stage deploy-app:</p>
+<p>Différentes étapes du stage deploy-app:</p>
 
 <ul>
-<li>Connexion sur la VM distante</li>
-<li>Arrêt de l&rsquo;application déployé</li>
-<li>Connexion au container registry de Gitlab</li>
-<li>Execution du docker-compose.yml qui va redéployer la dernière version de l&rsquo;app</li>
+<li>Connexion sur la VM distante.</li>
+<li>Arrêt de l&rsquo;application déployé.</li>
+<li>Connexion au container registry de Gitlab.</li>
+<li>Exécution du docker-compose.yml qui va redéployer la dernière version de l&rsquo;app.</li>
 </ul>
 
 <hr />
@@ -707,9 +718,9 @@ The push refers to repository [registry.gitlab.com/phou.jeannory/keycloak-back-e
 
 <hr />
 
-<p>Docker-compose.yml du répertoire /home/digital/keycloak-project/dev-docker-integration-app.</p>
+<p>docker-compose.yml du répertoire /home/digital/keycloak-project/dev-docker-integration-app.</p>
 
-<p>Il est important de spécifier dans le docker-compose que le service est &ldquo;host&rdquo; concernant le &ldquo;network_mode&rdquo;, cela évite des plantages, notamment à cause d&rsquo;un échec de connexion avec la base de données PostgreSql.
+<p>Il est important de spécifier dans le docker-compose d&rsquo;ajouter la ligne &lsquo;network_mode: &ldquo;host&rdquo;&lsquo;, cela évite des plantages, notamment à cause d&rsquo;un échec de connexion avec la base de données PostgreSql.
 Le profil Springboot pour le déploiement est dev-docker-integration.</p>
 
 <pre><code>version: '3.1'
@@ -722,7 +733,7 @@ Le profil Springboot pour le déploiement est dev-docker-integration.</p>
         - &quot;SPRING_PROFILES_ACTIVE=dev-docker-integration-deploy&quot;
 </code></pre>
 
-<p>application.yml</p>
+<p>application.yml.</p>
 
 <pre><code>spring:
     profiles: dev-docker-integration-deploy
@@ -743,21 +754,22 @@ Le profil Springboot pour le déploiement est dev-docker-integration.</p>
 
 keycloak:
     realm: Sc-project
-    auth-server-url: http://34.66.229.220/auth/
+    auth-server-url: http://jeannory.ovh/auth/
     resource: sc-user
     public-client: false
     bearer-only: true
     cors: true
+    ssl-required: none
 
 sc-properties:
-    authServerUrl: http://34.66.229.220/auth/
+    authServerUrl: http://jeannory.ovh/auth/
     authServerParameters: realms/Sc-project/protocol/openid-connect/token
 </code></pre>
 
 <hr />
 
-<p>Les logs de Gitlab indique que l&rsquo;opération a été un succès.
-L&rsquo;application java est correctement déployé. Son appelation est devdockerintegrationapp_java_1. La commande docker ps -a ne nous donne pas d&rsquo;indication concernant son exposition (colonne port).</p>
+<p>Les logs de Gitlab indiquent que l&rsquo;opération a été un succès.
+L&rsquo;application java est correctement déployée. Son appelation est devdockerintegrationapp_java_1. La commande docker ps -a ne nous donne pas d&rsquo;indication concernant son exposition (colonne port).</p>
 
 <p>Ce service utilise le port spécifié dans le fichier de configuration application.yml, soit le port 8081 en localhost.</p>
 
@@ -784,24 +796,17 @@ Job succeeded
 
 <h3 id="test-du-projet-déployé">Test du projet déployé</h3>
 
-<p>Sur un navigateur.</p>
-
-<pre><code>http://jeannory.dynamic-dns.net:8081/api/test
-</code></pre>
-
-<hr />
-
-<p>Autre test à faire en attendant de déployer le Front-end sur le serveur, exécuter le client sur le poste du développeur avec le profil prod.</p>
+<p>Test à faire en attendant de déployer le front-end sur un serveur, exécuter le client sur le poste du développeur avec le profil prod.</p>
 
 <pre><code>ng serve --prod
 </code></pre>
 
-<p>Le UI va se connecter au serveur d&rsquo;application jeannory.dynamic-dns.net, et vers le serveur d&rsquo;authentification 34.66.229.220.</p>
+<p>L&rsquo;UI va se connecter au serveur d&rsquo;application jeannory.dynamic-dns.net, et vers le serveur d&rsquo;authentification jeannory.ovh.</p>
 
 <pre><code>export const environment = {
     SC_USER_BASE_URL: 'jeannory.dynamic-dns.net',
     SC_USER_PORT: '8081',
-    AUTH_BASE_URL: '34.66.229.220',
+    AUTH_BASE_URL: 'jeannory.ovh',
     AUTH_PORT: '8099',
     // APP_VERSION: version,
     production: true,
@@ -809,6 +814,15 @@ Job succeeded
 </code></pre>
 
 <hr />
+
+<p>L&rsquo;utilisateur s&rsquo;authentifie via le serveur Keycloak et le serveur d&rsquo;application répond avec un statut code 200.
+Le test est un succès.</p>
+
+<p><img src="/blog/img/gitlab-14.png" alt="keycloak-ui" /></p>
+
+<hr />
+
+<p>Merci!</p>
 
 				</section>
 			</article>
@@ -840,11 +854,11 @@ Job succeeded
 <li><a href="#couverture-de-code">Couverture de code</a></li>
 <li><a href="#qualité-du-code">Qualité du code</a></li>
 <li><a href="#les-tests-d-intégration">Les tests d&rsquo;intégration</a></li>
-<li><a href="#archivage">Archivage</a></li>
+<li><a href="#archivage-d-artifacts">Archivage d&rsquo;artifacts</a></li>
 </ul></li>
 <li><a href="#gitlab-cd">Gitlab-CD</a>
 <ul>
-<li><a href="#build-de-l-application-back-end">Build de l&rsquo;application back-end</a></li>
+<li><a href="#container-registry">Container registry</a></li>
 <li><a href="#déploiement-de-l-application-back-end">Déploiement de l&rsquo;application back-end</a></li>
 <li><a href="#test-du-projet-déployé">Test du projet déployé</a></li>
 </ul></li>

@@ -157,22 +157,15 @@ Elle comprend l&rsquo;application principale, sa base de données PostgreSql, le
 
 <hr />
 
-<h3 id="exemple-de-déploiement-sur-une-vm-distante">Exemple de déploiement sur une VM distante</h3>
+<h3 id="déploiement-de-l-application">Déploiement de l&rsquo;application</h3>
 
-<p>Se connecter à la VM.</p>
+<p>Build les images de Postgresql, Keycloak et sa bdd MySql (répertoire dev-docker).</p>
 
-<pre><code>ssh -p 18380 digital@jeannory.dynamic-dns.net
-</code></pre>
-
-<hr />
-
-<p>Build les images de Postgresql, Keycloak et sa bdd (Mysql).</p>
-
-<pre><code>cd /home/digital/keycloak-project/docker-back-end-environment
+<pre><code>cd dev-docker
 docker-compose -f docker-compose.yml up -d
 </code></pre>
 
-<p>Le répertoire /home/digital/keycloak-project/docker-back-end-environment/ a le même contenu que le répertoire du même nom du projet.</p>
+<p>docker-compose.yml.</p>
 
 <pre><code>version: '3.1'
 services:
@@ -244,7 +237,7 @@ de2face102da        jboss/keycloak       &quot;/opt/jboss/tools/do…&quot;   22
 
 <hr />
 
-<p>Récupérer l&rsquo;ip de l&rsquo;image mysql-dev-docker.</p>
+<p>Si nécessaire, récupérer l&rsquo;ip de l&rsquo;image mysql-dev-docker.</p>
 
 <pre><code>docker inspect mysql-dev-docker
 </code></pre>
@@ -261,7 +254,14 @@ de2face102da        jboss/keycloak       &quot;/opt/jboss/tools/do…&quot;   22
 
 <p>Restaurer la base de données Mysql.</p>
 
-<pre><code>cat backup.sql | docker exec -i mysql-dev-docker /usr/bin/mysql -h '172.25.0.3' -u keycloak -ppassword keycloak
+<pre><code>cd keycloak-config
+cat backup.sql | docker exec -i mysql-dev-docker /usr/bin/mysql -h '172.25.0.3' -u keycloak -ppassword keycloak
+</code></pre>
+
+<p>ou</p>
+
+<pre><code>cd keycloak-config
+cat backup.sql | docker exec -i mysql-dev-docker /usr/bin/mysql -u keycloak -ppassword keycloak
 </code></pre>
 
 <hr />
@@ -269,19 +269,6 @@ de2face102da        jboss/keycloak       &quot;/opt/jboss/tools/do…&quot;   22
 <p>Un warning indique qu&rsquo;il n&rsquo;est pas recommandé de renseigner le password dans une ligne de commande&hellip;</p>
 
 <pre><code>mysql: [Warning] Using a password on the command line interface can be insecure.
-</code></pre>
-
-<hr />
-
-<p>Vérifier que la sauvegarde a bien été réalisée.</p>
-
-<pre><code>cd /home/digital/keycloak-project/target
-ls
-</code></pre>
-
-<hr />
-
-<pre><code>keycloak-dev-docker  mysql-dev-docker  postgresql-dev-docker
 </code></pre>
 
 <hr />
@@ -314,9 +301,9 @@ docker system prune -a
 
 <hr />
 
-<p>Rebuild les images.</p>
+<p>Rebuild et déployer les images.</p>
 
-<pre><code>cd /home/digital/keycloak-project/docker-back-end-environment
+<pre><code>cd dev-docker
 docker-compose -f docker-compose.yml up -d
 </code></pre>
 
@@ -372,7 +359,7 @@ docker-compose -f docker-compose.yml up -d
 <ul>
 <li><a href="#l-implémentation-de-keycloak">L&rsquo;implémentation de Keycloak</a></li>
 <li><a href="#application-100-portable-avec-docker">Application 100 % portable avec docker</a></li>
-<li><a href="#exemple-de-déploiement-sur-une-vm-distante">Exemple de déploiement sur une VM distante</a></li>
+<li><a href="#déploiement-de-l-application">Déploiement de l&rsquo;application</a></li>
 <li><a href="#les-profils-maven-et-springboot">Les profils maven et Springboot</a></li>
 <li><a href="#les-tests">Les tests</a></li>
 </ul></li>

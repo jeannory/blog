@@ -82,20 +82,14 @@ Elle comprend l'application principale, sa base de données PostgreSql, le serve
 
 ---
 
-### Exemple de déploiement sur une VM distante ###
+### Déploiement de l'application ###
 
-Se connecter à la VM.
+Build les images de Postgresql, Keycloak et sa bdd MySql (répertoire dev-docker).
 
-    ssh -p 18380 digital@jeannory.dynamic-dns.net
-
----
-
-Build les images de Postgresql, Keycloak et sa bdd (Mysql).
-
-    cd /home/digital/keycloak-project/docker-back-end-environment
+    cd dev-docker
     docker-compose -f docker-compose.yml up -d
 
-Le répertoire /home/digital/keycloak-project/docker-back-end-environment/ a le même contenu que le répertoire du même nom du projet.
+docker-compose.yml.
 
     version: '3.1'
     services:
@@ -164,7 +158,7 @@ Vérifier que les images ont bien été déployées.
 
 ---
 
-Récupérer l'ip de l'image mysql-dev-docker.
+Si nécessaire, récupérer l'ip de l'image mysql-dev-docker.
 
     docker inspect mysql-dev-docker
 
@@ -179,24 +173,19 @@ Récupérer l'ip de l'image mysql-dev-docker.
 
 Restaurer la base de données Mysql.
 
+    cd keycloak-config
     cat backup.sql | docker exec -i mysql-dev-docker /usr/bin/mysql -h '172.25.0.3' -u keycloak -ppassword keycloak
+
+ou
+
+    cd keycloak-config
+    cat backup.sql | docker exec -i mysql-dev-docker /usr/bin/mysql -u keycloak -ppassword keycloak
 
 ---
 
 Un warning indique qu'il n'est pas recommandé de renseigner le password dans une ligne de commande...
 
     mysql: [Warning] Using a password on the command line interface can be insecure.
-
----
-
-Vérifier que la sauvegarde a bien été réalisée.
-
-    cd /home/digital/keycloak-project/target
-    ls
-
----
-
-    keycloak-dev-docker  mysql-dev-docker  postgresql-dev-docker
 
 ---
 
@@ -225,9 +214,9 @@ Il faut arrêter/supprimer les images.
 
 ---
 
-Rebuild les images.
+Rebuild et déployer les images.
 
-    cd /home/digital/keycloak-project/docker-back-end-environment
+    cd dev-docker
     docker-compose -f docker-compose.yml up -d
 
 ---
