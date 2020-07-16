@@ -74,6 +74,8 @@
 
 <h2 id="introduction">Introduction</h2>
 
+<p><em>MAJ au 16/07/2020 reprise de cet article après une courte pause de 3 mois :)</em></p>
+
 <p>Keycloak est serveur d&rsquo;authentification standalone.
 Il est reconnu pour la protection qu&rsquo;il propose en termes de cyber sécurité et aussi par les très nombreuses librairies/fonctionnalités qui permettent une utilisation étendue (Java, AngularJs, Typescript, Ldap, etc..). Beaucoup d&rsquo;entreprises lui font confiance et lui délèguent la partie authentification/autorisation.
 C&rsquo;est un projet open source codé en java, qui fait preuve d&rsquo;une grande maturité (version 9 à ce jour).</p>
@@ -118,6 +120,7 @@ C&rsquo;est un projet open source codé en java, qui fait preuve d&rsquo;une gra
 <h3 id="projet-spécificités-techniques">Projet : spécificités techniques</h3>
 
 <ul>
+<li>Serveur d&rsquo;authentification</li>
 <li>Back-end en java avec Springboot</li>
 <li>Front-end en Angular Material</li>
 <li>Docker de la base de données Postgresql</li>
@@ -138,26 +141,358 @@ C&rsquo;est un projet open source codé en java, qui fait preuve d&rsquo;une gra
 
 <hr />
 
-<h2 id="le-projet-back-end">Le projet back-end</h2>
+<h3 id="serveur-d-authentification-100-portable-avec-docker">Serveur d&rsquo;authentification 100 % portable avec docker</h3>
 
-<p>toDo</p>
+<p>Dans une application en micro service, le serveur d&rsquo;authentification est décorélé des autres micro services. Le serveur Keycloak est déployé dans une VM.
+Keycloak et ses dépendances sont buildés dans une même image docker. Ils sont donc portable d&rsquo;un environnement à un autre.
+Cette image comporte le serveur standalone de Keycloak, et sa base de données MySql (répertoire dev-docker-integration-keycloak):</p>
+
+<p>docker-compose.yml</p>
+
+<pre><code>version: '3.1'
+services:
+    lab-mysql:
+        container_name: mysql-dev-docker
+        restart: always
+        image: mysql/mysql-server
+        environment:
+            MYSQL_ROOT_PASSWORD: password
+            MYSQL_ROOT_HOST: &quot;%&quot;
+            MYSQL_DATABASE: keycloak
+            MYSQL_USER: keycloak
+            MYSQL_PASSWORD: password
+        volumes:
+            - ./../target/mysql-dev-docker:/var/lib/mysql
+        ports:
+            - 3306:3306
+    keycloak:
+        container_name: keycloak-dev-docker
+        restart: always
+        image: jboss/keycloak
+        depends_on:
+            - lab-mysql
+        environment:
+            DB_VENDOR: MYSQL
+            DB_ADDR: lab-mysql
+            DB_PORT: 3306
+            DB_DATABASE: keycloak
+            DB_USER: keycloak
+            DB_PASSWORD: password
+            KEYCLOAK_USER: admin
+            KEYCLOAK_PASSWORD: 1234
+        ports:
+            - 8099:8080
+            - 8443:8443
+            - 9990:9990
+        volumes:
+            - ./../target/keycloak-dev-docker:/data
+        links:
+            - lab-mysql
+</code></pre>
 
 <hr />
 
-<h3 id="l-implémentation-de-keycloak">L&rsquo;implémentation de Keycloak</h3>
+<h3 id="déploiement-de-keycloak-dans-une-vm-gcp">Déploiement de Keycloak dans une VM GCP</h3>
 
-<p>toDo</p>
+<p>Il s&rsquo;agit d&rsquo;une petite VM sous Ubuntu Serveur (g1-small :1 vCPU, 1,7 Go de mémoire).
+Il faut déployer l&rsquo;image et restaurer la base de données:</p>
 
-<hr />
-
-<h3 id="application-100-portable-avec-docker">Application 100 % portable avec docker</h3>
-
-<p>Toute l&rsquo;infrastructure de l&rsquo;application fonctionne sous docker. Elle est donc portable d&rsquo;un environnement à un autre.
-Elle comprend l&rsquo;application principale, sa base de données PostgreSql, le serveur d&rsquo;authentification Keycloak et sa base de données MySql.</p>
+<pre><code>docker-compose -f docker-compose.yml up -d
+</code></pre>
 
 <hr />
 
-<h3 id="déploiement-de-l-application">Déploiement de l&rsquo;application</h3>
+<p>Si nécessaire, récupérer l&rsquo;ip de l&rsquo;image mysql-dev-docker.</p>
+
+<pre><code>docker inspect mysql-dev-docker
+</code></pre>
+
+<hr />
+
+<pre><code>&quot;NetworkID&quot;: &quot;909b56f4c2caa1c594f8d691e0204cc236849fb25ddb2302bb75fcba516a8698&quot;,
+&quot;EndpointID&quot;: &quot;21d1c92defc16198b971ecf87be244bcff13c3e8bb5750753c8d2c428a85685e&quot;,
+&quot;Gateway&quot;: &quot;172.25.0.1&quot;,
+&quot;IPAddress&quot;: &quot;172.25.0.3&quot;,
+</code></pre>
+
+<hr />
+
+<p>Restaurer la base de données Mysql.</p>
+
+<pre><code>cd keycloak-config
+cat backup.sql | docker exec -i mysql-dev-docker /usr/bin/mysql -h '172.25.0.3' -u keycloak -ppassword keycloak
+</code></pre>
+
+<p>ou</p>
+
+<pre><code>cd keycloak-config
+cat backup.sql | docker exec -i mysql-dev-docker /usr/bin/mysql -u keycloak -ppassword keycloak
+</code></pre>
+
+<p><em>Cette configuration a un niveau de sécurité permettant l&rsquo;exposition de l&rsquo;Ihm avec le protocol http.</em></p>
+
+<hr />
+
+<h3 id="l-ihm-de-keycloak">L&rsquo;IHM de Keycloak</h3>
+
+<p>Assurez-vous que le port de la VM soit ouverte en entré sur le port définis pour keycloak (8089)
+Se connecter à l&rsquo;IHM :</p>
+
+<pre><code>http://35.209.231.158:8099/auth/
+</code></pre>
+
+<p>Les crédentials figurent sur le docker-compose.yml</p>
+
+<pre><code>KEYCLOAK_USER: admin
+KEYCLOAK_PASSWORD: 1234
+</code></pre>
+
+<hr />
+
+<p><img src="/blog/img/gitlab-15.png" alt="keycloak-realm" /></p>
+
+<p>Le Realm correspond au royaume ou à l&rsquo;entretprise.</p>
+
+<hr />
+
+<p><img src="/blog/img/gitlab-16.png" alt="keycloak-clients" /></p>
+
+<p>Les clients sont les applications de l&rsquo;entreprise. Dans notre exemple il y a 2 clients qui vont être utilisés:</p>
+
+<ul>
+<li>sc-ui (Front-end)</li>
+<li>sc-user (Back-end)</li>
+</ul>
+
+<hr />
+
+<p><img src="/blog/img/gitlab-17.png" alt="keycloak-roles" /></p>
+
+<p>Les rôles peuvent être définis de manière globale ou pour une ou plusieurs applications (clients).</p>
+
+<hr />
+
+<p><img src="/blog/img/gitlab-18.png" alt="keycloak-users" /></p>
+
+<p>Les utilisateurs sont visibles dans l&rsquo;IHM. Leurs rôles peuvent ainsi être définis.</p>
+
+<hr />
+
+<p><img src="/blog/img/gitlab-19.png" alt="keycloak-installations" /></p>
+
+<p>Ces éléments vont être utiles pour créer les connecteurs des applications</p>
+
+<hr />
+
+<h2 id="back-end-en-java-avec-springboot">Back-end en java avec Springboot</h2>
+
+<p>Les infos récupérés vont servir à renseigner le fichier de configuration de Springboot.</p>
+
+<pre><code>{
+&quot;realm&quot;: &quot;Sc-project&quot;,
+&quot;auth-server-url&quot;: &quot;http://35.209.231.158:8099/auth/&quot;,
+&quot;ssl-required&quot;: &quot;none&quot;,
+&quot;resource&quot;: &quot;sc-user&quot;,
+&quot;public-client&quot;: true,
+&quot;confidential-port&quot;: 0
+}
+</code></pre>
+
+<p>Le nom de domaine <a href="http://jeannory.ovh">http://jeannory.ovh</a> pointe bien évidement vers l&rsquo;ip externe <a href="http://35.209.231.158">http://35.209.231.158</a></p>
+
+<p>Le profil dev-docker-integration va servir pour les étapes de CI/CD. Gitlab va se connecter à cette VM afin de réaliser tous les tests d&rsquo;intégration.</p>
+
+<pre><code>---
+
+spring:
+profiles: dev-docker-integration
+
+jpa:
+    database: POSTGRESQL
+    show-sql: true
+    hibernate:
+    ddl-auto: create-drop
+
+datasource:
+    platform: postgres
+    url: jdbc:postgresql://jeannory.dynamic-dns.net:5432/keycloak_back_end_db
+    username: user1
+    password: 1234!*MyJea@99
+    driverClassName: org.postgresql.Driver
+    initialization-mode: always
+
+keycloak:
+realm: Sc-project
+auth-server-url: http://jeannory.ovh:8099/auth/
+resource: sc-user
+public-client: false
+bearer-only: true
+cors: true
+
+
+sc-properties:
+authServerUrl: http://jeannory.ovh:8099/auth/
+authServerParameters: realms/Sc-project/protocol/openid-connect/token
+
+---
+</code></pre>
+
+<hr />
+
+<p>La redéfinition de la méthode <em>configure</em> permet une protection des end-points en fonction des rôles</p>
+
+<pre><code>@KeycloakConfiguration
+public class KeycloakSpringSecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
+
+    @Override
+    protected SessionAuthenticationStrategy sessionAuthenticationStrategy() {
+        return new RegisterSessionAuthenticationStrategy(new SessionRegistryImpl());
+    }
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception{
+        auth.authenticationProvider(new KeycloakAuthenticationProvider());
+    }
+
+    @Override
+    protected void configure(HttpSecurity http)throws Exception{
+        super.configure(http);
+        http.authorizeRequests().antMatchers(&quot;/api/users/connected-user&quot;).hasAuthority((&quot;user&quot;));
+        http.authorizeRequests().antMatchers(&quot;/api/users&quot;).hasAuthority((&quot;manager&quot;));
+        http.authorizeRequests().antMatchers(&quot;/api/spaces/**&quot;).hasAuthority((&quot;manager&quot;));
+    }
+
+}
+</code></pre>
+
+<hr />
+
+<p>Ces méthodes permettent de récupérer les infos de l&rsquo;utilisateurs dans le security context de l&rsquo;application.</p>
+
+<pre><code>@Component
+public class KeycloakSecurityContext {
+
+    /**
+    *
+    * @return roles
+    */
+    public OidcKeycloakAccount getOidcKeycloakAccount(){
+        return getKeycloakAuthenticationToken().getAccount();
+    }
+
+    /**
+    *
+    * @return preferredUsername, email, givenName, familyName
+    */
+    public AccessToken getAccessToken(){
+        return getOidcKeycloakAccount().getKeycloakSecurityContext().getToken();
+    }
+
+    @Bean
+    @Scope(scopeName = WebApplicationContext.SCOPE_REQUEST, proxyMode = ScopedProxyMode.TARGET_CLASS)
+    private KeycloakAuthenticationToken getKeycloakAuthenticationToken(){
+        return (KeycloakAuthenticationToken) ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getUserPrincipal();
+    }
+
+}
+</code></pre>
+
+<hr />
+
+<p>La méthode getAccessToken() permet ainsi de récupérer le username (accessToken.getPreferredUsername()), pour s&rsquo;en servir par la suite.</p>
+
+<pre><code>@Service
+public class UserServiceImpl implements UserService {
+
+    @Autowired
+    private KeycloakSecurityContext keycloakSecurityContext;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private SpaceRepository spaceRepository;
+
+    @Autowired
+    @Qualifier(&quot;UserUserDtoConverter&quot;)
+    private SuperConverter&lt;User, UserDto&gt; converter;
+
+    @Override
+    public UserDto getConnectedUserDto() {
+        try {
+            return converter.toDto(getConnectedUser());
+        } catch (CustomServiceException ex) {
+            return null;
+        }
+    }
+
+    @Override
+    public List&lt;UserDto&gt; getAllUsers(final Integer pageNo, final Integer pageSize, final String sortBy) {
+        final Pageable paging = PageRequest.of(pageNo, pageSize, Sort.by(sortBy));
+        final Page&lt;User&gt; pagedResult = userRepository.findAll(paging);
+        if(pagedResult.hasContent()) {
+            return converter.toDtos(pagedResult.getContent());
+        } else {
+            return new ArrayList&lt;&gt;();
+        }
+    }
+
+
+
+    //catch CustomTransactionalException in this method
+    private User getConnectedUser() {
+        final AccessToken accessToken = keycloakSecurityContext.getAccessToken();
+        if (accessToken == null) {
+            throw new CustomServiceException(&quot;error getAccessToken failed&quot;);
+        } else if (accessToken.getPreferredUsername() == null || accessToken.getPreferredUsername().isEmpty()) {
+            throw new CustomServiceException(&quot;error preferredUsername cannot be null or empty&quot;);
+        }
+        final String username = accessToken.getPreferredUsername();
+        User user = userRepository.findByUsernameIgnoreCase(username);
+        if (user == null) {
+            try {
+                user = testCreateUser(accessToken);
+            } catch (CustomTransactionalException ex) {
+                return null;
+            }
+        }
+        return user;
+    }
+
+    // Do not catch CustomTransactionalException in this method
+    @Transactional(propagation = Propagation.REQUIRES_NEW,
+            rollbackFor = CustomTransactionalException.class)
+    private User testCreateUser(final AccessToken accessToken) {
+        return validateCreateUser(accessToken);
+    }
+
+    // MANDATORY: Transaction must be created before.
+    @Transactional(propagation = Propagation.MANDATORY)
+    private User validateCreateUser(final AccessToken accessToken) {
+        try {
+            final Space space = new Space(null, accessToken.getPreferredUsername() + &quot;_space&quot;, null);
+            spaceRepository.save(space);
+            final User user = new User();
+            user.setUsername(accessToken.getPreferredUsername());
+            user.setEmail(accessToken.getEmail());
+            user.setFirstName(accessToken.getGivenName());
+            user.setLastName(accessToken.getFamilyName());
+            user.setSpace(space);
+            userRepository.save(user);
+            return userRepository.findByUsernameIgnoreCase(accessToken.getPreferredUsername());
+        } catch (Exception ex) {
+            throw new CustomTransactionalException(&quot;persistence failed : &quot; + ex.getMessage());
+        }
+    }
+
+}
+</code></pre>
+
+<hr />
+
+<p>Ces quelques classes/fichier de configuation permettent une très rapide implémentation d&rsquo;un projet back-end avec une sécurisation optimale.</p>
+
+<h3 id="déploiement-du-back-end-et-serveur-keycloak-100-sur-son-local">Déploiement du Back-end et serveur Keycloak 100% sur son local</h3>
 
 <p>Build les images de Postgresql, Keycloak et sa bdd MySql (répertoire dev-docker).</p>
 
@@ -174,50 +509,50 @@ services:
         container_name: postgresql-dev-docker
         restart: always
         environment:
-        POSTGRES_DB: keycloak_back_end_db
-        POSTGRES_PASSWORD: 1234!*MyJea@99
-        POSTGRES_USER: user1
+            POSTGRES_DB: keycloak_back_end_db
+            POSTGRES_PASSWORD: 1234!*MyJea@99
+            POSTGRES_USER: user1
         volumes:
-        - ./../target/postgresql-dev-docker:/var/lib/postgresql/data
+            - ./../target/postgresql-dev-docker:/var/lib/postgresql/data
         ports:
-        - 5432:5432
+            - 5432:5432
     lab-mysql:
         container_name: mysql-dev-docker
         restart: always
         image: mysql/mysql-server
         environment:
-        MYSQL_ROOT_PASSWORD: password
-        MYSQL_ROOT_HOST: &quot;%&quot;
-        MYSQL_DATABASE: keycloak
-        MYSQL_USER: keycloak
-        MYSQL_PASSWORD: password
+            MYSQL_ROOT_PASSWORD: password
+            MYSQL_ROOT_HOST: &quot;%&quot;
+            MYSQL_DATABASE: keycloak
+            MYSQL_USER: keycloak
+            MYSQL_PASSWORD: password
         volumes:
-        - ./../target/mysql-dev-docker:/var/lib/mysql
+            - ./../target/mysql-dev-docker:/var/lib/mysql
         ports:
-        - 3306:3306
+            - 3306:3306
     keycloak:
         container_name: keycloak-dev-docker
         restart: always
         image: jboss/keycloak
         depends_on:
-        - lab-mysql
+            - lab-mysql
         environment:
-        DB_VENDOR: MYSQL
-        DB_ADDR: lab-mysql
-        DB_PORT: 3306
-        DB_DATABASE: keycloak
-        DB_USER: keycloak
-        DB_PASSWORD: password
-        KEYCLOAK_USER: admin
-        KEYCLOAK_PASSWORD: 1234
+            DB_VENDOR: MYSQL
+            DB_ADDR: lab-mysql
+            DB_PORT: 3306
+            DB_DATABASE: keycloak
+            DB_USER: keycloak
+            DB_PASSWORD: password
+            KEYCLOAK_USER: admin
+            KEYCLOAK_PASSWORD: 1234
         ports:
-        - 8099:8080
-        - 8443:8443
-        - 9990:9990
+            - 8099:8080
+            - 8443:8443
+            - 9990:9990
         volumes:
-        - ./../target/keycloak-dev-docker:/data
+            - ./../target/keycloak-dev-docker:/data
         links:
-        - lab-mysql
+            - lab-mysql
 </code></pre>
 
 <hr />
@@ -317,7 +652,7 @@ docker-compose -f docker-compose.yml up -d
 2bd8051a1850        mysql/mysql-server   &quot;/entrypoint.sh mysq…&quot;   38 seconds ago      Up 24 seconds (health: starting)   0.0.0.0:3306-&gt;3306/tcp, 33060/tcp                                        mysql-dev-docker
 </code></pre>
 
-<p>&ndash;</p>
+<hr />
 
 <h3 id="les-profils-maven-et-springboot">Les profils maven et Springboot</h3>
 
@@ -354,12 +689,13 @@ docker-compose -f docker-compose.yml up -d
 <li><a href="#dépôts-gitlab">Dépôts Gitlab</a></li>
 <li><a href="#projet-spécificités-techniques">Projet : spécificités techniques</a></li>
 <li><a href="#projet-spécificités-fonctionnelles">Projet : spécificités fonctionnelles</a></li>
+<li><a href="#serveur-d-authentification-100-portable-avec-docker">Serveur d&rsquo;authentification 100 % portable avec docker</a></li>
+<li><a href="#déploiement-de-keycloak-dans-une-vm-gcp">Déploiement de Keycloak dans une VM GCP</a></li>
+<li><a href="#l-ihm-de-keycloak">L&rsquo;IHM de Keycloak</a></li>
 </ul></li>
-<li><a href="#le-projet-back-end">Le projet back-end</a>
+<li><a href="#back-end-en-java-avec-springboot">Back-end en java avec Springboot</a>
 <ul>
-<li><a href="#l-implémentation-de-keycloak">L&rsquo;implémentation de Keycloak</a></li>
-<li><a href="#application-100-portable-avec-docker">Application 100 % portable avec docker</a></li>
-<li><a href="#déploiement-de-l-application">Déploiement de l&rsquo;application</a></li>
+<li><a href="#déploiement-du-back-end-et-serveur-keycloak-100-sur-son-local">Déploiement du Back-end et serveur Keycloak 100% sur son local</a></li>
 <li><a href="#les-profils-maven-et-springboot">Les profils maven et Springboot</a></li>
 <li><a href="#les-tests">Les tests</a></li>
 </ul></li>

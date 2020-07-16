@@ -17,8 +17,8 @@
       <pubDate>Thu, 23 Apr 2020 19:40:34 +0200</pubDate>
       
       <guid>https://jeannory.github.io/blog/articles/keycloak/</guid>
-      <description>Introduction Keycloak est serveur d&amp;rsquo;authentification standalone. Il est reconnu pour la protection qu&amp;rsquo;il propose en termes de cyber sécurité et aussi par les très nombreuses librairies/fonctionnalités qui permettent une utilisation étendue (Java, AngularJs, Typescript, Ldap, etc..). Beaucoup d&amp;rsquo;entreprises lui font confiance et lui délèguent la partie authentification/autorisation. C&amp;rsquo;est un projet open source codé en java, qui fait preuve d&amp;rsquo;une grande maturité (version 9 à ce jour).
-Mohamed Youssfi formateur java explique comment sécuriser des applications en micro-service avec Keycloak à travers 11 vidéos.</description>
+      <description>Introduction MAJ au 16/07/2020 reprise de cet article après une courte pause de 3 mois :)
+Keycloak est serveur d&amp;rsquo;authentification standalone. Il est reconnu pour la protection qu&amp;rsquo;il propose en termes de cyber sécurité et aussi par les très nombreuses librairies/fonctionnalités qui permettent une utilisation étendue (Java, AngularJs, Typescript, Ldap, etc..). Beaucoup d&amp;rsquo;entreprises lui font confiance et lui délèguent la partie authentification/autorisation. C&amp;rsquo;est un projet open source codé en java, qui fait preuve d&amp;rsquo;une grande maturité (version 9 à ce jour).</description>
     </item>
     
   </channel>
