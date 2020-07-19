@@ -67,7 +67,7 @@ Exemple d'implémentation, avec des tests et une application entièrement portab
 
 ---
 
-### Serveur d'authentification 100 % portable avec docker ###
+## Serveur d'authentification 100 % portable avec docker ##
 
 Dans une application en micro service, le serveur d'authentification est décorélé des autres micro services. Le serveur Keycloak est déployé dans une VM.
 Keycloak et ses dépendances sont buildés dans une même image docker. Ils sont donc portable d'un environnement à un autre.
@@ -558,10 +558,551 @@ En relancant la commande docker ps -a nous constatons que tout est rentré dans 
 
 ### Les profils maven et Springboot ###
 
-toDo
+Un profil mave a été définis par défaut. Il permet de lancer l'application sans eéxécuter de test.
 
-### Les tests ###
-
-toDo
+		<!--profile by default								-->
+		<!--no junit or integration tests in this profile	-->
+		<profile>
+			<id>dev</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-test</artifactId>
+					<scope>test</scope>
+					<exclusions>
+						<exclusion>
+							<groupId>org.junit.vintage</groupId>
+							<artifactId>junit-vintage-engine</artifactId>
+						</exclusion>
+					</exclusions>
+				</dependency>
+			</dependencies>
+		</profile>
 
 ---
+
+Le profil dev-docker permet de lacer exclusivement les tests unitaires.
+
+		<!--profile for gitlab-ci										-->
+		<!--all junit tests in this profile								-->
+		<!--command														-->
+		<!--mvn test -Pdev-docker -Dspring.profiles.active=dev-docker	-->
+		<profile>
+			<id>dev-docker</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-test</artifactId>
+					<scope>test</scope>
+				</dependency>
+			</dependencies>
+			<build>
+				<plugins>
+					<!-- exclude integration tests-->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<version>3.0.0-M1</version>
+						<configuration>
+							<excludes>
+								<exclude>**/KeycloakApplicationTests*.java</exclude>
+								<exclude>**/UserControllerContextTest*.java</exclude>
+								<exclude>**/SpaceControllerContextTest*.java</exclude>
+							</excludes>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
+---
+
+Le profil dev-docker-integration-testing permet de ne lancer que les tests d'intégration
+
+		<!--profile for gitlab-ci										-->
+		<!--only integration tests in this profile						-->
+		<!--command														-->
+		<!--mvn test -Pdev-docker-integration-testing -Dspring.profiles.active=dev-docker	-->
+		<profile>
+			<id>dev-docker-integration-testing</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-test</artifactId>
+					<scope>test</scope>
+				</dependency>
+			</dependencies>
+			<build>
+				<plugins>
+					<!-- only integration tests-->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<version>3.0.0-M1</version>
+						<configuration>
+							<excludes>
+								<exclude>**/SpaceSpaceDtoConverterTest*.java</exclude>
+								<exclude>**/UserUserDtoConverterTest*.java</exclude>
+								<exclude>**/UserServiceImplTest*.java</exclude>
+								<exclude>**/UserServiceImplTest*.java</exclude>
+							</excludes>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
+---
+
+La combinaison de ces 3 profiles permettra l'exécution de plusiseurs étapes d'intégration et de déployement continue (voir le chapitre sur gitlab ci/cd).
+
+---
+
+Pour un déploiement en local ou pour compléter les tâches de ci/cd, la combinaison avec les profils Springboot va permettre de charger des variables sur un projet déjà compilés.
+
+---
+
+    spring:
+        profiles: dev-docker
+
+        jpa:
+            database: POSTGRESQL
+            show-sql: true
+            hibernate:
+                ddl-auto: create-drop
+
+        datasource:
+            platform: postgres
+            url: jdbc:postgresql://localhost:5432/keycloak_back_end_db
+            username: user1
+            password: 1234!*MyJea@99
+            driverClassName: org.postgresql.Driver
+            initialization-mode: always
+
+    keycloak:
+        realm: Sc-project
+        auth-server-url: http://localhost:8099/auth/
+        resource: sc-user
+        public-client: false
+        bearer-only: true
+        cors: true
+
+    sc-properties:
+        authServerUrl: http://localhost:8099/auth/
+        authServerParameters: realms/Sc-project/protocol/openid-connect/token
+
+Le profil dev-docker permet un déploiement en local et les tests unitaires.
+
+---
+
+    spring:
+        profiles: dev-docker-integration
+
+        jpa:
+            database: POSTGRESQL
+            show-sql: true
+            hibernate:
+                ddl-auto: create-drop
+
+        datasource:
+            platform: postgres
+            url: jdbc:postgresql://jeannory.dynamic-dns.net:5432/keycloak_back_end_db
+            username: user1
+            password: 1234!*MyJea@99
+            driverClassName: org.postgresql.Driver
+            initialization-mode: always
+
+    keycloak:
+        realm: Sc-project
+        auth-server-url: http://jeannory.ovh:8099/auth/
+        resource: sc-user
+        public-client: false
+        bearer-only: true
+        cors: true
+
+
+    sc-properties:
+        authServerUrl: http://jeannory.ovh:8099/auth/
+        authServerParameters: realms/Sc-project/protocol/openid-connect/token
+
+Le profil dev-docker-integration va être utilisé pour les tests d'intégration.
+
+---
+
+    spring:
+        profiles: dev-docker-integration-deploy
+
+    jpa:
+        database: POSTGRESQL
+        show-sql: true
+        hibernate:
+            ddl-auto: create-drop
+
+    datasource:
+        platform: postgres
+        url: jdbc:postgresql://localhost:5432/keycloak_back_end_db
+        username: user1
+        password: 1234!*MyJea@99
+        driverClassName: org.postgresql.Driver
+        initialization-mode: always
+
+    keycloak:
+        realm: Sc-project
+        auth-server-url: http://jeannory.ovh:8099/auth/
+        resource: sc-user
+        public-client: false
+        bearer-only: true
+        cors: true
+        ssl-required: none
+
+    sc-properties:
+        authServerUrl: http://jeannory.ovh:8099/auth/
+        authServerParameters: realms/Sc-project/protocol/openid-connect/token
+
+Enfin le profil dev-docker-integration-deploy va être utilisé pour le déploiement du projet.
+
+---
+
+### Les tests unitaires ###
+
+Ce projet comporte des tests unitaires. La méthode *getConnectedUserDto* a été contruite par les tests (principe du test first).
+
+Méthode :
+
+    @Service
+    public class UserServiceImpl implements UserService {
+
+        @Autowired
+        private KeycloakSecurityContext keycloakSecurityContext;
+
+        @Autowired
+        private UserRepository userRepository;
+
+        @Autowired
+        private SpaceRepository spaceRepository;
+
+        @Autowired
+        @Qualifier("UserUserDtoConverter")
+        private SuperConverter<User, UserDto> converter;
+
+        @Override
+        public UserDto getConnectedUserDto() {
+            try {
+                return converter.toDto(getConnectedUser());
+            } catch (CustomServiceException ex) {
+                return null;
+            }
+        }
+
+        //catch CustomTransactionalException in this method
+        private User getConnectedUser() {
+            final AccessToken accessToken = keycloakSecurityContext.getAccessToken();
+            if (accessToken == null) {
+                throw new CustomServiceException("error getAccessToken failed");
+            } else if (accessToken.getPreferredUsername() == null || accessToken.getPreferredUsername().isEmpty()) {
+                throw new CustomServiceException("error preferredUsername cannot be null or empty");
+            }
+            final String username = accessToken.getPreferredUsername();
+            User user = userRepository.findByUsernameIgnoreCase(username);
+            if (user == null) {
+                try {
+                    user = testCreateUser(accessToken);
+                } catch (CustomTransactionalException ex) {
+                    return null;
+                }
+            }
+            return user;
+        }
+
+        // Do not catch CustomTransactionalException in this method
+        @Transactional(propagation = Propagation.REQUIRES_NEW,
+                rollbackFor = CustomTransactionalException.class)
+        private User testCreateUser(final AccessToken accessToken) {
+            return validateCreateUser(accessToken);
+        }
+
+        // MANDATORY: Transaction must be created before.
+        @Transactional(propagation = Propagation.MANDATORY)
+        private User validateCreateUser(final AccessToken accessToken) {
+            try {
+                final Space space = new Space(null, accessToken.getPreferredUsername() + "_space", null);
+                spaceRepository.save(space);
+                final User user = new User();
+                user.setUsername(accessToken.getPreferredUsername());
+                user.setEmail(accessToken.getEmail());
+                user.setFirstName(accessToken.getGivenName());
+                user.setLastName(accessToken.getFamilyName());
+                user.setSpace(space);
+                userRepository.save(user);
+                return userRepository.findByUsernameIgnoreCase(accessToken.getPreferredUsername());
+            } catch (Exception ex) {
+                throw new CustomTransactionalException("persistence failed : " + ex.getMessage());
+            }
+        }
+
+    }
+
+---
+
+
+Class de test :
+
+    public class UserServiceImplTest {
+
+        @InjectMocks
+        private UserServiceImpl userService;
+
+        @Mock
+        private KeycloakSecurityContext keycloakSecurityContext;
+
+        @Mock
+        private UserRepository userRepository;
+
+        @Mock
+        private SpaceRepository spaceRepository;
+
+        @Mock
+        private SuperConverter<User, UserDto> converter;
+
+        @Before
+        public void setUp() throws Exception {
+            MockitoAnnotations.initMocks(this);
+        }
+
+        @Test
+        public void testGetConnectedUserDtoWhenUserExistsReturnDto() {
+            //given
+            final AccessToken accessToken = Mockito.spy(new AccessToken());
+            accessToken.setPreferredUsername("XLD");
+            Mockito.when(keycloakSecurityContext.getAccessToken()).thenReturn(accessToken);
+            final User user = new User();
+            user.setUsername("XLD");
+            Mockito.when(userRepository.findByUsernameIgnoreCase(Mockito.anyString())).thenReturn(user);
+            final UserDto userDto = new UserDto();
+            userDto.setUsername("XLD");
+            Mockito.when(converter.toDto(user)).thenReturn(userDto);
+
+            //when
+            final UserDto result = userService.getConnectedUserDto();
+
+            //then
+            assertEquals("XLD", result.getUsername());
+        }
+
+        @Test
+        public void testGetConnectedUserDtoWhenUserExistsReturnDtoBis() {
+            //given
+            Mockito.when(keycloakSecurityContext.getAccessToken()).thenReturn(BuilderUtils.getAccessToken());
+            Mockito.when(userRepository.findByUsernameIgnoreCase(Mockito.anyString())).thenReturn(BuilderUtils.getUser());
+            Mockito.when(converter.toDto(BuilderUtils.getUser())).thenReturn(BuilderUtils.getUserDto());
+
+            //when
+            final UserDto result = userService.getConnectedUserDto();
+
+            //then
+            assertEquals(1L, (long) result.getId());
+            assertEquals("user1",result.getUsername());
+            assertEquals("user1@gmail.com",result.getEmail());
+            assertEquals(Gender.Mister,result.getGender());
+            assertEquals("firstName1",result.getFirstName());
+            assertEquals("name1",result.getLastName());
+            assertEquals(Status.ACTIVE,result.getStatus());
+            assertEquals("user1_space", result.getSpace().getName());
+        }
+
+        @Test
+        public void testGetConnectedUserDtoWhenUserNoExistsReturnDto() {
+            //given
+            final AccessToken accessToken = Mockito.spy(new AccessToken());
+            accessToken.setPreferredUsername("XLD");
+            Mockito.when(keycloakSecurityContext.getAccessToken()).thenReturn(accessToken);
+            Mockito.when(userRepository.findByUsernameIgnoreCase(Mockito.anyString())).thenReturn(null);
+            final Space space = new Space();
+            space.setId(1L);
+            space.setName("XLD_space");
+
+            Mockito.when(spaceRepository.save(Mockito.any(Space.class))).thenReturn(space);
+            final User user = new User();
+            user.setId(1L);
+            user.setUsername("XLD");
+            user.setSpace(space);
+            Mockito.when(userRepository.save(Mockito.any(User.class))).thenReturn(user);
+            Mockito.when(userRepository.findByUsernameIgnoreCase(Mockito.anyString())).thenReturn(user);
+
+            final SpaceDto spaceDto = new SpaceDto();
+            spaceDto.setName("XLD_space");
+
+            final UserDto userDto = new UserDto();
+            userDto.setUsername("XLD");
+            userDto.setSpace(spaceDto);
+            Mockito.when(converter.toDto(user)).thenReturn(userDto);
+
+            //when
+            final UserDto result = userService.getConnectedUserDto();
+            result.toString();
+
+            //then
+            assertEquals("XLD", result.getUsername());
+        }
+
+        @Test
+        public void testGetConnectedUserWhenGetAccessTokenIsNullThenThrowExceptionReturnNull(){
+            //given
+            Mockito.when(keycloakSecurityContext.getAccessToken()).thenReturn(null);
+
+            //when
+            final UserDto result = userService.getConnectedUserDto();
+
+            //then
+            assertNull("return null", result);
+        }
+
+        @Test
+        public void testGetConnectedUserWhenPreferredUsernameIsNullThenThrowExceptionReturnNull() {
+            //given
+            final AccessToken accessToken = Mockito.spy(new AccessToken());
+            Mockito.when(keycloakSecurityContext.getAccessToken()).thenReturn(accessToken);
+
+            //when
+            final UserDto result = userService.getConnectedUserDto();
+
+            //then
+            assertNull("return null", result);
+        }
+
+        @Test
+        public void testGetConnectedUserWhenPreferredUsernameIsEmptyThenThrowExceptionReturnNull() {
+            //given
+            final AccessToken accessToken = Mockito.spy(new AccessToken());
+            accessToken.setPreferredUsername("");
+            Mockito.when(keycloakSecurityContext.getAccessToken()).thenReturn(accessToken);
+
+            //when
+            final UserDto result = userService.getConnectedUserDto();
+
+            //then
+            assertNull("return null", result);
+        }
+
+        @Test
+        public void testGetConnectedUserWhenSpaceSaveFailedThenThrowExceptionReturnNull() {
+            //given
+            final AccessToken accessToken = Mockito.spy(new AccessToken());
+            accessToken.setPreferredUsername("XLD");
+            Mockito.when(keycloakSecurityContext.getAccessToken()).thenReturn(accessToken);
+            Mockito.when(userRepository.findByUsernameIgnoreCase(Mockito.anyString())).thenReturn(null);
+            final Space space = new Space();
+            space.setName("XLD_space");
+            Mockito.when(spaceRepository.save(Mockito.any(Space.class))).thenThrow(new CustomTransactionalException());
+
+            //when
+            final UserDto result = userService.getConnectedUserDto();
+
+            //then
+            assertNull("return null", result);
+        }
+
+        @Test
+        public void testGetConnectedUserWhenUserSaveFailedThenThrowExceptionReturnNull() {
+            //given
+            final AccessToken accessToken = Mockito.spy(new AccessToken());
+            accessToken.setPreferredUsername("XLD");
+            Mockito.when(keycloakSecurityContext.getAccessToken()).thenReturn(accessToken);
+            Mockito.when(userRepository.findByUsernameIgnoreCase(Mockito.anyString())).thenReturn(null);
+            final User user = new User();
+            user.setUsername("XLD");
+            Mockito.when(userRepository.save(Mockito.any(User.class))).thenThrow(new CustomTransactionalException());
+            final Space space = new Space();
+            space.setName("XLD_space");
+            space.setUser(user);
+            Mockito.when(spaceRepository.save(Mockito.any(Space.class))).thenReturn(space);
+
+            //when
+            final UserDto result = userService.getConnectedUserDto();
+
+            //then
+            assertNull("return null", result);
+        }
+    }
+
+---
+
+### Les tests d'intégration ###
+
+Ce projet dispose de tests d'intégration.
+Il est nécessaire de diposer d'un environnement complet, un serveur d'authentification et la base de donnée du projet.
+Ces tests pourront être lancés en local ou depuis gitlab. Il faut pour cela charger le profil maven et Springboot adéquat.
+
+    /**
+    * Initialize spring context before the class
+    */
+    @RunWith(SpringRunner.class)
+    @SpringBootTest
+    @AutoConfigureMockMvc
+    /**
+    * ActiveProfiles must be launch by maven
+    * mvn test -Pdev-local -Dspring.profiles.active=dev-local
+    */
+    //@ActiveProfiles("dev-docker")
+    @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+    public class UserControllerContextTest extends BuilderUtilsResultAction {
+        @Autowired
+        private BuilderUtilsKeycloak builderUtilsKeycloak;
+
+        @Test
+        public void getGetUsersShouldReturnForbiddenWhenRoleIsUser() throws Exception {
+            final String accessToken = builderUtilsKeycloak.getAccessToken("test", "1234");
+            final MvcResult mvcResult = invokeGet("/api/users", accessToken)
+                    .andExpect(status().isForbidden())
+                    .andReturn();
+        }
+
+        @Test
+        public void testGetUsersWhenRoleIsManagerShouldReturn9() throws Exception {
+            final String accessToken = builderUtilsKeycloak.getAccessToken("phou.jeannory@gmail.com", "1234");
+            final MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+            parameters.put("pageNo", Collections.singletonList("0"));
+            parameters.put("pageSize", Collections.singletonList("9"));
+            parameters.put("sortBy", Collections.singletonList("id"));
+            final MvcResult mvcResult = invokeGet("/api/users", accessToken, parameters)
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$",hasSize(9)))
+                    .andExpect(jsonPath("$[0].username", is("user1")))
+                    .andReturn();
+        }
+
+        @Test
+        public void testGetConnectedUser() throws Exception {
+            final String accessToken = builderUtilsKeycloak.getAccessToken("test", "1234");
+            final MvcResult mvcResult = invokeGet("/api/users/connected-user", accessToken)
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("email", is("test@gmail.com")))
+                    .andExpect(jsonPath("space.name", is("test_space")))
+                    .andReturn();
+        }
+
+    }
+
+Pour le mode local la commande est :
+
+    mvn test -Pdev-local -Dspring.profiles.active=dev-docker
+
+---
+
+## Le front-end avec Angular Material ##
+
+Anglar Material (licence MIT)...toDo
+
+![Angular Material](/blog/img/gitlab-20.png)
+
+...
+
