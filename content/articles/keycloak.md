@@ -558,7 +558,7 @@ En relancant la commande docker ps -a nous constatons que tout est rentré dans 
 
 ### Les profils maven et Springboot ###
 
-Un profil mave a été définis par défaut. Il permet de lancer l'application sans eéxécuter de test.
+Un profil maven a été définis par défaut. Il permet de lancer l'application sans exécuter de test.
 
 		<!--profile by default								-->
 		<!--no junit or integration tests in this profile	-->
@@ -1100,9 +1100,1223 @@ Pour le mode local la commande est :
 
 ## Le front-end avec Angular Material ##
 
-Anglar Material (licence MIT)...toDo
+### Le projet et ses dépendances ###
+
+Le front-end a été réalisé depuis un projet sous licence MIT : Material Dashboard Angular.
+Récupérer le à l'addresse suivante : https://www.creative-tim.com/product/material-dashboard-angular2 (format zip).
 
 ![Angular Material](/blog/img/gitlab-20.png)
 
+Une fois le projet dézippé dans un répertoire local, télécharger toutes les dépendances.
+
+    npm i
+
+---
+
+Rendez-vous sur le site de keycloak-js et installer la librairie
+
+![keycloak js](/blog/img/gitlab-21.png)
+
+    npm i keycloak-js --save
+
+---
+
+Il faut rajouter dans le fichier angular.json *"node_modules/keycloak-js/dist/keycloak.min.js"*
+
+    "scripts": [
+        "node_modules/jquery/dist/jquery.js",
+        "node_modules/popper.js/dist/umd/popper.js",
+        "node_modules/bootstrap-material-design/dist/js/bootstrap-material-design.min.js",
+        "node_modules/arrive/src/arrive.js",
+        "node_modules/moment/moment.js",
+        "node_modules/perfect-scrollbar/dist/perfect-scrollbar.min.js",
+        "node_modules/bootstrap-notify/bootstrap-notify.js",
+        "node_modules/chartist/dist/chartist.js",
+        "node_modules/keycloak-js/dist/keycloak.min.js"
+    ]
+
+### Les variables d'environnement ###
+
+Pour commencer il faut setter les variables à l'application
+
+environment.ts
+
+    export const environment = {
+    SC_USER_BASE_URL: 'localhost',
+    SC_USER_PORT: '8081',
+    AUTH_BASE_URL: 'localhost',
+    AUTH_PORT: '8099',
+    // APP_VERSION: version,
+    production: false,
+    };
+
+---
+
+environment.prod.ts
+
+    export const environment = {
+    SC_USER_BASE_URL: 'jeannory.dynamic-dns.net',
+    SC_USER_PORT: '8081',
+    AUTH_BASE_URL: 'jeannory.ovh',
+    AUTH_PORT: '8099',
+    // APP_VERSION: version,
+    production: true,
+    };
+
+---
+
+Toutes les urls sont regroupées dans des variables statics
+
+Générer la class
+
+    ng g class utils/ApiUrl
+
+---
+
+api-url.ts
+
+        import { environment } from '../../environments/environment';
+
+    export class ApiUrl {
+        private static readonly BASE_SC_USER_URL = `http://${environment.SC_USER_BASE_URL}:${environment.SC_USER_PORT}`;
+        private static readonly BASE_API = '/api';
+        private static readonly USERS = '/users';
+        private static readonly CONNECTED_USER = '/connected-user'
+        private static readonly AUTH = '/auth/'
+        private static readonly AUTH_SERVER = `http://${environment.AUTH_BASE_URL}:${environment.AUTH_PORT}`;
+
+        static get GET_CONNECTED_USER(): string {
+            return `${this.BASE_SC_USER_URL}${this.BASE_API}${this.USERS}${this.CONNECTED_USER}`;
+        }
+
+        static get GET_USERS(): string {
+            return `${this.BASE_SC_USER_URL}${this.BASE_API}${this.USERS}`;
+        }
+
+        static get GET_AUTH_SERVER(): string {
+            return `${this.AUTH_SERVER}${this.AUTH}`;
+        }
+    }
+
+### Implémentation de keycloak ###
+
+Voici les étapes nécessaires
+
+Créer le service KeycloakSecurity
+
+    ng g service services/KeycloakSecurity
+
+---
+
+    import { Injectable } from '@angular/core';
+    import { ApiUrl } from '../utils/api-url';
+
+    declare var Keycloak: any;
+    @Injectable({
+    providedIn: 'root'
+    })
+    export class KeycloakSecurityService {
+
+    public kc;
+    apiUrl = ApiUrl;
+
+    constructor() { }
+    init() {
+        return new Promise((resolve, reject) => {
+        console.log('security Initialisation ...');
+        this.kc = new Keycloak({
+            url: this.apiUrl.GET_AUTH_SERVER,
+            realm: 'Sc-project',
+            clientId: 'sc-ui'
+        });
+        this.kc.init({
+            onLoad: 'check-sso',
+            promiseType: 'native'
+        }).then((authenticated) => {
+            console.log(this.kc.token);
+            resolve({ auth: authenticated, token: this.kc.token });
+        }).catch(err => {
+            reject(err);
+        });
+        });
+    }
+
+    }
+
 ...
 
+Puis créer le service RequestInterceptor qui implements HttpInterceptor.
+La redéfinition des méthodes de HttpInterceptor permet d'ajouter un header à chaque requête et récupérer tous les status codes des responses serveurs (cette fonction ne sera pas implémenter ici)
+
+    ng g service services/RequestInterceptor
+
+---
+
+    import { Injectable } from '@angular/core';
+    import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent } from '@angular/common/http';
+    import { KeycloakSecurityService } from './keycloak-security.service';
+    import { Observable } from 'rxjs';
+
+    @Injectable({
+    providedIn: 'root'
+    })
+    export class RequestInterceptorService implements HttpInterceptor{
+
+    constructor(private securityService: KeycloakSecurityService) { }
+
+    intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+        console.log('Request Http Interceptor ...');
+        if (!this.securityService.kc.authenticated) {
+        return next.handle(req);
+        } else {
+        const request = req.clone({
+            setHeaders: {
+            Authorization: 'Bearer ' + this.securityService.kc.token
+            }
+        });
+        return next.handle(request);
+        }
+    }
+    }
+
+Modifier app.module.ts comme tel
+
+    import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+    import { NgModule, DoBootstrap, ApplicationRef } from '@angular/core';
+    import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+    import { HttpModule } from '@angular/http';
+    import { RouterModule } from '@angular/router';
+    import { AppRoutingModule } from './app.routing';
+    import { ComponentsModule } from './components/components.module';
+    import { AppComponent } from './app.component';
+    import {
+    AgmCoreModule
+    } from '@agm/core';
+    import { AdminLayoutComponent } from './layouts/admin-layout/admin-layout.component';
+    import { KeycloakSecurityService } from './services/keycloak-security.service';
+    import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+    import { RequestInterceptorService } from './services/request-interceptor.service';
+    import { MatSnackBarModule } from '@angular/material/snack-bar';
+
+    const securityService = new KeycloakSecurityService();
+
+    @NgModule({
+    imports: [
+        BrowserAnimationsModule,
+        FormsModule,
+        ReactiveFormsModule,
+        HttpModule,
+        ComponentsModule,
+        RouterModule,
+        AppRoutingModule,
+        AgmCoreModule.forRoot({
+        apiKey: 'YOUR_GOOGLE_MAPS_API_KEY'
+        }),
+        HttpClientModule,
+        MatSnackBarModule
+    ],
+    declarations: [
+        AppComponent,
+        AdminLayoutComponent,
+    ],
+    providers: [
+        { provide: KeycloakSecurityService, useValue: securityService },
+        { provide: HTTP_INTERCEPTORS, useClass: RequestInterceptorService, multi: true }
+    ],
+    })
+
+    export class AppModule implements DoBootstrap {
+
+    ngDoBootstrap(appRef: ApplicationRef): void {
+        securityService.init()
+        .then(res => {
+            console.log(res);
+            appRef.bootstrap(AppComponent);
+        })
+        .catch((err) => {
+            console.log('Keycloak error ', err);
+        });
+    }
+    }
+
+---
+
+Il faut également modifier app.component.ts
+
+    import { Component, OnInit} from '@angular/core';
+    import { KeycloakSecurityService } from './services/keycloak-security.service';
+
+
+    @Component({
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.css']
+    })
+    export class AppComponent implements OnInit{
+
+    title = 'sc-ui';
+
+    constructor(public securityService: KeycloakSecurityService){
+
+    }
+
+    ngOnInit(): void {
+        console.log('AppComponent');
+    }
+
+    }
+
+---
+
+Il faut créer le service RoleGuard qui servira à protéger l'accès aux pages
+
+    ng g service services/RoleGuard
+
+---
+
+    import { Injectable } from '@angular/core';
+    import { CanActivate, Router, ActivatedRouteSnapshot } from '@angular/router';
+    import { KeycloakSecurityService } from './keycloak-security.service';
+    import { MatSnackBar } from '@angular/material/snack-bar';
+
+    @Injectable({
+    providedIn: 'root'
+    })
+    export class RoleGuardService implements CanActivate {
+
+    roles = [];
+
+    constructor(
+        public securityService: KeycloakSecurityService,
+        private router: Router,
+        private snackBar: MatSnackBar
+    ) {
+        this.getAccessRole();
+    }
+
+    canActivate(route: ActivatedRouteSnapshot): boolean {
+        const expectedRoleArray = route.data;
+        let i = 0;
+        while (i < expectedRoleArray.expectedRole.length) {
+        let j = 0;
+        while (j < this.roles.length) {
+            if (expectedRoleArray.expectedRole[i] === this.roles[j]) {
+            return true;
+            }
+            j++;
+        }
+        i++;
+        }
+        this.snackBar.open('You are not authorized to access this page.', 'ok', {
+        panelClass: 'snackbar-error',
+        verticalPosition: 'top',
+        duration: 5000,
+        });
+        this.router.navigate(['/home']);
+        return false;
+    }
+
+    private getAccessRole(): void {
+        if (this.securityService.kc.hasRealmRole('user')) {
+        this.roles.push('user');
+        }
+        if (this.securityService.kc.hasRealmRole('manager')) {
+        this.roles.push('manager');
+        }
+    }
+    }
+
+---
+
+Enfin nous allons créer un service qui va centraliser les requêtes vers le serveur back-end
+
+    ng g service services/Api
+
+---
+
+Les méthodes sont très basiques
+
+    import { Injectable } from '@angular/core';
+    import { HttpClient } from '@angular/common/http';
+    import { ApiUrl } from '../utils/api-url';
+
+    @Injectable({
+    providedIn: 'root'
+    })
+    export class ApiService {
+
+    apiUrl = ApiUrl;
+
+    constructor(
+        private http: HttpClient,
+    ) { }
+
+    public getConnectedUser() {
+        return this.http.get(this.apiUrl.GET_CONNECTED_USER)
+    }
+
+    public getUsers(pageNo: number, pageSize: number, sortBy: string) {
+        return this.http.get(this.apiUrl.GET_USERS + '?pageNo=' + pageNo + '&pageSize=' + pageSize + '&sortBy=' + sortBy);
+    }
+    }
+
+---
+
+La page Home permettra de rediriger les utilisateurs authentifiés
+
+    ng g c Home
+
+---
+
+Il faut encore modifier quelques fichiers du projet existant
+
+Pour naviguer vers la page *Home*
+
+sidebar.component.ts
+
+    import { Component, OnInit } from '@angular/core';
+    import { KeycloakSecurityService } from 'app/services/keycloak-security.service';
+
+    declare const $: any;
+    declare interface RouteInfo {
+        path: string;
+        title: string;
+        icon: string;
+        class: string;
+    }
+    export const ROUTES: RouteInfo[] = [
+        { path: '/home', title: 'Home',  icon: 'home', class: '' },
+        { path: '/dashboard', title: 'Dashboard',  icon: 'dashboard', class: '' },
+        { path: '/user-profile', title: 'User Profile',  icon:'person', class: '' },
+        { path: '/table-list', title: 'Table List',  icon:'content_paste', class: '' },
+        { path: '/typography', title: 'Typography',  icon:'library_books', class: '' },
+        { path: '/icons', title: 'Icons',  icon:'bubble_chart', class: '' },
+        { path: '/maps', title: 'Maps',  icon:'location_on', class: '' },
+        { path: '/notifications', title: 'Notifications',  icon:'notifications', class: '' },
+        { path: '/upgrade', title: 'Upgrade to PRO',  icon:'unarchive', class: 'active-pro' },
+    ];
+
+    @Component({
+    selector: 'app-sidebar',
+    templateUrl: './sidebar.component.html',
+    styleUrls: ['./sidebar.component.css']
+    })
+    export class SidebarComponent implements OnInit {
+    menuItems: any[];
+
+    constructor(public securityService: KeycloakSecurityService) { }
+
+    ngOnInit() {
+        this.menuItems = ROUTES.filter(menuItem => menuItem);
+    }
+    isMobileMenu() {
+        if ($(window).width() > 991) {
+            return false;
+        }
+        return true;
+    };
+
+    }
+
+---
+
+sidebar.component.ts
+
+    <div class="logo">
+        <a routerLink="/home" class="simple-text">
+            <div class="logo-img">
+                <img src="/assets/img/angular2-logo-red.png" />
+            </div>
+            Creative Tim
+        </a>
+    </div>
+    <div class="sidebar-wrapper">
+        <div *ngIf="isMobileMenu()">
+            <form class="navbar-form">
+                <span class="bmd-form-group">
+                    <div class="input-group no-border">
+                        <input type="text" value="" class="form-control" placeholder="Search...">
+                        <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon">
+                            <i class="material-icons">search</i>
+                            <div class="ripple-container"></div>
+                        </button>
+                    </div>
+                </span>
+            </form>
+            <ul class="nav navbar-nav nav-mobile-menu">
+                <li class="nav-item">
+                    <a class="nav-link" href="javascript:void(0)">
+                        <i class="material-icons">dashboard</i>
+                        <p>
+                            <span class="d-lg-none d-md-block">Stats</span>
+                        </p>
+                    </a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link" href="javascript:void(0)" id="navbarDropdownMenuLink" data-toggle="dropdown"
+                        aria-haspopup="true" aria-expanded="false">
+                        <i class="material-icons">notifications</i>
+                        <span class="notification">5</span>
+                        <p>
+                            <span class="d-lg-none d-md-block">Some Actions</span>
+                        </p>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
+                        <a class="dropdown-item" href="#">Mike John responded to your email</a>
+                        <a class="dropdown-item" href="#">You have 5 new tasks</a>
+                        <a class="dropdown-item" href="#">You're now friend with Andrew</a>
+                        <a class="dropdown-item" href="#">Another Notification</a>
+                        <a class="dropdown-item" href="#">Another One</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="javascript:void(0)">
+                        <i class="material-icons">person</i>
+                        <p>
+                            <span class="d-lg-none d-md-block">Account</span>
+                        </p>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <ul class="nav">
+            <li routerLinkActive="active" *ngFor="let menuItem of menuItems" class="{{menuItem.class}} nav-item">
+                <a class="nav-link" [routerLink]="[menuItem.path]"
+                    *ngIf="!securityService.kc.authenticated && menuItem.title == 'Home'">
+                    <i class="material-icons">{{menuItem.icon}}</i>
+                    <p>{{menuItem.title}}</p>
+                </a>
+                <a class="nav-link" [routerLink]="[menuItem.path]" *ngIf="securityService.kc.authenticated">
+                    <i class="material-icons">{{menuItem.icon}}</i>
+                    <p>{{menuItem.title}}</p>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+---
+
+Quelques méthodes de la librairies de keycloak seront acessible depuis la navbar
+
+navbar.component.ts
+
+    import { Component, OnInit, ElementRef } from '@angular/core';
+    import { ROUTES } from '../sidebar/sidebar.component';
+    import { Location, LocationStrategy, PathLocationStrategy } from '@angular/common';
+    import { Router } from '@angular/router';
+    import { KeycloakSecurityService } from 'app/services/keycloak-security.service';
+
+    @Component({
+        selector: 'app-navbar',
+        templateUrl: './navbar.component.html',
+        styleUrls: ['./navbar.component.css']
+    })
+    export class NavbarComponent implements OnInit {
+        private listTitles: any[];
+        location: Location;
+        mobile_menu_visible: any = 0;
+        private toggleButton: any;
+        private sidebarVisible: boolean;
+
+        constructor(
+            location: Location,
+            private element: ElementRef,
+            private router: Router,
+            public securityService: KeycloakSecurityService) {
+            this.location = location;
+            this.sidebarVisible = false;
+        }
+
+        ngOnInit() {
+            this.listTitles = ROUTES.filter(listTitle => listTitle);
+            const navbar: HTMLElement = this.element.nativeElement;
+            this.toggleButton = navbar.getElementsByClassName('navbar-toggler')[0];
+            this.router.events.subscribe((event) => {
+                this.sidebarClose();
+                var $layer: any = document.getElementsByClassName('close-layer')[0];
+                if ($layer) {
+                    $layer.remove();
+                    this.mobile_menu_visible = 0;
+                }
+            });
+        }
+
+        sidebarOpen() {
+            const toggleButton = this.toggleButton;
+            const body = document.getElementsByTagName('body')[0];
+            setTimeout(function () {
+                toggleButton.classList.add('toggled');
+            }, 500);
+
+            body.classList.add('nav-open');
+
+            this.sidebarVisible = true;
+        };
+        sidebarClose() {
+            const body = document.getElementsByTagName('body')[0];
+            this.toggleButton.classList.remove('toggled');
+            this.sidebarVisible = false;
+            body.classList.remove('nav-open');
+        };
+        sidebarToggle() {
+            // const toggleButton = this.toggleButton;
+            // const body = document.getElementsByTagName('body')[0];
+            var $toggle = document.getElementsByClassName('navbar-toggler')[0];
+
+            if (this.sidebarVisible === false) {
+                this.sidebarOpen();
+            } else {
+                this.sidebarClose();
+            }
+            const body = document.getElementsByTagName('body')[0];
+
+            if (this.mobile_menu_visible == 1) {
+                // $('html').removeClass('nav-open');
+                body.classList.remove('nav-open');
+                if ($layer) {
+                    $layer.remove();
+                }
+                setTimeout(function () {
+                    $toggle.classList.remove('toggled');
+                }, 400);
+
+                this.mobile_menu_visible = 0;
+            } else {
+                setTimeout(function () {
+                    $toggle.classList.add('toggled');
+                }, 430);
+
+                var $layer = document.createElement('div');
+                $layer.setAttribute('class', 'close-layer');
+
+
+                if (body.querySelectorAll('.main-panel')) {
+                    document.getElementsByClassName('main-panel')[0].appendChild($layer);
+                } else if (body.classList.contains('off-canvas-sidebar')) {
+                    document.getElementsByClassName('wrapper-full-page')[0].appendChild($layer);
+                }
+
+                setTimeout(function () {
+                    $layer.classList.add('visible');
+                }, 100);
+
+                $layer.onclick = function () { //asign a function
+                    body.classList.remove('nav-open');
+                    this.mobile_menu_visible = 0;
+                    $layer.classList.remove('visible');
+                    setTimeout(function () {
+                        $layer.remove();
+                        $toggle.classList.remove('toggled');
+                    }, 400);
+                }.bind(this);
+
+                body.classList.add('nav-open');
+                this.mobile_menu_visible = 1;
+
+            }
+        };
+
+        getTitle() {
+            let titlee = this.location.prepareExternalUrl(this.location.path());
+            if (titlee.charAt(0) === '#') {
+                titlee = titlee.slice(1);
+            }
+
+            for (let item = 0; item < this.listTitles.length; item++) {
+                if (this.listTitles[item].path === titlee) {
+                    return this.listTitles[item].title;
+                }
+            }
+            return 'Dashboard';
+        }
+
+        onLogin() {
+            this.securityService.kc.login();
+        }
+
+        onLogout() {
+            this.securityService.kc.logout();
+        }
+
+        onEditAccount() {
+            this.securityService.kc.accountManagement();
+        }
+    }
+
+---
+
+navbar.component.html
+
+    <nav class="navbar navbar-expand-lg navbar-transparent  navbar-absolute fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-wrapper">
+                <a class="navbar-brand" href="javascript:void(0)">{{getTitle()}}</a>
+            </div>
+            <button mat-raised-button class="navbar-toggler" type="button" (click)="sidebarToggle()">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="navbar-toggler-icon icon-bar"></span>
+                <span class="navbar-toggler-icon icon-bar"></span>
+                <span class="navbar-toggler-icon icon-bar"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="navigation"
+                *ngIf="securityService.kc.authenticated">
+                <form class="navbar-form">
+                    <div class="input-group no-border">
+                        <input type="text" value="" class="form-control" placeholder="Search...">
+                        <button mat-raised-button type="submit" class="btn btn-white btn-round btn-just-icon">
+                            <i class="material-icons">search</i>
+                            <div class="ripple-container"></div>
+                        </button>
+                    </div>
+                </form>
+                <ul class="navbar-nav" *ngIf="securityService.kc.authenticated">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link" href="javascript:void(0)" id="navbarDropdownMenuLink" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false">
+                            <i class="material-icons">notifications</i>
+                            <span class="notification">5</span>
+                            <p>
+                                <span class="d-lg-none d-md-block">Some Actions</span>
+                            </p>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
+                            <a class="dropdown-item" href="javascript:void(0)">Mike John responded to your email</a>
+                            <a class="dropdown-item" href="javascript:void(0)">You have 5 new tasks</a>
+                            <a class="dropdown-item" href="javascript:void(0)">You're now friend with Andrew</a>
+                            <a class="dropdown-item" href="javascript:void(0)">Another Notification</a>
+                            <a class="dropdown-item" href="javascript:void(0)">Another One</a>
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        <a class="clickable nav-link" (click)="onEditAccount()">
+                            <i class="material-icons">person</i>
+                            <p>
+                                <span class="d-lg-none d-md-block">account</span>
+                            </p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="clickable nav-link" (click)="onLogout()">
+                            <i class="material-icons">exit_to_app</i>
+                            <p>
+                                <span class="d-lg-none d-md-block">logout</span>
+                            </p>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="collapse navbar-collapse justify-content-end" id="navigation"
+                *ngIf="!securityService.kc.authenticated">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="clickable nav-link" (click)="onLogin()">
+                            <i class="material-icons">exit_to_app</i>
+                            <p>
+                                <span class="d-lg-none d-md-block">login</span>
+                            </p>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+---
+
+navbar.component.css
+
+    .clickable{
+        cursor: pointer
+    }
+
+---
+
+Il est important de protéger certaines pages en fonction des rôles de l'utilisateur
+
+admin-layout.routing.ts
+
+    import { Routes } from '@angular/router';
+
+    import { DashboardComponent } from '../../dashboard/dashboard.component';
+    import { UserProfileComponent } from '../../user-profile/user-profile.component';
+    import { TableListComponent } from '../../table-list/table-list.component';
+    import { TypographyComponent } from '../../typography/typography.component';
+    import { IconsComponent } from '../../icons/icons.component';
+    import { MapsComponent } from '../../maps/maps.component';
+    import { NotificationsComponent } from '../../notifications/notifications.component';
+    import { UpgradeComponent } from '../../upgrade/upgrade.component';
+    import { RoleGuardService } from 'app/services/role-guard.service';
+    import { HomeComponent } from 'app/home/home.component';
+
+    export const AdminLayoutRoutes: Routes = [
+        {
+            path: 'home',
+            component: HomeComponent
+        },
+        {
+            path: 'dashboard',
+            component: DashboardComponent,
+            canActivate: [RoleGuardService],
+            data: {
+                expectedRole: ['user', 'manager']
+            }
+        },
+        {
+            path: 'user-profile',
+            component: UserProfileComponent,
+            canActivate: [RoleGuardService],
+            data: {
+                expectedRole: ['user', 'manager']
+            }
+        },
+        {
+            path: 'table-list',
+            component: TableListComponent,
+            canActivate: [RoleGuardService],
+            data: {
+                expectedRole: ['manager']
+            }
+        },
+        {
+            path: 'typography',
+            component: TypographyComponent,
+            canActivate: [RoleGuardService],
+            data: {
+                expectedRole: ['user', 'manager']
+            }
+        },
+        {
+            path: 'icons',
+            component: IconsComponent,
+            canActivate: [RoleGuardService],
+            data: {
+                expectedRole: ['user', 'manager']
+            }
+        },
+        {
+            path: 'maps',
+            component: MapsComponent,
+            canActivate: [RoleGuardService],
+            data: {
+                expectedRole: ['user', 'manager']
+            }
+        },
+        {
+            path: 'notifications',
+            component: NotificationsComponent,
+            canActivate: [RoleGuardService],
+            data: {
+                expectedRole: ['user', 'manager']
+            }
+        },
+        {
+            path: 'upgrade',
+            component: UpgradeComponent,
+            canActivate: [RoleGuardService],
+            data: {
+                expectedRole: ['user', 'manager']
+            }
+        },
+    ];
+
+---
+
+admin-layout.module.ts
+
+    import { NgModule } from '@angular/core';
+    import { RouterModule } from '@angular/router';
+    import { CommonModule } from '@angular/common';
+    import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+    import { AdminLayoutRoutes } from './admin-layout.routing';
+    import { DashboardComponent } from '../../dashboard/dashboard.component';
+    import { UserProfileComponent } from '../../user-profile/user-profile.component';
+    import { TableListComponent } from '../../table-list/table-list.component';
+    import { TypographyComponent } from '../../typography/typography.component';
+    import { IconsComponent } from '../../icons/icons.component';
+    import { MapsComponent } from '../../maps/maps.component';
+    import { NotificationsComponent } from '../../notifications/notifications.component';
+    import { UpgradeComponent } from '../../upgrade/upgrade.component';
+    import {MatButtonModule} from '@angular/material/button';
+    import {MatInputModule} from '@angular/material/input';
+    import {MatRippleModule} from '@angular/material/core';
+    import {MatFormFieldModule} from '@angular/material/form-field';
+    import {MatTooltipModule} from '@angular/material/tooltip';
+    import {MatSelectModule} from '@angular/material/select';
+    import { HomeComponent } from 'app/home/home.component';
+
+    @NgModule({
+    imports: [
+        CommonModule,
+        RouterModule.forChild(AdminLayoutRoutes),
+        FormsModule,
+        ReactiveFormsModule,
+        MatButtonModule,
+        MatRippleModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatSelectModule,
+        MatTooltipModule,
+    ],
+    declarations: [
+        HomeComponent,
+        DashboardComponent,
+        UserProfileComponent,
+        TableListComponent,
+        TypographyComponent,
+        IconsComponent,
+        MapsComponent,
+        NotificationsComponent,
+        UpgradeComponent,
+    ]
+    })
+
+    export class AdminLayoutModule {}
+
+---
+
+### Affichage personnalisée ###
+
+Une amélioration de la page UserProfile
+
+user-profile.component.ts
+
+    import { Component, OnInit } from '@angular/core';
+    import { ApiService } from 'app/services/api.service';
+
+    @Component({
+    selector: 'app-user-profile',
+    templateUrl: './user-profile.component.html',
+    styleUrls: ['./user-profile.component.css']
+    })
+    export class UserProfileComponent implements OnInit {
+
+    user: any;
+    public errorMessage: any;
+
+    constructor(private apiService: ApiService) { }
+
+    ngOnInit() {
+        this.apiService.getConnectedUser()
+        .subscribe(data => {
+        this.user = data;
+        }, err => {
+        console.log('err.error.message : ' + err.error.message);
+        this.errorMessage = err.error.message;
+        });
+    }
+
+    }
+
+---
+
+user-profile.component.html
+
+    <div class="main-content">
+    <div class="container-fluid">
+        <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+            <div class="card-header card-header-danger">
+                <h4 class="card-title">Your Profile</h4>
+                <p class="card-category">data from keycloak</p>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                <div class="col-md-3">
+                    <mat-form-field class="example-full-width">
+                    Username
+                    </mat-form-field>
+                </div>
+                <div class="col-md-9">
+                    <mat-form-field class="example-full-width">
+                    {{user?.username}}
+                    </mat-form-field>
+                </div>
+                </div>
+                <div class="row">
+                <div class="col-md-3">
+                    <mat-form-field class="example-full-width">
+                    email
+                    </mat-form-field>
+                </div>
+                <div class="col-md-9">
+                    <mat-form-field class="example-full-width">
+                    {{user?.email}}
+                    </mat-form-field>
+                </div>
+                </div>
+                <div class="row">
+                <div class="col-md-3">
+                    <mat-form-field class="example-full-width">
+                    firstName
+                    </mat-form-field>
+                </div>
+                <div class="col-md-9">
+                    <mat-form-field class="example-full-width">
+                    {{user?.firstName}}
+                    </mat-form-field>
+                </div>
+                </div>
+                <div class="row">
+                <div class="col-md-3">
+                    <mat-form-field class="example-full-width">
+                    lastName
+                    </mat-form-field>
+                </div>
+                <div class="col-md-9">
+                    <mat-form-field class="example-full-width">
+                    {{user?.lastName}}
+                    </mat-form-field>
+                </div>
+                </div>
+                <div class="row">
+                <div class="col-md-3">
+                    <mat-form-field class="example-full-width">
+                    space
+                    </mat-form-field>
+                </div>
+                <div class="col-md-9">
+                    <mat-form-field class="example-full-width">
+                    {{user?.space?.name}}
+                    </mat-form-field>
+                </div>
+                </div>
+                <div class="clearfix"></div>
+            </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-profile">
+            <div class="card-avatar">
+                <a href="javascript:void(0)">
+                <img class="img" src="./assets/img/faces/marc.jpg" />
+                </a>
+            </div>
+            <div class="card-body">
+                <h6 class="card-category text-gray">CEO / Co-Founder</h6>
+                <h4 class="card-title">Alec Thompson</h4>
+                <p class="card-description">
+                Don't be scared of the truth because we need to restart the human foundation in truth And I love you like
+                Kanye loves Kanye I love Rick Owens’ bed design but the back is...
+                </p>
+                <a href="javascript:void(0)" class="btn btn-danger btn-round">Follow</a>
+            </div>
+            </div>
+        </div>
+        </div>
+    </div>
+    </div>
+
+---
+
+Enfin une récupération de tous les utilisateurs du back-end avec une pagination customisée
+
+table-list.component.ts
+
+    import { Component, OnInit } from '@angular/core';
+    import { ApiService } from 'app/services/api.service';
+
+    @Component({
+    selector: 'app-table-list',
+    templateUrl: './table-list.component.html',
+    styleUrls: ['./table-list.component.css']
+    })
+    export class TableListComponent implements OnInit {
+
+    users: any;
+    public errorMessage: any;
+    pageNo: number;
+    pageSize: number;
+    sortBy;
+
+    constructor(private apiService: ApiService) { }
+
+    ngOnInit() {
+        this.pageNo = 0;
+        this.pageSize = 10;
+        this.sortBy = 'id';
+        this.getUsers(this.pageNo, this.sortBy);
+    }
+
+    getUsers(pageNo: number, sortBy: string) {
+        this.apiService.getUsers(pageNo, this.pageSize, this.sortBy)
+        .subscribe(data => {
+            this.users = data;
+            this.cancelNext(this.users.length);
+        }, err => {
+            console.log('err.error.message : ' + err.error.message);
+            this.errorMessage = err.error.message;
+        });
+    }
+
+    navigateBefore() {
+        if (this.pageNo !== 0) {
+        this.pageNo -= 1;
+        this.getUsers(this.pageNo, this.sortBy);
+        }
+    }
+
+    navigateNext() {
+        this.pageNo += 1;
+        this.getUsers(this.pageNo, this.sortBy);
+    }
+
+    cancelNext(size: number) {
+        console.log('size : ' + + size);
+        if (size === 0) {
+        this.pageNo -= 1;
+        this.getUsers(this.pageNo, this.sortBy);
+        }
+    }
+
+    sortById() {
+        this.sortBy = 'id';
+        this.getUsers(this.pageNo, this.sortBy);
+    }
+
+    sortByGender() {
+        this.sortBy = 'gender';
+        this.getUsers(this.pageNo, this.sortBy);
+    }
+
+    sortByUsername() {
+        this.sortBy = 'username';
+        this.getUsers(this.pageNo, this.sortBy);
+    }
+
+    sortByFirstName() {
+        this.sortBy = 'firstName';
+        this.getUsers(this.pageNo, this.sortBy);
+    }
+
+    sortByLastName() {
+        this.sortBy = 'lastName';
+        this.getUsers(this.pageNo, this.sortBy);
+    }
+
+    sortByEmail() {
+        this.sortBy = 'email';
+        this.getUsers(this.pageNo, this.sortBy);
+    }
+
+    sortByStatus() {
+        this.sortBy = 'status';
+        this.getUsers(this.pageNo, this.sortBy);
+    }
+
+    }
+
+---
+
+table-list.component.html
+
+    <div class="main-content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-plain">
+                        <div class="card-header card-header-danger">
+                            <h4 class="card-title mt-0"> Table on Plain Background</h4>
+                            <p class="card-category"> Here is a subtitle for this table</p>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="">
+                                        <th>
+                                            <a (click)="sortById()">Id</a>
+                                        </th>
+                                        <th>
+                                            <a (click)="sortByGender()">Gender</a>
+                                        </th>
+                                        <th>
+                                            <a (click)="sortByUsername()">Username</a>
+                                        </th>
+                                        <th>
+                                            <a (click)="sortByFirstName()">First Name</a>
+                                        </th>
+                                        <th>
+                                            <a (click)="sortByLastName()">Last Name</a>
+                                        </th>
+                                        <th>
+                                            <a (click)="sortByEmail()">Email</a>
+                                        </th>
+                                        <th>
+                                            <a (click)="sortByStatus()">Status</a>
+                                        </th>
+                                        <th>
+                                            Space
+                                        </th>
+                                    </thead>
+                                    <tbody>
+                                        <tr *ngFor="let user of users">
+                                            <td>
+                                                {{user.id}}
+                                            </td>
+                                            <td>
+                                                {{user.gender}}
+                                            </td>
+                                            <td>
+                                                {{user.username}}
+                                            </td>
+                                            <td>
+                                                {{user.firstName}}
+                                            </td>
+                                            <td>
+                                                {{user.lastName}}
+                                            </td>
+                                            <td>
+                                                {{user.email}}
+                                            </td>
+                                            <td>
+                                                {{user.status}}
+                                            </td>
+                                            <td>
+                                                {{user.space.name}}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                            </td>
+                                            <td>
+                                            </td>
+                                            <td>
+                                            </td>
+                                            <td>
+                                            </td>
+                                            <td>
+                                                <a class="clickable nav-link" (click)="navigateBefore()">
+                                                    <i class="material-icons">navigate_before</i>
+                                                    <p>
+                                                        <span class="d-lg-none d-md-block">Before</span>
+                                                    </p>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <a class="clickable nav-link" (click)="navigateNext()">
+                                                    <i class="material-icons">navigate_next</i>
+                                                    <p>
+                                                        <span class="d-lg-none d-md-block">Next</span>
+                                                    </p>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+Vous pouvez maintenant lancer l'application en mode local
+
+    ng serve --open
+
+## Conclusion ##
+
+Vous disposer d'une application en micro service comprenant un serveur d'authentification, d'un back-end en java et d'un Front-end avec Angular. L'application est protégé de manière optimale avec un token de session jwt. Tout est géré par Keycloak. L'implémentation est relativement simple. Dans la rubrique Gitlab vous verrez comment tester et déployer le projet back-end. Je compte si le temps me le permet de faire de l'intégration et du déploiment continue avec le front-end sous docker.
+
+PS: Cet article a été écrit relativement vite, ne vous offusquez pas des fautes d'orthographes ou erreurs de syntaxes. Je compte l'améliorer au fur et à mesure!
