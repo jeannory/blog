@@ -3,6 +3,11 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://jeannory.github.io/blog/articles/message/</loc>
+    <lastmod>2020-07-30T23:14:42+02:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://jeannory.github.io/blog/articles/gitlab/</loc>
     <lastmod>2020-04-26T16:20:53+02:00</lastmod>
   </url>
@@ -34,13 +39,13 @@
   
   <url>
     <loc>https://jeannory.github.io/blog/articles/</loc>
-    <lastmod>2020-04-26T16:20:53+02:00</lastmod>
+    <lastmod>2020-07-30T23:14:42+02:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://jeannory.github.io/blog/tags/articles/</loc>
-    <lastmod>2020-04-26T16:20:53+02:00</lastmod>
+    <lastmod>2020-07-30T23:14:42+02:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -68,6 +73,12 @@
   </url>
   
   <url>
+    <loc>https://jeannory.github.io/blog/categories/message/</loc>
+    <lastmod>2020-07-30T23:14:42+02:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://jeannory.github.io/blog/categories/spring-security/</loc>
     <lastmod>2019-10-07T23:47:25+02:00</lastmod>
     <priority>0</priority>
@@ -81,7 +92,7 @@
   
   <url>
     <loc>https://jeannory.github.io/blog/tags/</loc>
-    <lastmod>2020-04-26T16:20:53+02:00</lastmod>
+    <lastmod>2020-07-30T23:14:42+02:00</lastmod>
     <priority>0</priority>
   </url>
   
