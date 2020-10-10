@@ -8,30 +8,69 @@ categories: ["Message"]
 ---
 ## Introduction ##
 
-Dans ce chapitre nous allons aborder la communication asynchrone entre micro-services à travers le développement de composants d'une user storie.
+*MAJ au 10/10/2020.*
 
-*Ebauche en cours de développement*
+Dans ce chapitre nous allons aborder la communication asynchrone entre micro-services à travers le développement de composants.
 
-### User storie ###
+Stack technique
 
-Quand un utilisateur clique sur "spam" un bouton apparait
-*spam the managers*
+* VM Google Cloud Plateform
+* Message oriented middleware activeMQ
+* Back-end Java/Springboot
+* Module Java/SpringBoot
+* Serveur d'authentification keycloak
+* Front-end Angular Material
 
-Quand un utilisateur non connecté clique sur le bouton, un service incrémente un compteur 1 sur un thread (thread1) et enregistre la date et l'heure.
+### User storie 1###
 
-Quand un utilisateur connecté clique sur le bouton, un service incrémente un compteur 2 sur un thread (thread2) et enregistre la date et l'heure.
+Given:
 
-Quand thread1 compte 10 incrémentations il envoi une notification à tous les managers connectés.
-La popup affiche : *10 utilisateurs non connectés spam les managers depuis le (date/heure du spam 0)*.
-Puis le compteur 1 est remit a zéro.
+* Je peux cliquer sur le bouton "spam les managers"
 
-Quand thread2 compte 10 incrémentations il envoi une notification à tous les managers connectés.
-La popup affiche : *10 utilisateurs connectés spam les managers depuis le (date/heure du spam 0)*.
-Puis le compteur 2 est remit a zéro.
+When:
 
-Spécificité technique : L'IHM envoie une requête http vers le back-end sc-user, qui transmet un Java Message Service (JMS) vers un autre micro-service (SpamApp). Toutes les 10 incrémentations SpamApp envoi un message push (web-Socket) vers l'IHM.
+* L'utilisateur n'est pas connecté
+
+Then:
+
+* Incrémentation du nombre de spams des utilisateurs non connectés
+
+And:
+
+* Tous les 10 spams, le serveur envoi un message à l'ensemble des managers connectés, ou il est indiqué le nombre de spam recus ainsi que la date et l'heure du 1er spam envoyé
+
+### User storie 2###
+
+Given:
+
+* Je peux cliquer sur le bouton "spam les managers"
+
+When:
+
+* L'utilisateur est connecté
+
+Then:
+
+* Incrémentation du nombre de spams des utilisateurs connectés
+
+And:
+
+* Tous les 10 spams, le serveur envoi un message à l'ensemble des managers connectés, ou il est indiqué le nombre de spam recus ainsi que la date et l'heure du 1er spam envoyé
 
 ---
+
+### Spécificité technique###
+
+L'IHM envoie une requête http vers le serveur user-app-server, qui transmet un java message service (JMS) vers un autre micro-service (spam-app-server). Toutes les 10 incrémentations spam-app envoi un message push (web-Socket) vers l'IHM.
+Le serveur d'authentification va permettre à l'utilisateur de se connecter, et contrôler le header des requêtes lorsque les api sont protégés.
+
+---
+
+![Message-app-diag1](/blog/img/Message-app-diag-1.png)
+
+---
+
+## Requête client-server ##
 
 ### Page Front-end  ###
 
@@ -295,9 +334,232 @@ La console affichera un résultat différent en fonction de l'état de connectio
 
 ![spam-not-connected](/blog/img/message-06.png)
 
-### Spam service ###
+---
 
-Créer l'appliation Springboot
+## Message server-server avec activeMQ ##
 
-![keycloak-clients](/blog/img/message-04.png)
+Comme indiqué dans le diagramme de l'infrastructure du projet, le module spam-app sera dans une vm distincte qui devra contenir un "message-oriented middleware" (MOM). Pour ce micro projet j'ai choisit ActiveMQ de la fondation apache, plus adapté que les 2 autres géants qui sont Kafka et RabbitMq.
 
+Il faut se rendre sur [le site de activeMq](http://activemq.apache.org/), télécharger le serveur et le dézipper. 
+Pour le lancer il faut tapper la commande
+
+    ./apache-activemq-5.16.0/bin/activemq start
+
+---
+
+Dépendances maven à ajouter aux projets qui se connecte au serveur
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-activemq</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.activemq</groupId>
+			<artifactId>activemq-broker</artifactId>
+		</dependency>
+
+---
+
+Configuration vers le MOM
+
+    spring:
+        profiles: dev-docker #local mode
+
+        activemq:
+            broker-url: "tcp://localhost:61616"
+            user: "admin"
+            password: "admin"
+
+    ---
+
+    spring:
+        profiles: dev-docker-integration #integration testing mode
+
+        activemq:
+            broker-url: "tcp://35.210.119.52:61616"
+            user: "admin"
+            password: "admin"
+
+---
+
+    @EnableJms
+    @SpringBootApplication
+    public class SpamAppApplication {
+        public static Connected connected = new Connected();
+        public static NotConnected notConnected = new NotConnected();
+
+        @Bean
+        public JmsListenerContainerFactory<?> myFactory(ConnectionFactory connectionFactory,
+                                                        DefaultJmsListenerContainerFactoryConfigurer configurer) {
+            DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
+            configurer.configure(factory, connectionFactory);
+            return factory;
+        }
+
+        @Bean
+        public MessageConverter jacksonJmsMessageConverter() {
+            MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
+            converter.setTargetType(MessageType.TEXT);
+            converter.setTypeIdPropertyName("_type");
+            return converter;
+        }
+
+---
+
+user-app va envoyer un message au module spam-app
+
+Expédition (class SpamServiceImpl)
+
+        jmsTemplate.convertAndSend("spamIncrement", spamDto);
+        jmsTemplate.setReceiveTimeout(10_000);
+
+
+Destination (class SpamMessage)
+
+        @JmsListener(destination = "spamIncrement", containerFactory = "myFactory")
+
+---
+
+Une fois le message consommé, une action pourra être enclenchée par le serveur. Ici il va envoyer un message au client (web-socket).
+
+## Web-socket ##
+
+Je joins ici le lien de l'implémentaton en Springboot/Angular [[lien]](https://medium.com/@haseeamarathunga/create-a-spring-boot-angular-websocket-using-sockjs-and-stomp-cb339f766a98)
+
+---
+
+### Web-socket Springboot ###
+
+Dépendance coté serveur
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-websocket</artifactId>
+			<version>1.5.2.RELEASE</version>
+		</dependency>
+
+---
+
+Configuration pour l'envoi du message
+
+    @Configuration
+    @EnableWebSocketMessageBroker
+    public class WebSocketConfig extends AbstractWebSocketMessageBrokerConfigurer {
+        @Override
+        public void registerStompEndpoints(StompEndpointRegistry registry) {
+            registry.addEndpoint("/spam-app")
+                    .setAllowedOrigins("*")
+                    .withSockJS();
+        }
+        @Override
+        public void configureMessageBroker(MessageBrokerRegistry registry) {
+            registry.enableSimpleBroker("/message");
+        }
+    }
+
+---
+
+Envoi du message vers le client
+
+        if (spamDto.isConnected()) {
+            SpamAppApplication.connected.increment();
+            SpamAppApplication.connected.updateSince(spamDto.getNow());
+            if (isSendNotification(SpamAppApplication.connected.getCount())) {
+                this.template.convertAndSend("/message", SpamAppApplication.connected.message());
+            }
+        } else {
+            SpamAppApplication.notConnected.increment();
+            SpamAppApplication.notConnected.updateSince(spamDto.getNow());
+            if (isSendNotification(SpamAppApplication.notConnected.getCount())) {
+                this.template.convertAndSend("/message", SpamAppApplication.notConnected.message());
+            }
+        }
+
+### Web-socket Angular ###
+
+Enregistrer les scripts dans assets et charger les dans index.html
+
+    <script src="assets/sockjs.min.js"></script>
+    <script src="assets/stomp.min.js"></script>
+
+Le service
+
+    export class WebSocketService {
+
+        public stompClient;
+        public msg = [];
+
+        constructor() {
+            this.initializeWebSocketConnection();
+        }
+
+        initializeWebSocketConnection() {
+            const serverUrl = 'http://localhost:8080/spam-app';
+            const ws = new SockJS(serverUrl);
+            this.stompClient = Stomp.over(ws);
+            const that = this;
+            // tslint:disable-next-line:only-arrow-functions
+                this.stompClient.connect({}, function (frame) {
+                    that.stompClient.subscribe('/message', (message) => {
+                        if (message.body) {
+                        that.msg.push(message.body);
+                        }
+                    });
+                });
+        }
+    }
+
+---
+
+Injection de dépendance vers le composant qui va afficher les notifications (NavbarComponent)
+
+    private webSocketService: WebSocketService
+
+---
+
+Affichage des notifications pour le manager connecté (page navbar.component.html)
+
+            <ul class="navbar-nav" *ngIf="securityService.kc.authenticated">
+                <li class="nav-item dropdown">
+                    <a class="nav-link" href="javascript:void(0)" id="navbarDropdownMenuLink" data-toggle="dropdown"
+                        aria-haspopup="true" aria-expanded="false">
+                        <i class="material-icons">notifications</i>
+                        <span *ngIf="webSocketService.msg.length > 0" class="notification">{{webSocketService.msg.length}}</span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
+                        <a *ngFor="let msg of webSocketService.msg" class="dropdown-item">{{msg}}</a>
+                    </div>
+                </li>
+                ...
+
+---
+
+Notification recu coté UI
+
+![notification](/blog/img/Message-app-img-01.png)
+
+---
+
+## Intégration et livraison continue ##
+
+### Spécificité technique###
+
+Dans le cadre de l'intégration et de la livraison continue, voici le schéma de l'infrastructure mit en place, pour le build, test and deploy des projets user-app et de spam-app.
+
+---
+
+![Message-app-diag2](/blog/img/Message-app-diag-2.png)
+
+---
+
+### Configuration des VM avec Google cloud plateform ###
+
+![gcp](/blog/img/Message-app-img-02.png)
+
+### Stage des pipelines de user-app ###
+
+### Stage des pipelines de spam-app ###
+
+### Stage des pipelines du front-end ###
+
+## Conclusion ##
