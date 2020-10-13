@@ -66,7 +66,22 @@ Le serveur d'authentification va permettre à l'utilisateur de se connecter, et 
 
 ---
 
-![Message-app-diag1](/blog/img/Message-app-diag-1.png)
+### Schéma ###
+
+Infrastructure de l'application
+
+![Infrastructure](/blog/img/Message-app-img-03.png)
+
+---
+
+Parcours de la fonction
+
+![Message-app-diag1](/blog/img/Message-app-img-04.png)
+
+* 1/Envoi de la requête http vers le back-end user-app
+* 2/Envoi du message vers le serveur activeMq
+* 3/Récupération du message par le module spam-app
+* 4/Envoi d'une notification vers le client
 
 ---
 
@@ -548,7 +563,10 @@ Dans le cadre de l'intégration et de la livraison continue, voici le schéma de
 
 ---
 
-![Message-app-diag2](/blog/img/Message-app-diag-2.png)
+![Gitlab-ci-cd](/blog/img/Message-app-img-05.png)
+L'offre gratuite proposé par gitlab permet une utilisation poussé du ci/cd à travers les dépôts officiels.
+De ce fait et parce que la gestion des certificats est assez couteuse, le serveur gitlab n'a pas été embarqué dans le cloud. 
+Ne faisant pas parti du sous réseau, certains ports vont être ouvert le temps des tests et déployement (chose à bannir lors de vrais application d'entreprises).
 
 ---
 

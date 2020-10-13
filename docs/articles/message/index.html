@@ -152,7 +152,24 @@ Le serveur d&rsquo;authentification va permettre à l&rsquo;utilisateur de se co
 
 <hr />
 
-<p><img src="/blog/img/Message-app-diag-1.png" alt="Message-app-diag1" /></p>
+<h3 id="schéma">Schéma</h3>
+
+<p>Infrastructure de l&rsquo;application</p>
+
+<p><img src="/blog/img/Message-app-img-03.png" alt="Infrastructure" /></p>
+
+<hr />
+
+<p>Parcours de la fonction</p>
+
+<p><img src="/blog/img/Message-app-img-04.png" alt="Message-app-diag1" /></p>
+
+<ul>
+<li>1/Envoi de la requête http vers le back-end user-app</li>
+<li>2/Envoi du message vers le serveur activeMq</li>
+<li>3/Récupération du message par le module spam-app</li>
+<li>4/Envoi d&rsquo;une notification vers le client</li>
+</ul>
 
 <hr />
 
@@ -661,7 +678,10 @@ public class WebSocketConfig extends AbstractWebSocketMessageBrokerConfigurer {
 
 <hr />
 
-<p><img src="/blog/img/Message-app-diag-2.png" alt="Message-app-diag2" /></p>
+<p><img src="/blog/img/Message-app-img-05.png" alt="Gitlab-ci-cd" />
+L&rsquo;offre gratuite proposé par gitlab permet une utilisation poussé du ci/cd à travers les dépôts officiels.
+De ce fait et parce que la gestion des certificats est assez couteuse, le serveur gitlab n&rsquo;a pas été embarqué dans le cloud.
+Ne faisant pas parti du sous réseau, certains ports vont être ouvert le temps des tests et déployement (chose à bannir lors de vrais application d&rsquo;entreprises).</p>
 
 <hr />
 
@@ -701,6 +721,7 @@ public class WebSocketConfig extends AbstractWebSocketMessageBrokerConfigurer {
 <li><a href="#user-storie-1">User storie 1</a></li>
 <li><a href="#user-storie-2">User storie 2</a></li>
 <li><a href="#spécificité-technique">Spécificité technique</a></li>
+<li><a href="#schéma">Schéma</a></li>
 </ul></li>
 <li><a href="#requête-client-server">Requête client-server</a>
 <ul>
