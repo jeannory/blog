@@ -4,11 +4,11 @@ date: 2020-04-23T19:40:34+02:00
 draft: false
 author: "Jeannory"
 tags: ["articles"]
-categories: ["Keycloak"]
+categories: ["3/Keycloak"]
 ---
 ## Introduction ##
 
-*MAJ au 16/07/2020 reprise de cet article après une courte pause de 3 mois :)*
+*MAJ au 16/07/2020*
 
 Keycloak est serveur d'authentification standalone.
 Il est reconnu pour la protection qu'il propose en termes de cyber sécurité et aussi par les très nombreuses librairies/fonctionnalités qui permettent une utilisation étendue (Java, AngularJs, Typescript, Ldap, etc..). Beaucoup d'entreprises lui font confiance et lui délèguent la partie authentification/autorisation.

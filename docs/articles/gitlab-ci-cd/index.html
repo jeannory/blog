@@ -6,7 +6,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<link rel="alternate" href="/index.xml" type="application/rss+xml" title="Jeannory&#39;s blog">
 		<link rel="icon" href="https://jeannory.github.io/blog/favicon.ico">
-		<title>Gitlab - Jeannory&#39;s blog</title>
+		<title>Gitlab Ci Cd - Jeannory&#39;s blog</title>
 		
 		<link rel="stylesheet" href="https://jeannory.github.io/blog/css/highlight/default.css">
 		<link rel="stylesheet" href="https://jeannory.github.io/blog/css/bootstrap.min.css">
@@ -40,15 +40,15 @@
 						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Categories<span class="caret"></span></a>
 						<ul class="dropdown-menu" role="menu">
 						
-							<li><a href="https://jeannory.github.io/blog/categories/gitlab">Gitlab</a></li>
+							<li><a href="https://jeannory.github.io/blog/categories/1/spring-security">1/Spring-Security</a></li>
 						
-							<li><a href="https://jeannory.github.io/blog/categories/keycloak">Keycloak</a></li>
+							<li><a href="https://jeannory.github.io/blog/categories/2/springboot-tests">2/Springboot-Tests</a></li>
 						
-							<li><a href="https://jeannory.github.io/blog/categories/message">Message</a></li>
+							<li><a href="https://jeannory.github.io/blog/categories/3/keycloak">3/Keycloak</a></li>
 						
-							<li><a href="https://jeannory.github.io/blog/categories/spring-security">Spring-Security</a></li>
+							<li><a href="https://jeannory.github.io/blog/categories/4/gitlab-ci-cd">4/Gitlab-Ci-Cd</a></li>
 						
-							<li><a href="https://jeannory.github.io/blog/categories/springboot-tests">Springboot-Tests</a></li>
+							<li><a href="https://jeannory.github.io/blog/categories/5/jms-websocket">5/Jms-Websocket</a></li>
 						
 						</ul>
 					</li>
@@ -67,7 +67,7 @@
 		<main role="main">
 			<article>
 				<a id="title"></a>
-				<h1 class="doc-entry-title">Gitlab</h1>
+				<h1 class="doc-entry-title">Gitlab Ci Cd</h1>
 				<div class="doc-entry-meta">
 					<span><time datetime="2020-04-26">April 26, 2020</time></span>
 				</div>
@@ -79,7 +79,7 @@
 <p>Gitlab fournit un ensemble de services complet pour l&rsquo;intégration et le déploiement continue.
 Il est nécessaire de créer et de renseigner le fichier .gitlab-ci.yml à la racine du projet, pour qu&rsquo;à chaque commit sur une branche cible, Gitlab exécute les tâches (stages).</p>
 
-<p>Exemple d&rsquo;utilisation avec le projet Back-end de <a href="/blog/articles/keycloak/">Keycloak</a> pour la réalisation des différentes étapes CI/CD.</p>
+<p>Exemple d&rsquo;utilisation avec le projet full stack de <a href="/blog/articles/keycloak/">Keycloak</a> pour la réalisation des différentes étapes CI/CD.</p>
 
 <hr />
 
@@ -91,7 +91,7 @@ Il est nécessaire de créer et de renseigner le fichier .gitlab-ci.yml à la ra
 
 <hr />
 
-<h2 id="gitlab-ci">Gitlab-CI</h2>
+<h2 id="back-end-gitlab-ci">Back-end - Gitlab-CI</h2>
 
 <p>L&rsquo;intégration continue permet à chaque commit de tester le build du projet, l&rsquo;exécution des tests, les affichages de différents rapports (qualité de code et couverture des tests) et l&rsquo;archivage des différents artifacts.
 Les pipelines correspond à un cycle complet, qui contiennent des jobs (stages).</p>
@@ -556,7 +556,7 @@ To                         Action      From
 
 <hr />
 
-<h2 id="gitlab-cd">Gitlab-CD</h2>
+<h2 id="back-end-gitlab-cd">Back-end - Gitlab-CD</h2>
 
 <p>À partir du package généré, le runner va build une image de l&rsquo;application et le déployer sur un serveur distant.</p>
 
@@ -798,32 +798,129 @@ Uploading artifacts for successful job
 Job succeeded
 </code></pre>
 
-<h3 id="test-du-projet-déployé">Test du projet déployé</h3>
+<h2 id="front-end-gitlab-ci-cd">Front-end - Gitlab-CI/CD</h2>
 
-<p>Test à faire en attendant de déployer le front-end sur un serveur, exécuter le client sur le poste du développeur avec le profil prod (<a href="https://gitlab.com/phou.jeannory/keycloak-front-end.git">dépôt git</a>).</p>
+<p><em>MAJ au 16/07/2020</em></p>
 
-<pre><code>ng serve --prod
-</code></pre>
+<p>Pour les étapes du ci/cd les étapes vont etre simplifiés, nous n&rsquo;allons retenir que le build et deploiement.
+Pour ce faire nous allons créer nos propres images à partir de l&rsquo;image ubuntu.</p>
 
-<p>L&rsquo;UI va se connecter au serveur d&rsquo;application jeannory.dynamic-dns.net et d&rsquo;authentification jeannory.ovh.</p>
+<h3 id="front-end-build">Front-end build</h3>
 
-<pre><code>export const environment = {
-    SC_USER_BASE_URL: 'jeannory.dynamic-dns.net',
-    SC_USER_PORT: '8081',
-    AUTH_BASE_URL: 'jeannory.ovh',
-    AUTH_PORT: '8099',
-    // APP_VERSION: version,
-    production: true,
-};
+<p>L&rsquo;image d&rsquo;ubuntu va installer node 12, anguar-cli et build le projet. Dans le fichier .gitlab-ci.yml nous allons y mettre toutes ces instructions.</p>
+
+<pre><code>image: ubuntu:18.04
+
+cache:
+key: ${CI_COMMIT_REF_SLUG} #cache is for per branch
+paths:
+    - dist/
+
+stages:
+- build
+- build-app-image
+- deploy-app
+
+#https://computingforgeeks.com/how-to-install-nodejs-on-ubuntu-debian-linux-mint/
+build:
+stage: build
+before_script:
+    - apt-get update
+    - echo &quot;y&quot; | apt-get install curl dirmngr apt-transport-https lsb-release ca-certificates
+    - curl -sL https://deb.nodesource.com/setup_12.x | bash -
+    - echo &quot;y&quot; | apt-get install nodejs
+    - node --version
+    - npm -v
+    - npm install -g @angular/cli
+    - npm i
+script:
+    - ng build --prod
+only:
+    - Function-message
 </code></pre>
 
 <hr />
 
-<p>L&rsquo;utilisateur s&rsquo;authentifie via le serveur Keycloak et le serveur d&rsquo;applications répond avec un statut code 200 et les données demandées.</p>
+<h3 id="front-end-déploiement">Front-end déploiement</h3>
 
-<p>Le test est un succès.</p>
+<p>Nous allons à partir de ubuntu créer l&rsquo;image qui servira à déployer l&rsquo;application.
+Le principe sera le même, à partir de cet instance, les étape seront d&rsquo;installer apache2, y copier le build, et finalement déployer le serveur.</p>
 
-<p><img src="/blog/img/gitlab-14.png" alt="keycloak-ui" /></p>
+<p>Dockerfile:</p>
+
+<pre><code>FROM ubuntu:18.04
+
+ARG FOLDER=dist
+
+#update &amp;&amp; install
+RUN apt-get update &amp;&amp;\
+    echo &quot;y&quot; | apt-get install apache2 &amp;&amp;\
+    rm -r /var/www/html
+
+WORKDIR /var/www
+
+#cp dist /var/www/html
+COPY ${FOLDER} html
+
+EXPOSE 80
+
+#start apache2
+CMD [&quot;apachectl&quot;, &quot;-D&quot;, &quot;FOREGROUND&quot;]
+</code></pre>
+
+<hr />
+
+<p>Le stage build-app-image va récupérer l&rsquo;image pour le push dans le container registry</p>
+
+<pre><code>build-app-image:
+    stage: build-app-image
+    image: docker:latest
+    services:
+        - docker:dind
+    before_script:
+        - docker login -u &quot;$CI_REGISTRY_USER&quot; -p &quot;$CI_REGISTRY_PASSWORD&quot; $CI_REGISTRY
+    script:
+        - docker build --pull -t &quot;$CI_REGISTRY_IMAGE&quot; .
+        - docker push &quot;$CI_REGISTRY_IMAGE&quot;
+    only:
+        - Function-message
+</code></pre>
+
+<hr />
+
+<p>Enfin gitlab va se connecter à la VM pour déployer l&rsquo;application à partir de la dernière image</p>
+
+<pre><code>deploy-app:
+    stage: deploy-app
+    image: ubuntu:latest
+    before_script:
+        - 'which ssh-agent || ( apt-get update -y &amp;&amp; apt-get install openssh-client -y)'
+        - mkdir -p ~/.ssh
+        - echo &quot;$FRONT_END_SERVER_KEY&quot; | tr -d '\r' &gt; ~/.ssh/id_rsa
+        - chmod 700 ~/.ssh/id_rsa
+        - eval &quot;$(ssh-agent -s)&quot;
+        - ssh-add ~/.ssh/id_rsa
+        - '[[ -f /.dockerenv ]] &amp;&amp; echo -e &quot;Host *\n\tStrictHostKeyChecking no\n\n&quot; &gt; ~/.ssh/config'
+    script:
+        - ssh-copy-id phou_jeannory@35.214.20.18 #server-front-end
+        - ssh -t phou_jeannory@35.214.20.18 &lt;&lt; END
+        - pwd
+        - sudo docker stop deployfrontendapp_ubuntu_1 # stop and delete the image of app
+        - sudo docker rm deployfrontendapp_ubuntu_1
+        - echo &quot;y&quot; | sudo docker system prune -a
+        - sudo docker login registry.gitlab.com -u &quot;$CI_REGISTRY_USER&quot; -p &quot;$CI_REGISTRY_PASSWORD&quot; # build new image of app from container registry
+        - cd /home/phou_jeannory/deploy-front-end-app
+        - sudo docker-compose -f docker-compose.yml up -d # name of image is the folder + unbuntu ==&gt; deployfrontendapp_ubuntu_1
+        - sudo docker ps -a
+        - sudo docker images ls
+        - END
+    only:
+        - Function-message
+</code></pre>
+
+<hr />
+
+<p><img src="/blog/img/gitlab-14.png" alt="front-end" /></p>
 
 <hr />
 
@@ -842,7 +939,7 @@ Job succeeded
 		<div class="sidebar-toc">
 			<h4 class="sidebar-heading">Table of Contents</h4>
 			<ul>
-				<li><strong><a href="#title">Gitlab</a></strong></li>
+				<li><strong><a href="#title">Gitlab Ci Cd</a></strong></li>
 			</ul>
 			<nav id="TableOfContents">
 <ul>
@@ -852,7 +949,7 @@ Job succeeded
 <ul>
 <li><a href="#dépôts-gitlab">Dépôts Gitlab</a></li>
 </ul></li>
-<li><a href="#gitlab-ci">Gitlab-CI</a>
+<li><a href="#back-end-gitlab-ci">Back-end - Gitlab-CI</a>
 <ul>
 <li><a href="#build-du-projet">Build du projet</a></li>
 <li><a href="#les-tests-unitaires">Les tests unitaires</a></li>
@@ -861,11 +958,15 @@ Job succeeded
 <li><a href="#les-tests-d-intégration">Les tests d&rsquo;intégration</a></li>
 <li><a href="#archivage-d-artifacts">Archivage d&rsquo;artifacts</a></li>
 </ul></li>
-<li><a href="#gitlab-cd">Gitlab-CD</a>
+<li><a href="#back-end-gitlab-cd">Back-end - Gitlab-CD</a>
 <ul>
 <li><a href="#container-registry">Container registry</a></li>
 <li><a href="#déploiement-de-l-application-back-end">Déploiement de l&rsquo;application back-end</a></li>
-<li><a href="#test-du-projet-déployé">Test du projet déployé</a></li>
+</ul></li>
+<li><a href="#front-end-gitlab-ci-cd">Front-end - Gitlab-CI/CD</a>
+<ul>
+<li><a href="#front-end-build">Front-end build</a></li>
+<li><a href="#front-end-déploiement">Front-end déploiement</a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -877,42 +978,8 @@ Job succeeded
 		<ul class="sidebar-category-list">
 		
 			<li>
-				<a href="https://jeannory.github.io/blog/categories/gitlab">
-					<span class="doc-list-category">Gitlab</span>
-				</a>
-				<ul>
-					<li>
-						<span class="active">Gitlab</span>
-						</li>
-				
-				</ul>
-			</li>
-		
-			<li>
-				<a href="https://jeannory.github.io/blog/categories/keycloak">
-					<span class="doc-list-category">Keycloak</span>
-				</a>
-				<ul>
-					<li><a href="/blog/articles/keycloak/">Keycloak</a>
-					</li>
-				
-				</ul>
-			</li>
-		
-			<li>
-				<a href="https://jeannory.github.io/blog/categories/message">
-					<span class="doc-list-category">Message</span>
-				</a>
-				<ul>
-					<li><a href="/blog/articles/message/">Message</a>
-					</li>
-				
-				</ul>
-			</li>
-		
-			<li>
-				<a href="https://jeannory.github.io/blog/categories/spring-security">
-					<span class="doc-list-category">Spring-Security</span>
+				<a href="https://jeannory.github.io/blog/categories/1/spring-security">
+					<span class="doc-list-category">1/Spring-Security</span>
 				</a>
 				<ul>
 					<li><a href="/blog/articles/spring-security/">Spring Security</a>
@@ -922,11 +989,45 @@ Job succeeded
 			</li>
 		
 			<li>
-				<a href="https://jeannory.github.io/blog/categories/springboot-tests">
-					<span class="doc-list-category">Springboot-Tests</span>
+				<a href="https://jeannory.github.io/blog/categories/2/springboot-tests">
+					<span class="doc-list-category">2/Springboot-Tests</span>
 				</a>
 				<ul>
 					<li><a href="/blog/articles/springboot-tests/">Springboot-tests</a>
+					</li>
+				
+				</ul>
+			</li>
+		
+			<li>
+				<a href="https://jeannory.github.io/blog/categories/3/keycloak">
+					<span class="doc-list-category">3/Keycloak</span>
+				</a>
+				<ul>
+					<li><a href="/blog/articles/keycloak/">Keycloak</a>
+					</li>
+				
+				</ul>
+			</li>
+		
+			<li>
+				<a href="https://jeannory.github.io/blog/categories/4/gitlab-ci-cd">
+					<span class="doc-list-category">4/Gitlab-Ci-Cd</span>
+				</a>
+				<ul>
+					<li>
+						<span class="active">Gitlab Ci Cd</span>
+						</li>
+				
+				</ul>
+			</li>
+		
+			<li>
+				<a href="https://jeannory.github.io/blog/categories/5/jms-websocket">
+					<span class="doc-list-category">5/Jms-Websocket</span>
+				</a>
+				<ul>
+					<li><a href="/blog/articles/jms-websocket/">Jms Websocket</a>
 					</li>
 				
 				</ul>

@@ -1,17 +1,17 @@
 ---
-title: "Gitlab"
+title: "Gitlab Ci Cd"
 date: 2020-04-26T16:20:53+02:00
 draft: false
 author: "Jeannory"
 tags: ["articles"]
-categories: ["Gitlab"]
+categories: ["4/Gitlab-ci-cd"]
 ---
 ## Introduction ##
 
 Gitlab fournit un ensemble de services complet pour l'intégration et le déploiement continue.
 Il est nécessaire de créer et de renseigner le fichier .gitlab-ci.yml à la racine du projet, pour qu'à chaque commit sur une branche cible, Gitlab exécute les tâches (stages). 
 
-Exemple d'utilisation avec le projet Back-end de <a href="/blog/articles/keycloak/">Keycloak</a> pour la réalisation des différentes étapes CI/CD.
+Exemple d'utilisation avec le projet full stack de <a href="/blog/articles/keycloak/">Keycloak</a> pour la réalisation des différentes étapes CI/CD.
 
 ---
 
@@ -21,7 +21,7 @@ Exemple d'utilisation avec le projet Back-end de <a href="/blog/articles/keycloa
 
 ---
 
-## Gitlab-CI ##
+## Back-end - Gitlab-CI ##
 
 L'intégration continue permet à chaque commit de tester le build du projet, l'exécution des tests, les affichages de différents rapports (qualité de code et couverture des tests) et l'archivage des différents artifacts.
 Les pipelines correspond à un cycle complet, qui contiennent des jobs (stages).
@@ -463,7 +463,7 @@ toDo
 
 ---
 
-## Gitlab-CD ##
+## Back-end - Gitlab-CD ##
 
 À partir du package généré, le runner va build une image de l'application et le déployer sur un serveur distant.
 
@@ -695,32 +695,128 @@ Ce service utilise le port spécifié dans le fichier de configuration applicati
     00:02
     Job succeeded
 
-### Test du projet déployé ###
+## Front-end - Gitlab-CI/CD ##
 
-Test à faire en attendant de déployer le front-end sur un serveur, exécuter le client sur le poste du développeur avec le profil prod ([dépôt git] (https://gitlab.com/phou.jeannory/keycloak-front-end.git)).
+*MAJ au 16/07/2020*
 
-    ng serve --prod
+Pour les étapes du ci/cd les étapes vont etre simplifiés, nous n'allons retenir que le build et deploiement.
+Pour ce faire nous allons créer nos propres images à partir de l'image ubuntu.
 
-L'UI va se connecter au serveur d'application jeannory.dynamic-dns.net et d'authentification jeannory.ovh.
+### Front-end build ###
 
-    export const environment = {
-        SC_USER_BASE_URL: 'jeannory.dynamic-dns.net',
-        SC_USER_PORT: '8081',
-        AUTH_BASE_URL: 'jeannory.ovh',
-        AUTH_PORT: '8099',
-        // APP_VERSION: version,
-        production: true,
-    };
+L'image d'ubuntu va installer node 12, anguar-cli et build le projet. Dans le fichier .gitlab-ci.yml nous allons y mettre toutes ces instructions.
+
+    image: ubuntu:18.04
+
+    cache:
+    key: ${CI_COMMIT_REF_SLUG} #cache is for per branch
+    paths:
+        - dist/
+
+    stages:
+    - build
+    - build-app-image
+    - deploy-app
+
+    #https://computingforgeeks.com/how-to-install-nodejs-on-ubuntu-debian-linux-mint/
+    build:
+    stage: build
+    before_script:
+        - apt-get update
+        - echo "y" | apt-get install curl dirmngr apt-transport-https lsb-release ca-certificates
+        - curl -sL https://deb.nodesource.com/setup_12.x | bash -
+        - echo "y" | apt-get install nodejs
+        - node --version
+        - npm -v
+        - npm install -g @angular/cli
+        - npm i
+    script:
+        - ng build --prod
+    only:
+        - Function-message
 
 ---
 
-L'utilisateur s'authentifie via le serveur Keycloak et le serveur d'applications répond avec un statut code 200 et les données demandées.
+### Front-end déploiement ###
 
-Le test est un succès.
+Nous allons à partir de ubuntu créer l'image qui servira à déployer l'application.
+Le principe sera le même, à partir de cet instance, les étape seront d'installer apache2, y copier le build, et finalement déployer le serveur.
 
-![keycloak-ui](/blog/img/gitlab-14.png)
+Dockerfile:
+
+    FROM ubuntu:18.04
+
+    ARG FOLDER=dist
+
+    #update && install
+    RUN apt-get update &&\
+        echo "y" | apt-get install apache2 &&\
+        rm -r /var/www/html
+
+    WORKDIR /var/www
+
+    #cp dist /var/www/html
+    COPY ${FOLDER} html
+
+    EXPOSE 80
+
+    #start apache2
+    CMD ["apachectl", "-D", "FOREGROUND"]
+
+---
+
+Le stage build-app-image va récupérer l'image pour le push dans le container registry
+
+    build-app-image:
+        stage: build-app-image
+        image: docker:latest
+        services:
+            - docker:dind
+        before_script:
+            - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+        script:
+            - docker build --pull -t "$CI_REGISTRY_IMAGE" .
+            - docker push "$CI_REGISTRY_IMAGE"
+        only:
+            - Function-message
+
+---
+
+Enfin gitlab va se connecter à la VM pour déployer l'application à partir de la dernière image
+
+    deploy-app:
+        stage: deploy-app
+        image: ubuntu:latest
+        before_script:
+            - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y)'
+            - mkdir -p ~/.ssh
+            - echo "$FRONT_END_SERVER_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+            - chmod 700 ~/.ssh/id_rsa
+            - eval "$(ssh-agent -s)"
+            - ssh-add ~/.ssh/id_rsa
+            - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+        script:
+            - ssh-copy-id phou_jeannory@35.214.20.18 #server-front-end
+            - ssh -t phou_jeannory@35.214.20.18 << END
+            - pwd
+            - sudo docker stop deployfrontendapp_ubuntu_1 # stop and delete the image of app
+            - sudo docker rm deployfrontendapp_ubuntu_1
+            - echo "y" | sudo docker system prune -a
+            - sudo docker login registry.gitlab.com -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" # build new image of app from container registry
+            - cd /home/phou_jeannory/deploy-front-end-app
+            - sudo docker-compose -f docker-compose.yml up -d # name of image is the folder + unbuntu ==> deployfrontendapp_ubuntu_1
+            - sudo docker ps -a
+            - sudo docker images ls
+            - END
+        only:
+            - Function-message
+
+---
+
+![front-end](/blog/img/gitlab-14.png)
 
 ---
 
 Merci!
+
 

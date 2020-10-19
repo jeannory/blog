@@ -1,10 +1,10 @@
 ---
-title: "Message"
-date: 2020-07-30T23:14:42+02:00
+title: "Jms Websocket"
+date: 2020-07-30T14:43:41+02:00
 draft: false
 author: "Jeannory"
 tags: ["articles"]
-categories: ["Message"]
+categories: ["5/Jms-Websocket"]
 ---
 ## Introduction ##
 
@@ -209,16 +209,18 @@ Coté back-end, une api va récupérer les réquêtes http du client et renvoyer
 
 Pour cela dans la class KeycloakSecurityContext nous allons rajouter la méthode qui va vérifier si l'utilisateur est connecté.
 
-    @Bean
-    @Scope(scopeName = WebApplicationContext.SCOPE_REQUEST, proxyMode = ScopedProxyMode.TARGET_CLASS)
-    private KeycloakAuthenticationToken getKeycloakAuthenticationToken() {
-        KeycloakAuthenticationToken keycloakAuthenticationToken = null;
-        try {
-            keycloakAuthenticationToken = (KeycloakAuthenticationToken) ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getUserPrincipal();
-        } catch (NullPointerException ex) {
-            //user is not connected
-        }
-        return keycloakAuthenticationToken;
+    /**
+     * @return roles
+     */
+    public OidcKeycloakAccount getOidcKeycloakAccount() {
+        return getKeycloakAuthenticationToken().getAccount();
+    }
+
+    /**
+     * @return preferredUsername, email, givenName, familyName
+     */
+    public AccessToken getAccessToken() {
+        return getOidcKeycloakAccount().getKeycloakSecurityContext().getToken();
     }
 
     public boolean isConnected() {
@@ -229,16 +231,49 @@ Pour cela dans la class KeycloakSecurityContext nous allons rajouter la méthode
         return isConnected;
     }
 
-Le service SpamServiceImpl va instancier et retourner le SpamDto au controlleur
+    @Bean
+    @Scope(scopeName = WebApplicationContext.SCOPE_REQUEST, proxyMode = ScopedProxyMode.TARGET_CLASS)
+    private KeycloakAuthenticationToken getKeycloakAuthenticationToken() {
+        try {
+            return checkConnectedUser();
+        } catch (CustomSecurityContextException ex) {
+            System.out.println(ex.getMessage());
+            return null;
+        }
+    }
 
-    @Autowired
-    private KeycloakSecurityContext keycloakSecurityContext;
+    private KeycloakAuthenticationToken checkConnectedUser() {
+        final KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getUserPrincipal();
+        if (keycloakAuthenticationToken == null) {
+            throw new CustomSecurityContextException("user is not connected");
+        }
+        return keycloakAuthenticationToken;
+    }
+
+Le service SpamServiceImpl va instancier et retourner le SpamDto en jms vers le serveur de message, et au controlleur de l'application.
 
     @Override
-    public SpamDto getSpamDto(){
+    public SpamDto getSpamDto() {
         final SpamDto spamDto = new SpamDto();
         spamDto.setConnected(keycloakSecurityContext.isConnected());
+        sendSpam(spamDto);
         return spamDto;
+    }
+
+    @Override
+    @JmsListener(destination = "spamIncrementQueueOut", containerFactory = "myFactory")
+    public void getSpamIncrementQueueOut(Message message) throws JMSException {
+        final SpamDto spamDto = singletonBean.getModelMapper().map(((TextMessage) message).getText(), SpamDto.class);
+        System.out.println("receive from MOM " + spamDto);
+    }
+
+    private void sendSpam(SpamDto spamDto) {
+        try {
+            jmsTemplate.convertAndSend("spamIncrement", spamDto);
+            jmsTemplate.setReceiveTimeout(10_000);
+        } catch (Exception ex) {
+            LOGGER.error(ex.getMessage());
+        }
     }
 
 ---
@@ -253,8 +288,8 @@ La simple requête http://localhost:8081/api/spam/getSpam va retourner le résul
         @Autowired
         private SpamService spamService;
 
-        @RequestMapping(path = "/getSpam", method = RequestMethod.GET)
-        public ResponseEntity<SpamDto> getSpam(){
+        @RequestMapping(value = "/get-spam")
+        public ResponseEntity<SpamDto> getSpam() {
             return new ResponseEntity<SpamDto>(spamService.getSpamDto(), new HttpHeaders(), HttpStatus.OK);
         }
     }
@@ -351,7 +386,11 @@ La console affichera un résultat différent en fonction de l'état de connectio
 
 ---
 
-## Message server-server avec activeMQ ##
+## Message server-server ##
+
+Commucation entre 2 serveurs via Java Message Service (JMS).
+
+### ActiveMq ###
 
 Comme indiqué dans le diagramme de l'infrastructure du projet, le module spam-app sera dans une vm distincte qui devra contenir un "message-oriented middleware" (MOM). Pour ce micro projet j'ai choisit ActiveMQ de la fondation apache, plus adapté que les 2 autres géants qui sont Kafka et RabbitMq.
 
@@ -391,7 +430,7 @@ Configuration vers le MOM
         profiles: dev-docker-integration #integration testing mode
 
         activemq:
-            broker-url: "tcp://35.210.119.52:61616"
+            broker-url: "tcp://10.132.0.3:61616" #subnetwork-gcp
             user: "admin"
             password: "admin"
 
@@ -458,8 +497,9 @@ Dépendance coté serveur
 Configuration pour l'envoi du message
 
     @Configuration
+    @EnableScheduling
     @EnableWebSocketMessageBroker
-    public class WebSocketConfig extends AbstractWebSocketMessageBrokerConfigurer {
+    public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         @Override
         public void registerStompEndpoints(StompEndpointRegistry registry) {
             registry.addEndpoint("/spam-app")
@@ -476,19 +516,50 @@ Configuration pour l'envoi du message
 
 Envoi du message vers le client
 
-        if (spamDto.isConnected()) {
-            SpamAppApplication.connected.increment();
-            SpamAppApplication.connected.updateSince(spamDto.getNow());
-            if (isSendNotification(SpamAppApplication.connected.getCount())) {
-                this.template.convertAndSend("/message", SpamAppApplication.connected.message());
-            }
-        } else {
-            SpamAppApplication.notConnected.increment();
-            SpamAppApplication.notConnected.updateSince(spamDto.getNow());
-            if (isSendNotification(SpamAppApplication.notConnected.getCount())) {
-                this.template.convertAndSend("/message", SpamAppApplication.notConnected.message());
+    @Component
+    public class SpamMessage {
+
+        @Autowired
+        private SingletonBean singletonBean;
+
+        @Autowired
+        private final SimpMessagingTemplate template;
+
+        @Autowired
+        private Gson gson;
+
+        public SpamMessage(SimpMessagingTemplate template) {
+            this.template = template;
+        }
+
+        @JmsListener(destination = "spamIncrement", containerFactory = "myFactory")
+        public JmsResponse getSpamIncrement(Message message) throws JMSException {
+            ActiveMQTextMessage amqMessage = (ActiveMQTextMessage) message;
+            final String messageResponse = amqMessage.getText();
+            final SpamDto spamDto = gson.fromJson(messageResponse, SpamDto.class);
+            updateAndSend(spamDto);
+            return JmsResponse.forQueue(Arrays.asList(singletonBean.getConnectedUser(), singletonBean.getNotConnectedUser()), "spamIncrementQueueOut");
+        }
+
+        private void updateAndSend(SpamDto spamDto) {
+            if (spamDto.isConnected()) {
+                singletonBean.getConnectedUser().increment(spamDto.getNow());
+                if (isSendNotification(singletonBean.getConnectedUser().getCount())) {
+                    this.template.convertAndSend("/message", singletonBean.getConnectedUser().message());
+                }
+            } else {
+                singletonBean.getNotConnectedUser().increment(spamDto.getNow());
+                if (isSendNotification(singletonBean.getNotConnectedUser().getCount())) {
+                    this.template.convertAndSend("/message", singletonBean.getNotConnectedUser().message());
+                }
             }
         }
+
+        private boolean isSendNotification(int count) {
+            return count % 10 == 0;
+        }
+
+    }
 
 ### Web-socket Angular ###
 
@@ -501,6 +572,7 @@ Le service
 
     export class WebSocketService {
 
+        apiUrl = ApiUrl;
         public stompClient;
         public msg = [];
 
@@ -509,18 +581,18 @@ Le service
         }
 
         initializeWebSocketConnection() {
-            const serverUrl = 'http://localhost:8080/spam-app';
+            const serverUrl = this.apiUrl.GET_SPAM_MESSAGE;
             const ws = new SockJS(serverUrl);
             this.stompClient = Stomp.over(ws);
             const that = this;
             // tslint:disable-next-line:only-arrow-functions
-                this.stompClient.connect({}, function (frame) {
-                    that.stompClient.subscribe('/message', (message) => {
-                        if (message.body) {
-                        that.msg.push(message.body);
-                        }
-                    });
-                });
+            this.stompClient.connect({}, function (frame) {
+            that.stompClient.subscribe('/message', (message) => {
+                if (message.body) {
+                that.msg.push(message.body);
+                }
+            });
+            });
         }
     }
 
@@ -528,7 +600,23 @@ Le service
 
 Injection de dépendance vers le composant qui va afficher les notifications (NavbarComponent)
 
-    private webSocketService: WebSocketService
+    private msg = [];
+
+    constructor(
+        location: Location,
+        private element: ElementRef,
+        private router: Router,
+        private websocketService: WebSocketService,
+        public securityService: KeycloakSecurityService,
+    ) {
+        if (sessionStorage.getItem('token') != null) {
+            securityService.kc.token = sessionStorage.getItem('token')
+        }
+        this.location = location;
+        this.sidebarVisible = false;
+        this.msg = this.websocketService.msg;
+    }
+    ...
 
 ---
 
@@ -539,10 +627,12 @@ Affichage des notifications pour le manager connecté (page navbar.component.htm
                     <a class="nav-link" href="javascript:void(0)" id="navbarDropdownMenuLink" data-toggle="dropdown"
                         aria-haspopup="true" aria-expanded="false">
                         <i class="material-icons">notifications</i>
-                        <span *ngIf="webSocketService.msg.length > 0" class="notification">{{webSocketService.msg.length}}</span>
+                        <span *ngIf="msg.length > 0" class="notification">{{msg.length}}</span>
                     </a>
                     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
-                        <a *ngFor="let msg of webSocketService.msg" class="dropdown-item">{{msg}}</a>
+                        <span *ngIf="msg">
+                        <a *ngFor="let m of msg" class="dropdown-item">{{m}}</a>
+                        </span>
                     </div>
                 </li>
                 ...
@@ -564,7 +654,10 @@ Dans le cadre de l'intégration et de la livraison continue, voici le schéma de
 ---
 
 ![Gitlab-ci-cd](/blog/img/Message-app-img-05.png)
-L'offre gratuite proposé par gitlab permet une utilisation poussé du ci/cd à travers les dépôts officiels.
+
+---
+
+L'offre gratuite proposé par gitlab permet une utilisation poussé du ci/cd à travers le service public.
 De ce fait et parce que la gestion des certificats est assez couteuse, le serveur gitlab n'a pas été embarqué dans le cloud. 
 Ne faisant pas parti du sous réseau, certains ports vont être ouvert le temps des tests et déployement (chose à bannir lors de vrais application d'entreprises).
 
@@ -572,12 +665,14 @@ Ne faisant pas parti du sous réseau, certains ports vont être ouvert le temps 
 
 ### Configuration des VM avec Google cloud plateform ###
 
+Pour cette étape il faut comme pour les étapes dans l'article gitlab-ci/cd <a href="/blog/articles/gitlab-ci-cd">[Gitlab-Ci-Cd]</a> ajouter les clefs privés à gitlab et la clé public dans la console GCP. Il faut également définir des adresses statiques pour toutes les VM (internes et externes). Puis, pour les tests et pour le bon fonctionnement de l'application, il faut ouvrir certains ports (définir les règles de parefeu via un tag dans la console GCP).
+Concernant les ports il ne faut pas oublier que certains micro service communiquent dans le même sous-téseau, ou vers l'externe.
+Exemple, le module spam-app-module communique avec activemq dans le même sous-réseau, mais le port pour la le subscribe du web-socket doit être ouvert au client.
+
+---
+
 ![gcp](/blog/img/Message-app-img-02.png)
 
-### Stage des pipelines de user-app ###
+---
 
-### Stage des pipelines de spam-app ###
-
-### Stage des pipelines du front-end ###
-
-## Conclusion ##
+Merci

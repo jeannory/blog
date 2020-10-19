@@ -6,17 +6,17 @@
     <description>Recent content in Articles on Jeannory&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 30 Jul 2020 23:14:42 +0200</lastBuildDate>
+    <lastBuildDate>Thu, 30 Jul 2020 14:43:41 +0200</lastBuildDate>
     
 	<atom:link href="https://jeannory.github.io/blog/tags/articles/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>Message</title>
-      <link>https://jeannory.github.io/blog/articles/message/</link>
-      <pubDate>Thu, 30 Jul 2020 23:14:42 +0200</pubDate>
+      <title>Jms Websocket</title>
+      <link>https://jeannory.github.io/blog/articles/jms-websocket/</link>
+      <pubDate>Thu, 30 Jul 2020 14:43:41 +0200</pubDate>
       
-      <guid>https://jeannory.github.io/blog/articles/message/</guid>
+      <guid>https://jeannory.github.io/blog/articles/jms-websocket/</guid>
       <description>Introduction MAJ au 10/10/2020.
 Dans ce chapitre nous allons aborder la communication asynchrone entre micro-services à travers le développement de composants.
 Stack technique
@@ -27,14 +27,14 @@ Stack technique
     </item>
     
     <item>
-      <title>Gitlab</title>
-      <link>https://jeannory.github.io/blog/articles/gitlab/</link>
+      <title>Gitlab Ci Cd</title>
+      <link>https://jeannory.github.io/blog/articles/gitlab-ci-cd/</link>
       <pubDate>Sun, 26 Apr 2020 16:20:53 +0200</pubDate>
       
-      <guid>https://jeannory.github.io/blog/articles/gitlab/</guid>
+      <guid>https://jeannory.github.io/blog/articles/gitlab-ci-cd/</guid>
       <description>Introduction Gitlab fournit un ensemble de services complet pour l&amp;rsquo;intégration et le déploiement continue. Il est nécessaire de créer et de renseigner le fichier .gitlab-ci.yml à la racine du projet, pour qu&amp;rsquo;à chaque commit sur une branche cible, Gitlab exécute les tâches (stages).
-Exemple d&amp;rsquo;utilisation avec le projet Back-end de Keycloak pour la réalisation des différentes étapes CI/CD.
-Dépôts Gitlab  Back-end  Gitlab-CI L&amp;rsquo;intégration continue permet à chaque commit de tester le build du projet, l&amp;rsquo;exécution des tests, les affichages de différents rapports (qualité de code et couverture des tests) et l&amp;rsquo;archivage des différents artifacts.</description>
+Exemple d&amp;rsquo;utilisation avec le projet full stack de Keycloak pour la réalisation des différentes étapes CI/CD.
+Dépôts Gitlab  Back-end  Back-end - Gitlab-CI L&amp;rsquo;intégration continue permet à chaque commit de tester le build du projet, l&amp;rsquo;exécution des tests, les affichages de différents rapports (qualité de code et couverture des tests) et l&amp;rsquo;archivage des différents artifacts.</description>
     </item>
     
     <item>
@@ -43,7 +43,7 @@ Dépôts Gitlab  Back-end  Gitlab-CI L&amp;rsquo;intégration continue permet à
       <pubDate>Thu, 23 Apr 2020 19:40:34 +0200</pubDate>
       
       <guid>https://jeannory.github.io/blog/articles/keycloak/</guid>
-      <description>Introduction MAJ au 16/07/2020 reprise de cet article après une courte pause de 3 mois :)
+      <description>Introduction MAJ au 16/07/2020
 Keycloak est serveur d&amp;rsquo;authentification standalone. Il est reconnu pour la protection qu&amp;rsquo;il propose en termes de cyber sécurité et aussi par les très nombreuses librairies/fonctionnalités qui permettent une utilisation étendue (Java, AngularJs, Typescript, Ldap, etc..). Beaucoup d&amp;rsquo;entreprises lui font confiance et lui délèguent la partie authentification/autorisation. C&amp;rsquo;est un projet open source codé en java, qui fait preuve d&amp;rsquo;une grande maturité (version 9 à ce jour).</description>
     </item>
     

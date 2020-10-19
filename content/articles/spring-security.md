@@ -4,7 +4,7 @@ date: 2019-10-07T23:47:25+02:00
 draft: false
 author: "Jeannory"
 tags: ["articles"]
-categories: ["Spring Security"]
+categories: ["1/Spring Security"]
 ---
 ## Introduction ##
 
