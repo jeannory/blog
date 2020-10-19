@@ -695,9 +695,11 @@ Ce service utilise le port spécifié dans le fichier de configuration applicati
     00:02
     Job succeeded
 
+---
+
 ## Front-end - Gitlab-CI/CD ##
 
-*MAJ au 16/07/2020*
+*MAJ au 10/10/2020*
 
 Pour les étapes du ci/cd les étapes vont etre simplifiés, nous n'allons retenir que le build et deploiement.
 Pour ce faire nous allons créer nos propres images à partir de l'image ubuntu.
