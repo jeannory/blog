@@ -6,10 +6,19 @@
     <description>Recent content in Articles on Jeannory&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 30 Jul 2020 14:43:41 +0200</lastBuildDate>
+    <lastBuildDate>Fri, 30 Oct 2020 09:05:35 +0100</lastBuildDate>
     
 	<atom:link href="https://jeannory.github.io/blog/articles/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Spring Cloud Part 1</title>
+      <link>https://jeannory.github.io/blog/articles/micro-service/spring-cloud-part-1/</link>
+      <pubDate>Fri, 30 Oct 2020 09:05:35 +0100</pubDate>
+      
+      <guid>https://jeannory.github.io/blog/articles/micro-service/spring-cloud-part-1/</guid>
+      <description> Micro-service Spring Cloud part 1 Le projet Etat actuel  Objectif  </description>
+    </item>
     
     <item>
       <title>Jms Websocket</title>

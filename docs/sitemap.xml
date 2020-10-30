@@ -3,6 +3,11 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://jeannory.github.io/blog/articles/micro-service/spring-cloud-part-1/</loc>
+    <lastmod>2020-10-30T09:05:35+01:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://jeannory.github.io/blog/articles/jms-websocket/</loc>
     <lastmod>2020-07-30T14:43:41+02:00</lastmod>
   </url>
@@ -98,8 +103,20 @@
   </url>
   
   <url>
+    <loc>https://jeannory.github.io/blog/categories/6/micro-services/</loc>
+    <lastmod>2020-10-30T09:05:35+01:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jeannory.github.io/blog/tags/6/micro-services-spring-cloud-part-1/</loc>
+    <lastmod>2020-10-30T09:05:35+01:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://jeannory.github.io/blog/articles/</loc>
-    <lastmod>2020-07-30T14:43:41+02:00</lastmod>
+    <lastmod>2020-10-30T09:05:35+01:00</lastmod>
     <priority>0</priority>
   </url>
   

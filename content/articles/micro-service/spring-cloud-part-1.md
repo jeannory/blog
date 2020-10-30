@@ -1,13 +1,13 @@
 ---
 title: "Spring Cloud Part 1"
 date: 2020-10-30T09:05:35+01:00
-draft: true
+draft: false
 author: "Jeannory"
-tags: ["6/Micro-services Spring Cloud Part 1"]
-categories: ["6/Micro-services Spring Cloud Part 1"]
+tags: ["6/Micro-services-spring-cloud-part-1"]
+categories: ["6/Micro-services"]
 ---
 
-## Micro-service part 1 ##
+## Micro-service Spring Cloud part 1 ##
 
 ### Le projet ###
 
