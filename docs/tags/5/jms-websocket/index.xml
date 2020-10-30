@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>5/Jms Websocket on Jeannory&#39;s blog</title>
+    <link>https://jeannory.github.io/blog/tags/5/jms-websocket/</link>
+    <description>Recent content in 5/Jms Websocket on Jeannory&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 30 Jul 2020 14:43:41 +0200</lastBuildDate>
+    
+	<atom:link href="https://jeannory.github.io/blog/tags/5/jms-websocket/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Jms Websocket</title>
+      <link>https://jeannory.github.io/blog/articles/jms-websocket/</link>
+      <pubDate>Thu, 30 Jul 2020 14:43:41 +0200</pubDate>
+      
+      <guid>https://jeannory.github.io/blog/articles/jms-websocket/</guid>
+      <description>Introduction MAJ au 10/10/2020.
+Dans ce chapitre nous allons aborder la communication asynchrone entre micro-services à travers le développement de composants.
+Stack technique
+ VM Google Cloud Plateform Message oriented middleware activeMQ Back-end Java/Springboot Module Java/SpringBoot Serveur d&amp;rsquo;authentification keycloak Front-end Angular Material  User storie 1 Given:
+ Je peux cliquer sur le bouton &amp;ldquo;spam les managers&amp;rdquo;  When:
+ L&amp;rsquo;utilisateur n&amp;rsquo;est pas connecté  Then:
+ Incrémentation du nombre de spams des utilisateurs non connectés  And:</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -3,7 +3,7 @@ title: "Keycloak"
 date: 2020-04-23T19:40:34+02:00
 draft: false
 author: "Jeannory"
-tags: ["articles"]
+tags: ["3/Keycloak"]
 categories: ["3/Keycloak"]
 ---
 ## Introduction ##

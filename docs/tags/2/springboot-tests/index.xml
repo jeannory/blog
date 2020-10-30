@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>2/Springboot Tests on Jeannory&#39;s blog</title>
+    <link>https://jeannory.github.io/blog/tags/2/springboot-tests/</link>
+    <description>Recent content in 2/Springboot Tests on Jeannory&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Fri, 25 Oct 2019 15:02:42 +0200</lastBuildDate>
+    
+	<atom:link href="https://jeannory.github.io/blog/tags/2/springboot-tests/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Springboot-tests</title>
+      <link>https://jeannory.github.io/blog/articles/springboot-tests/</link>
+      <pubDate>Fri, 25 Oct 2019 15:02:42 +0200</pubDate>
+      
+      <guid>https://jeannory.github.io/blog/articles/springboot-tests/</guid>
+      <description>Introduction Springboot-tests : Type de tests avec Springboot
+ Tests de persistence - DataJpaTest Tests unitaires - Mockito Tests de controleurs - In-Container  Fonctionalitées du projet :
+ Enregistrement/Modification utilisateur Authentification Gestion des rôles implémentation de Spring Security/Jwt.  Présentation de l&amp;rsquo;implémentation de Spring Security/Jwt : ici
+Stack technique
+ Java 8 Springboot 2 Spring Security Jwt Postgresql Junit 4 Mockito 1.9 H2  Dépôt git du projet back-end : ici</description>
+    </item>
+    
+  </channel>
+</rss>

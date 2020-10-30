@@ -3,7 +3,7 @@ title: "Springboot-tests"
 date: 2019-10-25T15:02:42+02:00
 draft: false
 author: "Jeannory"
-tags: ["articles"]
+tags: ["2/Springboot-tests"]
 categories: ["2/Springboot-tests"]
 ---
 ## Introduction ##

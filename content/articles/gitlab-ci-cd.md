@@ -3,7 +3,7 @@ title: "Gitlab Ci Cd"
 date: 2020-04-26T16:20:53+02:00
 draft: false
 author: "Jeannory"
-tags: ["articles"]
+tags: ["4/Gitlab-ci-cd"]
 categories: ["4/Gitlab-ci-cd"]
 ---
 ## Introduction ##
