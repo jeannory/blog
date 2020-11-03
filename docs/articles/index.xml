@@ -17,7 +17,8 @@
       <pubDate>Fri, 30 Oct 2020 09:05:35 +0100</pubDate>
       
       <guid>https://jeannory.github.io/blog/articles/micro-service/spring-cloud-part-1/</guid>
-      <description> Micro-service Spring Cloud part 1 Le projet Etat actuel  Objectif  </description>
+      <description> Micro-service Spring Cloud part 1 Le projet Etat actuel  Objectif  Dépôts
+ configuration-service : ici configuration : ici user-service : ici spam-app-module : ici front-end-server : ici  </description>
     </item>
     
     <item>
