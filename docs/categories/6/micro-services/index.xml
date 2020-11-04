@@ -17,8 +17,8 @@
       <pubDate>Fri, 30 Oct 2020 09:05:35 +0100</pubDate>
       
       <guid>https://jeannory.github.io/blog/articles/micro-service/spring-cloud-part-1/</guid>
-      <description> Micro-service Spring Cloud part 1 Le projet Etat actuel  Objectif  Dépôts
- configuration-service : ici configuration : ici user-service : ici spam-app-module : ici front-end-server : ici  </description>
+      <description>Micro-service Spring Cloud part 1 Le projet Etat actuel  Objectif  Dépôts
+ configuration-service : ici configuration : ici registartion-service : ici user-service : ici spam-app-module : ici front-end-server : ici  Configuration-service Configuration service va servir à mapper les fichiers de configurations vers les services. Les fichiers de configurations sont centralisés dans un dépôt git ici. Par exemple, un fichier de configuration peut contenir le port de déployement, les différents profils, les connecteurs de la base de données, du serveur d&amp;rsquo;authentification, etc&amp;hellip;</description>
     </item>
     
   </channel>
