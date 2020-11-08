@@ -99,10 +99,10 @@
 <ul>
 <li>configuration-service : <a href="https://gitlab.com/phou.jeannory/configuration-service">ici</a></li>
 <li>configuration : <a href="https://gitlab.com/phou.jeannory/configuration">ici</a></li>
-<li>registartion-service : <a href="https://gitlab.com/phou.jeannory/registration-servicen">ici</a></li>
+<li>registartion-service : <a href="https://gitlab.com/phou.jeannory/registration-service">ici</a></li>
 <li>user-service : <a href="https://gitlab.com/phou.jeannory/user-service">ici</a></li>
-<li>spam-app-module : <a href="https://gitlab.com/phou.jeannory/spam-app">ici</a></li>
-<li>front-end-server : <a href="https://gitlab.com/phou.jeannory/keycloak-front-end">ici</a></li>
+<li>spam-service : <a href="https://gitlab.com/phou.jeannory/spam-service">ici</a></li>
+<li>front-end-server : <a href="https://gitlab.com/phou.jeannory/front-end-server">ici</a></li>
 </ul>
 
 <h3 id="configuration-service">Configuration-service</h3>
@@ -357,9 +357,314 @@ boostrap.yml</p>
 
 <h3 id="registartion-service">Registartion-service</h3>
 
+<p>Dépendances</p>
+
+<pre><code>&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-cloud-starter-config&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-cloud-starter-netflix-eureka-server&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
+        &lt;scope&gt;test&lt;/scope&gt;
+        &lt;exclusions&gt;
+            &lt;exclusion&gt;
+                &lt;groupId&gt;org.junit.vintage&lt;/groupId&gt;
+                &lt;artifactId&gt;junit-vintage-engine&lt;/artifactId&gt;
+            &lt;/exclusion&gt;
+        &lt;/exclusions&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+&lt;dependencyManagement&gt;
+    &lt;dependencies&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-cloud-dependencies&lt;/artifactId&gt;
+            &lt;version&gt;${spring-cloud.version}&lt;/version&gt;
+            &lt;type&gt;pom&lt;/type&gt;
+            &lt;scope&gt;import&lt;/scope&gt;
+        &lt;/dependency&gt;
+    &lt;/dependencies&gt;
+&lt;/dependencyManagement&gt;
+</code></pre>
+
+<hr />
+
+<p>Annotation à rajouter dans le main</p>
+
+<pre><code>@EnableEurekaServer
+@SpringBootApplication
+public class RegistrationServiceApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(RegistrationServiceApplication.class, args);
+    }
+
+}
+</code></pre>
+
+<hr />
+
+<p>Il faut pour ce service aussi renseigner bootstrap.yml vers configuration-service</p>
+
+<pre><code>spring:
+    name: &quot;registration-service&quot;
+    application:
+        name: registration-service
+    profiles:
+        active: &quot;dev-docker&quot;
+
+    main:
+        banner-mode: &quot;off&quot;
+
+---
+
+spring:
+    profiles: dev-docker
+    cloud:
+        config:
+            uri: http://localhost:8888
+
+---
+
+spring:
+    profiles: dev-docker-integration-deploy #deployment
+    cloud:
+        config:
+            uri: http://10.156.0.2:8888
+</code></pre>
+
+<hr />
+
+<p>Qui va mapper vers la configuration (registration-service.yml) dans le dépôt git</p>
+
+<pre><code>server:
+    port: 8761
+
+eureka:
+    client:
+        fetch-registry: false
+        register-with-eureka: false
+</code></pre>
+
+<hr />
+
+<p>Une fois démarrer il faut lancer la console qui va afficher des informations essentiels.
+Celles qui nous intéreressent ici sont les instances enregistrées.</p>
+
 <p><img src="/blog/img/6/eureka-1.png" alt="console-eureka" /></p>
 
 <hr />
+
+<h3 id="proxy-service">Proxy-service</h3>
+
+<p>Dépendances</p>
+
+<pre><code>&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-actuator&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-cloud-starter-config&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-cloud-starter-netflix-eureka-client&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-cloud-starter-netflix-zuul&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
+        &lt;scope&gt;test&lt;/scope&gt;
+        &lt;exclusions&gt;
+            &lt;exclusion&gt;
+                &lt;groupId&gt;org.junit.vintage&lt;/groupId&gt;
+                &lt;artifactId&gt;junit-vintage-engine&lt;/artifactId&gt;
+            &lt;/exclusion&gt;
+        &lt;/exclusions&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+&lt;dependencyManagement&gt;
+    &lt;dependencies&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-cloud-dependencies&lt;/artifactId&gt;
+            &lt;version&gt;${spring-cloud.version}&lt;/version&gt;
+            &lt;type&gt;pom&lt;/type&gt;
+            &lt;scope&gt;import&lt;/scope&gt;
+        &lt;/dependency&gt;
+    &lt;/dependencies&gt;
+&lt;/dependencyManagement&gt;
+</code></pre>
+
+<hr />
+
+<p>Annotations à ajouter dans le main</p>
+
+<pre><code>@EnableDiscoveryClient
+@EnableZuulProxy
+@SpringBootApplication
+public class ProxyServiceApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(ProxyServiceApplication.class, args);
+    }
+
+}
+</code></pre>
+
+<hr />
+
+<p>Il faut pour ce service aussi renseigner bootstrap.yml vers configuration-service</p>
+
+<pre><code>spring:
+    application:
+        name: proxy-service
+    profiles:
+        active: &quot;dev-docker&quot;
+
+main:
+    banner-mode: &quot;off&quot;
+
+---
+
+spring:
+    profiles: dev-docker
+    cloud:
+        config:
+            uri: http://localhost:8888
+
+---
+
+spring:
+    profiles: dev-docker-integration-deploy #deployment
+    cloud:
+        config:
+            uri: http://10.156.0.2:8888
+</code></pre>
+
+<hr />
+
+<p>Qui va mapper vers la configuration (proxy-service.yml) dans le dépôt git.
+Zuul sensitiveHeaders: Cookie,Set-Cookie permet que la requête comporte le header d&rsquo;origine. Nécessaire en cas de la vérification du token de session jwt dans le header.</p>
+
+<pre><code>server:
+    port: 9999
+
+logging:
+    file: logs/proxy-service.log
+    pattern:
+        console: &quot;%d %-5level %logger : %msg%n&quot;
+        file: &quot;%d %-5level [%thread] %logger : %msg%n&quot;
+    level:
+        org.springframework.web: ERROR
+        com.howtodoinjava: DEBUG
+        org.hibernate: ERROR
+
+zuul: # Pass Authorization header downstream
+    sensitiveHeaders: Cookie,Set-Cookie
+
+---
+
+spring:
+    profiles: dev-docker
+
+eureka:
+    client:
+        serviceUrl:
+            defaultZone: http://localhost:8761/eureka/
+
+---
+
+spring:
+    profiles: dev-docker-integration-deploy #deployment
+
+eureka:
+    client:
+        serviceUrl:
+            defaultZone: http://10.166.0.3:8761/eureka/
+</code></pre>
+
+<hr />
+
+<p>Sur le projet user-service, nous allons déployer la même instance sur 2 vm différentes</p>
+
+<pre><code>deploy-app-instance-1:
+    stage: deploy-app-instance-1
+    image: ubuntu:18.04
+    before_script:
+        - 'which ssh-agent || ( apt-get update -y &amp;&amp; apt-get install openssh-client -y)'
+        - mkdir -p ~/.ssh
+        - echo &quot;$USER_APP_KEY&quot; | tr -d '\r' &gt; ~/.ssh/id_rsa
+        - chmod 700 ~/.ssh/id_rsa
+        - eval &quot;$(ssh-agent -s)&quot;
+        - ssh-add ~/.ssh/id_rsa
+        - '[[ -f /.dockerenv ]] &amp;&amp; echo -e &quot;Host *\n\tStrictHostKeyChecking no\n\n&quot; &gt; ~/.ssh/config'
+    script:
+        - ssh-copy-id phou_jeannory@35.208.214.143
+        - ssh -t phou_jeannory@35.208.214.143 &lt;&lt; END
+        - pwd
+        - sudo docker stop devdockerintegrationapp_java_1 # stop and delete the image of app
+        - sudo docker rm devdockerintegrationapp_java_1
+        - echo &quot;y&quot; | sudo docker system prune -a
+        - sudo docker login registry.gitlab.com -u &quot;$CI_REGISTRY_USER&quot; -p &quot;$CI_REGISTRY_PASSWORD&quot; # build new image of app from container registry
+        - cd /home/phou_jeannory/dev-docker-integration-app
+        - sudo docker-compose -f docker-compose.yml up -d # name of image is the folder + java_1 ==&gt; devdockerintegrationapp_java_1
+        - sudo docker ps -a
+        - sudo docker images ls
+        - END
+    only:
+        - develop
+
+deploy-app-instance-2:
+    stage: deploy-app-instance-2
+    image: ubuntu:18.04
+    before_script:
+        - 'which ssh-agent || ( apt-get update -y &amp;&amp; apt-get install openssh-client -y)'
+        - mkdir -p ~/.ssh
+        - echo &quot;$USER_APP_KEY&quot; | tr -d '\r' &gt; ~/.ssh/id_rsa
+        - chmod 700 ~/.ssh/id_rsa
+        - eval &quot;$(ssh-agent -s)&quot;
+        - ssh-add ~/.ssh/id_rsa
+        - '[[ -f /.dockerenv ]] &amp;&amp; echo -e &quot;Host *\n\tStrictHostKeyChecking no\n\n&quot; &gt; ~/.ssh/config'
+    script:
+        - ssh-copy-id phou_jeannory@35.216.225.110
+        - ssh -t phou_jeannory@35.216.225.110 &lt;&lt; END
+        - pwd
+        - sudo docker stop devdockerintegrationapp_java_1 # stop and delete the image of app
+        - sudo docker rm devdockerintegrationapp_java_1
+        - echo &quot;y&quot; | sudo docker system prune -a
+        - sudo docker login registry.gitlab.com -u &quot;$CI_REGISTRY_USER&quot; -p &quot;$CI_REGISTRY_PASSWORD&quot; # build new image of app from container registry
+        - cd /home/phou_jeannory/dev-docker-integration-app
+        - sudo docker-compose -f docker-compose.yml up -d # name of image is the folder + java_1 ==&gt; devdockerintegrationapp_java_1
+        - sudo docker ps -a
+        - sudo docker images ls
+        - END
+    only:
+        - develop
+</code></pre>
+
+<p>Ainsi proxy-service va router les requêtes clients vers l&rsquo;une des 2 instances de user-service. Il fait donc office d&rsquo;équilibreur de charge.
+Pour ce faire la requête devra comporter l&rsquo;url de proxy-service + le nom du service demandé + l&rsquo;api (exemple <a href="http://35.208.214.143:9999/user-service/api/users?pageNo=0&amp;pageSize=10&amp;sortBy=id">http://35.208.214.143:9999/user-service/api/users?pageNo=0&amp;pageSize=10&amp;sortBy=id</a>).
+<em>Pour la vérification du serveur keycloak ne pas oublier de rajouter dans Valid Redirect URIs l&rsquo;url de proxy-service soit <a href="http://35.214.184.168:9999/*">http://35.214.184.168:9999/*</a></em></p>
 
 				</section>
 			</article>
@@ -386,6 +691,7 @@ boostrap.yml</p>
 <li><a href="#configuration-service">Configuration-service</a></li>
 <li><a href="#user-service">User-service</a></li>
 <li><a href="#registartion-service">Registartion-service</a></li>
+<li><a href="#proxy-service">Proxy-service</a></li>
 </ul></li>
 </ul></li>
 </ul>
