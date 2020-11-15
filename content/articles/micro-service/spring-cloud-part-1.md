@@ -9,7 +9,7 @@ categories: ["6/Micro-services"]
 
 ## Micro-service Spring Cloud part 1 ##
 
-### Le projet ###
+## Le projet ##
 
 A travers ce projet, je vais illustrer un exemple d'implémentation d'un micro service avec Spring-Cloud. Ce projet va être déployé sur plusieurs VM du cloud de googl-cloud-plateform. Il va s'agir de la 1ère partie ou sera développé un seul service sur plusieurs instances.
 
@@ -52,7 +52,7 @@ Et 10 VM ont été utilisé pour tous les déploiements.
 ---
 
 
-### Configuration-service ###
+## Configuration-service ##
 
 Configuration service va servir à mapper les fichiers de configurations vers les services. Les fichiers de configurations sont centralisés vers le dépôt git [configuration](https://gitlab.com/phou.jeannory/configuration).
 Par exemple, un fichier de configuration peut contenir le port de déployement, les différents profils, les connecteurs de la base de données, du serveur d'authentification, etc...
@@ -169,7 +169,7 @@ Il faut également ajouter l'annotation EnableConfigServer
 
 ---
 
-### Configuration ###
+## Configuration ##
 
 C'est le dépôt git qui va contenir toutes les configurations des différents services.
 
@@ -177,7 +177,7 @@ C'est le dépôt git qui va contenir toutes les configurations des différents s
 
 ---
 
-### Registartion-service ###
+## Registartion-service ##
 
 C'est le service qui va enregistrer tous les services du projet. Ces informations seront affichés dans sa console.
 Ici nous voyons qu'il y a proxy-service, spam-service et user-service qui lui comporte 3 instances.
@@ -282,7 +282,7 @@ Qui va mapper vers la configuration (registration-service.yml) dans le dépôt g
 
 ---
 
-### Proxy-service ###
+## Proxy-service ##
 
 Ce service va servir de gateway entre les appels client http et les différents services. Il sert également d'équilibreur de charge : dans le cas ou un service comporte plusieurs instances, proxy-service va décider quelle instance sera sollicitée pour une même requête.
 
@@ -438,7 +438,7 @@ Dans le cas de multiples instances, il n'y a pas besoin de déclarations spécif
 ---
 
 
-### User-service ###
+## User-service ##
 
 Enfin le dernier service qui va nous servir pour tester les micro-services.
 
@@ -534,6 +534,8 @@ Configuration-service fera ainsi le mapping grâce au nommage (fichier user-serv
 
 ---
 
+### Actuator ###
+
 Actuator renseignera sur des informations sur user-service et permet que les données actualisés du fichier de configuration puisse aussi l'être pour le server (exemple à suivre)
 
     @Controller
@@ -581,6 +583,9 @@ boostrap.yml
                 enabled: true
 
 ---
+
+### Requête simple ###
+
 Etapes d'un appel simple :
 
 * 1/Le client lance une requête vers le proxy-service
@@ -592,6 +597,8 @@ Etapes d'un appel simple :
 Il s'agit d'un exemple très simple. Le service-proxy a la possibilité de faire traitement lorsqu'il recoit une requête (filtre, traitement avant la response, etc...)
 
 ![Etapes](/blog/img/6/Micro-service-3.png)
+
+---
 
 ### Mise à jour des bases de données des différentes instances ###
 
@@ -709,7 +716,7 @@ Cette méthode comporte plusieurs points de vigilance
 * L'instance qui va produire va également consommer (Exception à gérer en cas de re-persistence!)
 * Vérifier que les bases de données de toutes les instances comportent tous les mêmes éléments
 
-### Conclusion ###
+## Conclusion ##
 
 Il est très simple avec Spring-Cloud d'implémenter un projet en micro-service. Elle prend également en charge le système de sécurité OpenID. Avec l'intégration continue et docker il est également très aisée de scaler les services, et même de changer de vm.
 

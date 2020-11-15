@@ -78,7 +78,7 @@
 
 <h2 id="micro-service-spring-cloud-part-1">Micro-service Spring Cloud part 1</h2>
 
-<h3 id="le-projet">Le projet</h3>
+<h2 id="le-projet">Le projet</h2>
 
 <p>A travers ce projet, je vais illustrer un exemple d&rsquo;implémentation d&rsquo;un micro service avec Spring-Cloud. Ce projet va être déployé sur plusieurs VM du cloud de googl-cloud-plateform. Il va s&rsquo;agir de la 1ère partie ou sera développé un seul service sur plusieurs instances.</p>
 
@@ -121,7 +121,7 @@ Schéma de'infrastructure du projet réalisé.
 
 <hr />
 
-<h3 id="configuration-service">Configuration-service</h3>
+<h2 id="configuration-service">Configuration-service</h2>
 
 <p>Configuration service va servir à mapper les fichiers de configurations vers les services. Les fichiers de configurations sont centralisés vers le dépôt git <a href="https://gitlab.com/phou.jeannory/configuration">configuration</a>.
 Par exemple, un fichier de configuration peut contenir le port de déployement, les différents profils, les connecteurs de la base de données, du serveur d&rsquo;authentification, etc&hellip;</p>
@@ -241,7 +241,7 @@ public class ConfigurationServiceApplication {
 
 <hr />
 
-<h3 id="configuration">Configuration</h3>
+<h2 id="configuration">Configuration</h2>
 
 <p>C&rsquo;est le dépôt git qui va contenir toutes les configurations des différents services.</p>
 
@@ -249,7 +249,7 @@ public class ConfigurationServiceApplication {
 
 <hr />
 
-<h3 id="registartion-service">Registartion-service</h3>
+<h2 id="registartion-service">Registartion-service</h2>
 
 <p>C&rsquo;est le service qui va enregistrer tous les services du projet. Ces informations seront affichés dans sa console.
 Ici nous voyons qu&rsquo;il y a proxy-service, spam-service et user-service qui lui comporte 3 instances.</p>
@@ -357,7 +357,7 @@ eureka:
 
 <hr />
 
-<h3 id="proxy-service">Proxy-service</h3>
+<h2 id="proxy-service">Proxy-service</h2>
 
 <p>Ce service va servir de gateway entre les appels client http et les différents services. Il sert également d&rsquo;équilibreur de charge : dans le cas ou un service comporte plusieurs instances, proxy-service va décider quelle instance sera sollicitée pour une même requête.</p>
 
@@ -516,7 +516,7 @@ eureka:
 
 <hr />
 
-<h3 id="user-service">User-service</h3>
+<h2 id="user-service">User-service</h2>
 
 <p>Enfin le dernier service qui va nous servir pour tester les micro-services.</p>
 
@@ -614,6 +614,8 @@ spring:
 
 <hr />
 
+<h3 id="actuator">Actuator</h3>
+
 <p>Actuator renseignera sur des informations sur user-service et permet que les données actualisés du fichier de configuration puisse aussi l&rsquo;être pour le server (exemple à suivre)</p>
 
 <pre><code>@Controller
@@ -665,6 +667,8 @@ boostrap.yml</p>
 
 <hr />
 
+<h3 id="requête-simple">Requête simple</h3>
+
 <p>Etapes d&rsquo;un appel simple :</p>
 
 <ul>
@@ -678,6 +682,8 @@ boostrap.yml</p>
 <p>Il s&rsquo;agit d&rsquo;un exemple très simple. Le service-proxy a la possibilité de faire traitement lorsqu&rsquo;il recoit une requête (filtre, traitement avant la response, etc&hellip;)</p>
 
 <p><img src="/blog/img/6/Micro-service-3.png" alt="Etapes" /></p>
+
+<hr />
 
 <h3 id="mise-à-jour-des-bases-de-données-des-différentes-instances">Mise à jour des bases de données des différentes instances</h3>
 
@@ -803,7 +809,7 @@ public static Topic getUserTopic() {
 <li>Vérifier que les bases de données de toutes les instances comportent tous les mêmes éléments</li>
 </ul>
 
-<h3 id="conclusion">Conclusion</h3>
+<h2 id="conclusion">Conclusion</h2>
 
 <p>Il est très simple avec Spring-Cloud d&rsquo;implémenter un projet en micro-service. Elle prend également en charge le système de sécurité OpenID. Avec l&rsquo;intégration continue et docker il est également très aisée de scaler les services, et même de changer de vm.</p>
 
@@ -826,17 +832,19 @@ public static Topic getUserTopic() {
 <ul>
 <li>
 <ul>
-<li><a href="#micro-service-spring-cloud-part-1">Micro-service Spring Cloud part 1</a>
-<ul>
+<li><a href="#micro-service-spring-cloud-part-1">Micro-service Spring Cloud part 1</a></li>
 <li><a href="#le-projet">Le projet</a></li>
 <li><a href="#configuration-service">Configuration-service</a></li>
 <li><a href="#configuration">Configuration</a></li>
 <li><a href="#registartion-service">Registartion-service</a></li>
 <li><a href="#proxy-service">Proxy-service</a></li>
-<li><a href="#user-service">User-service</a></li>
+<li><a href="#user-service">User-service</a>
+<ul>
+<li><a href="#actuator">Actuator</a></li>
+<li><a href="#requête-simple">Requête simple</a></li>
 <li><a href="#mise-à-jour-des-bases-de-données-des-différentes-instances">Mise à jour des bases de données des différentes instances</a></li>
-<li><a href="#conclusion">Conclusion</a></li>
 </ul></li>
+<li><a href="#conclusion">Conclusion</a></li>
 </ul></li>
 </ul>
 </nav>
