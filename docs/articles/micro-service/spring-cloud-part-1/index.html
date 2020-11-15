@@ -80,34 +80,50 @@
 
 <h3 id="le-projet">Le projet</h3>
 
-<pre><code>Etat actuel
+<p>A travers ce projet, je vais illustrer un exemple d&rsquo;implémentation d&rsquo;un micro service avec Spring-Cloud. Ce projet va être déployé sur plusieurs VM du cloud de googl-cloud-plateform. Il va s&rsquo;agir de la 1ère partie ou sera développé un seul service sur plusieurs instances.</p>
+
+<pre><code>Objectif
+Schéma de'infrastructure du projet réalisé.
 </code></pre>
 
-<p><img src="/blog/img/6/Micro-service-1.png" alt="schéma-actuel" /></p>
+<p><img src="/blog/img/6/Micro-service-1.png" alt="objectif" /></p>
 
 <hr />
 
-<pre><code>Objectif
+<pre><code>Projet de base
 </code></pre>
 
-<p><img src="/blog/img/6/Micro-service-2.png" alt="objectif" /></p>
+<p>Reprise du projet du paragraphe <a href="https://jeannory.github.io/blog/articles/jms-websocket/" title="Jms Websocket">Jms Websocket</a>
+<img src="/blog/img/6/Micro-service-2.png" alt="schéma-actuel" /></p>
 
 <hr />
 
 <p>Dépôts</p>
 
+<p>Ce projet a nécessité 8 dépôts gitlab.</p>
+
 <ul>
-<li>configuration-service : <a href="https://gitlab.com/phou.jeannory/configuration-service">ici</a></li>
+<li>active-mq : <a href="https://gitlab.com/phou.jeannory/active-mq">ici</a></li>
 <li>configuration : <a href="https://gitlab.com/phou.jeannory/configuration">ici</a></li>
+<li>configuration-service : <a href="https://gitlab.com/phou.jeannory/configuration-service">ici</a></li>
 <li>registartion-service : <a href="https://gitlab.com/phou.jeannory/registration-service">ici</a></li>
+<li>proxy-service : <a href="https://gitlab.com/phou.jeannory/proxy-service">ici</a></li>
 <li>user-service : <a href="https://gitlab.com/phou.jeannory/user-service">ici</a></li>
 <li>spam-service : <a href="https://gitlab.com/phou.jeannory/spam-service">ici</a></li>
 <li>front-end-server : <a href="https://gitlab.com/phou.jeannory/front-end-server">ici</a></li>
 </ul>
 
+<hr />
+
+<p>Et 10 VM ont été utilisé pour tous les déploiements.</p>
+
+<p><img src="/blog/img/6/gcp.png" alt="gcp" /></p>
+
+<hr />
+
 <h3 id="configuration-service">Configuration-service</h3>
 
-<p>Configuration service va servir à mapper les fichiers de configurations vers les services. Les fichiers de configurations sont centralisés dans un dépôt git <a href="https://gitlab.com/phou.jeannory/configuration">ici</a>.
+<p>Configuration service va servir à mapper les fichiers de configurations vers les services. Les fichiers de configurations sont centralisés vers le dépôt git <a href="https://gitlab.com/phou.jeannory/configuration">configuration</a>.
 Par exemple, un fichier de configuration peut contenir le port de déployement, les différents profils, les connecteurs de la base de données, du serveur d&rsquo;authentification, etc&hellip;</p>
 
 <pre><code>server:
@@ -188,17 +204,30 @@ Il a besoin des dépendances suivants:</p>
 
 <hr />
 
-<p>Son fichier application.yml devra obligatoirement indiquer le lien vers le git de configuration (il peut aussi s&rsquo;agir d&rsquo;un répertoire si vous essayer en local, dans ce cas remplacer https:// par file:)</p>
+<p>Son fichier application.yml devra obligatoirement indiquer le lien vers le git de configuration (il peut aussi s&rsquo;agir d&rsquo;un répertoire si vous essayez en local, dans ce cas remplacer https:// par file:)</p>
 
 <pre><code>server:
     port: 8888
 
 spring:
+    name: &quot;configuration-service&quot;
+        profiles:
+            active: &quot;dev-docker&quot;
+        cloud:
+            config:
+                server:
+                    git:
+                        uri: https://gitlab.com/phou.jeannory/configuration.git
+
+---
+
+spring:
+    profiles: dev-docker
     cloud:
         config:
             server:
                 git:
-                    uri: https://gitlab.com/phou.jeannory/configuration.git
+                    uri: file:/home/jeannory/gitlab/keycloak/local-configuration
 </code></pre>
 
 <hr />
@@ -212,150 +241,22 @@ public class ConfigurationServiceApplication {
 
 <hr />
 
-<h3 id="user-service">User-service</h3>
+<h3 id="configuration">Configuration</h3>
 
-<p>user-service va utliser configuration-service pour récupérer sa configuration</p>
+<p>C&rsquo;est le dépôt git qui va contenir toutes les configurations des différents services.</p>
 
-<pre><code>    &lt;dependency&gt;
-        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
-        &lt;artifactId&gt;spring-boot-starter-actuator&lt;/artifactId&gt;
-    &lt;/dependency&gt;
-    &lt;dependency&gt;
-        &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
-        &lt;artifactId&gt;spring-cloud-starter-config&lt;/artifactId&gt;
-    &lt;/dependency&gt;
-</code></pre>
-
-<hr />
-
-<p>Il faut rajouter l&rsquo;annotation EnableConfigurationProperties</p>
-
-<pre><code>@EnableConfigurationProperties
-@EnableJms
-@SpringBootApplication
-public class UserServiceApplication {
-</code></pre>
-
-<hr />
-
-<p>Renommer le fichier application.yml en bootstrap.yml et lui indiquer, comment va se nommer le service (ici c&rsquo;est application: name: user-service) et ou se trouve le serveur de configuration (<a href="http://localhost:8888">http://localhost:8888</a> ou <a href="http://34.107.109.238:8888">http://34.107.109.238:8888</a> en fonction du profile).</p>
-
-<pre><code>spring:
-    name: &quot;user-service&quot;
-    application:
-        name: user-service
-    profiles:
-        active: &quot;dev-docker&quot;
-
-    main:
-        banner-mode: &quot;off&quot;
-
-lombok:
-    anyConstructor:
-        addConstructorProperties: true
-
----
-
-spring:
-profiles: dev-docker
-cloud:
-    config:
-    uri: http://localhost:8888
-
----
-
-spring:
-    profiles: dev-docker-integration #integration test
-    cloud:
-        config:
-            uri: http://34.107.109.238:8888
-
----
-
-spring:
-    profiles: dev-docker-integration-deploy #deployment
-    cloud:
-        config:
-            uri: http://34.107.109.238:8888
-</code></pre>
-
-<hr />
-
-<p>Configuration-service fera ainsi le mapping grâce au nommage (fichier user-service.yml dans le serveur git configuration).</p>
-
-<pre><code>server:
-    port: 8081
-
-logging:
-    file: logs/user-service.log
-    pattern:
-        console: &quot;%d %-5level %logger : %msg%n&quot;
-        file: &quot;%d %-5level [%thread] %logger : %msg%n&quot;
-    level:
-        org.springframework.web: ERROR
-        com.howtodoinjava: DEBUG
-        org.hibernate: ERROR
-
----
-
-spring:
-    profiles: dev-docker
-</code></pre>
-
-<hr />
-
-<p>Actuator renseignera sur des informations sur user-service et permet que les données actualisés du fichier de configuration puisse aussi l&rsquo;être pour le server (exemple à suivre)</p>
-
-<pre><code>@Controller
-public class MainController {
-
-    @ResponseBody
-    @RequestMapping(path = &quot;/&quot;)
-    public String home(HttpServletRequest request) {
-
-        String contextPath = request.getContextPath();
-        String host = request.getServerName();
-
-        // Spring Boot &gt;= 2.0.0.M7
-        String endpointBasePath = &quot;/actuator&quot;;
-
-        StringBuilder sb = new StringBuilder();
-
-        sb.append(&quot;&lt;h2&gt;Sprig Boot Actuator&lt;/h2&gt;&quot;);
-        sb.append(&quot;&lt;ul&gt;&quot;);
-
-        // http://localhost:8090/actuator
-        String url = &quot;http://&quot; + host + &quot;:8090&quot; + contextPath + endpointBasePath;
-
-        sb.append(&quot;&lt;li&gt;&lt;a href='&quot; + url + &quot;'&gt;&quot; + url + &quot;&lt;/a&gt;&lt;/li&gt;&quot;);
-
-        sb.append(&quot;&lt;/ul&gt;&quot;);
-
-        return sb.toString();
-    }
-
-}
-</code></pre>
-
-<hr />
-
-<p>Configuration de actuator
-boostrap.yml</p>
-
-<pre><code>management:
-    server:
-        port: 0
-    endpoints:
-        web:
-            exposure:
-                include: &quot;*&quot;
-        shutdown:
-            enabled: true
-</code></pre>
+<p><img src="/blog/img/6/configuration.png" alt="configuartion" /></p>
 
 <hr />
 
 <h3 id="registartion-service">Registartion-service</h3>
+
+<p>C&rsquo;est le service qui va enregistrer tous les services du projet. Ces informations seront affichés dans sa console.
+Ici nous voyons qu&rsquo;il y a proxy-service, spam-service et user-service qui lui comporte 3 instances.</p>
+
+<p><img src="/blog/img/6/eureka-1.png" alt="console-eureka" /></p>
+
+<hr />
 
 <p>Dépendances</p>
 
@@ -456,14 +357,9 @@ eureka:
 
 <hr />
 
-<p>Une fois démarrer il faut lancer la console qui va afficher des informations essentiels.
-Celles qui nous intéreressent ici sont les instances enregistrées.</p>
-
-<p><img src="/blog/img/6/eureka-1.png" alt="console-eureka" /></p>
-
-<hr />
-
 <h3 id="proxy-service">Proxy-service</h3>
+
+<p>Ce service va servir de gateway entre les appels client http et les différents services. Il sert également d&rsquo;équilibreur de charge : dans le cas ou un service comporte plusieurs instances, proxy-service va décider quelle instance sera sollicitée pour une même requête.</p>
 
 <p>Dépendances</p>
 
@@ -564,7 +460,10 @@ spring:
 <hr />
 
 <p>Qui va mapper vers la configuration (proxy-service.yml) dans le dépôt git.
-Zuul sensitiveHeaders: Cookie,Set-Cookie permet que la requête comporte le header d&rsquo;origine. Nécessaire en cas de la vérification du token de session jwt dans le header.</p>
+Pour le mapping des api, la requête doit pointer vers l&rsquo;url du service-proxy + service appelé + api. Exemple si nous souhaitons appeler la requete de user-service <a href="http://35.208.214.143:8081/api/test">http://35.208.214.143:8081/api/test</a>, il faut lancer la requête suivante <a href="http://35.214.184.168:9999/user-service/api/test">http://35.214.184.168:9999/user-service/api/test</a>. Il est possible de personnaliser les appels.
+Dans la configuration suivante, l&rsquo;appel devient <a href="http://35.214.184.168:9999/user/api/test">http://35.214.184.168:9999/user/api/test</a>.
+Zuul prend en charge les redirections de sécurité. Il est possible de le définir de manière globale ou pour un ou plusieurs services (ajouter sensitiveHeaders: Cookie,Set-Cookie).
+Dans le cas de multiples instances, il n&rsquo;y a pas besoin de déclarations spécifique.</p>
 
 <pre><code>server:
     port: 9999
@@ -579,8 +478,20 @@ logging:
         com.howtodoinjava: DEBUG
         org.hibernate: ERROR
 
-zuul: # Pass Authorization header downstream
-    sensitiveHeaders: Cookie,Set-Cookie
+zuul:
+    routes:
+        user:
+            path: /user/** # request pre-path
+            serviceId: user-service # mapping service
+            sensitiveHeaders: Cookie,Set-Cookie # add bearer on header
+
+# Disable Hystrix timeout globally (for all services)
+hystrix:
+    command:
+        default:
+            execution:
+                timeout:
+                    enabled: false
 
 ---
 
@@ -605,66 +516,296 @@ eureka:
 
 <hr />
 
-<p>Sur le projet user-service, nous allons déployer la même instance sur 2 vm différentes</p>
+<h3 id="user-service">User-service</h3>
 
-<pre><code>deploy-app-instance-1:
-    stage: deploy-app-instance-1
-    image: ubuntu:18.04
-    before_script:
-        - 'which ssh-agent || ( apt-get update -y &amp;&amp; apt-get install openssh-client -y)'
-        - mkdir -p ~/.ssh
-        - echo &quot;$USER_APP_KEY&quot; | tr -d '\r' &gt; ~/.ssh/id_rsa
-        - chmod 700 ~/.ssh/id_rsa
-        - eval &quot;$(ssh-agent -s)&quot;
-        - ssh-add ~/.ssh/id_rsa
-        - '[[ -f /.dockerenv ]] &amp;&amp; echo -e &quot;Host *\n\tStrictHostKeyChecking no\n\n&quot; &gt; ~/.ssh/config'
-    script:
-        - ssh-copy-id phou_jeannory@35.208.214.143
-        - ssh -t phou_jeannory@35.208.214.143 &lt;&lt; END
-        - pwd
-        - sudo docker stop devdockerintegrationapp_java_1 # stop and delete the image of app
-        - sudo docker rm devdockerintegrationapp_java_1
-        - echo &quot;y&quot; | sudo docker system prune -a
-        - sudo docker login registry.gitlab.com -u &quot;$CI_REGISTRY_USER&quot; -p &quot;$CI_REGISTRY_PASSWORD&quot; # build new image of app from container registry
-        - cd /home/phou_jeannory/dev-docker-integration-app
-        - sudo docker-compose -f docker-compose.yml up -d # name of image is the folder + java_1 ==&gt; devdockerintegrationapp_java_1
-        - sudo docker ps -a
-        - sudo docker images ls
-        - END
-    only:
-        - develop
+<p>Enfin le dernier service qui va nous servir pour tester les micro-services.</p>
 
-deploy-app-instance-2:
-    stage: deploy-app-instance-2
-    image: ubuntu:18.04
-    before_script:
-        - 'which ssh-agent || ( apt-get update -y &amp;&amp; apt-get install openssh-client -y)'
-        - mkdir -p ~/.ssh
-        - echo &quot;$USER_APP_KEY&quot; | tr -d '\r' &gt; ~/.ssh/id_rsa
-        - chmod 700 ~/.ssh/id_rsa
-        - eval &quot;$(ssh-agent -s)&quot;
-        - ssh-add ~/.ssh/id_rsa
-        - '[[ -f /.dockerenv ]] &amp;&amp; echo -e &quot;Host *\n\tStrictHostKeyChecking no\n\n&quot; &gt; ~/.ssh/config'
-    script:
-        - ssh-copy-id phou_jeannory@35.216.225.110
-        - ssh -t phou_jeannory@35.216.225.110 &lt;&lt; END
-        - pwd
-        - sudo docker stop devdockerintegrationapp_java_1 # stop and delete the image of app
-        - sudo docker rm devdockerintegrationapp_java_1
-        - echo &quot;y&quot; | sudo docker system prune -a
-        - sudo docker login registry.gitlab.com -u &quot;$CI_REGISTRY_USER&quot; -p &quot;$CI_REGISTRY_PASSWORD&quot; # build new image of app from container registry
-        - cd /home/phou_jeannory/dev-docker-integration-app
-        - sudo docker-compose -f docker-compose.yml up -d # name of image is the folder + java_1 ==&gt; devdockerintegrationapp_java_1
-        - sudo docker ps -a
-        - sudo docker images ls
-        - END
-    only:
-        - develop
+<p>Dépendances</p>
+
+<pre><code>    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-actuator&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-cloud-starter-config&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-cloud-starter-netflix-eureka-client&lt;/artifactId&gt;
+    &lt;/dependency&gt;
 </code></pre>
 
-<p>Ainsi proxy-service va router les requêtes clients vers l&rsquo;une des 2 instances de user-service. Il fait donc office d&rsquo;équilibreur de charge.
-Pour ce faire la requête devra comporter l&rsquo;url de proxy-service + le nom du service demandé + l&rsquo;api (exemple <a href="http://35.208.214.143:9999/user-service/api/users?pageNo=0&amp;pageSize=10&amp;sortBy=id">http://35.208.214.143:9999/user-service/api/users?pageNo=0&amp;pageSize=10&amp;sortBy=id</a>).
-<em>Pour la vérification du serveur keycloak ne pas oublier de rajouter dans Valid Redirect URIs l&rsquo;url de proxy-service soit <a href="http://35.214.184.168:9999/*">http://35.214.184.168:9999/*</a></em></p>
+<hr />
+
+<p>Il faut rajouter les annotations EnableDiscoveryClient et EnableConfigurationProperties</p>
+
+<pre><code>@EnableDiscoveryClient
+@EnableConfigurationProperties
+@SpringBootApplication
+public class UserServiceApplication {
+</code></pre>
+
+<hr />
+
+<p>Renommer le fichier application.yml en bootstrap.yml et lui indiquer, comment va se nommer le service (ici c&rsquo;est application: name: user-service) et ou se trouve le serveur de configuration (<a href="http://localhost:8888">http://localhost:8888</a> ou <a href="http://34.107.109.238:8888">http://34.107.109.238:8888</a> en fonction du profile).</p>
+
+<pre><code>spring:
+    name: &quot;user-service&quot;
+    application:
+        name: user-service
+    profiles:
+        active: &quot;dev-docker&quot;
+
+    main:
+        banner-mode: &quot;off&quot;
+
+lombok:
+    anyConstructor:
+        addConstructorProperties: true
+
+---
+
+spring:
+profiles: dev-docker
+cloud:
+    config:
+    uri: http://localhost:8888
+
+---
+
+spring:
+    profiles: dev-docker-integration #integration test
+    cloud:
+        config:
+            uri: http://35.207.169.107:8888
+
+---
+
+spring:
+    profiles: dev-docker-integration-deploy #deployment
+    cloud:
+        config:
+            uri: http://10.156.0.2:8888
+</code></pre>
+
+<hr />
+
+<p>Configuration-service fera ainsi le mapping grâce au nommage (fichier user-service.yml dans le serveur git configuration).</p>
+
+<pre><code>server: #to comment on local
+    port: 8081
+
+logging:
+    file: logs/user-service.log
+    pattern:
+        console: &quot;%d %-5level %logger : %msg%n&quot;
+        file: &quot;%d %-5level [%thread] %logger : %msg%n&quot;
+    level:
+        org.springframework.web: ERROR
+        com.howtodoinjava: DEBUG
+        org.hibernate: ERROR
+
+---
+
+spring:
+    profiles: dev-docker
+</code></pre>
+
+<hr />
+
+<p>Actuator renseignera sur des informations sur user-service et permet que les données actualisés du fichier de configuration puisse aussi l&rsquo;être pour le server (exemple à suivre)</p>
+
+<pre><code>@Controller
+public class MainController {
+
+    @ResponseBody
+    @RequestMapping(path = &quot;/&quot;)
+    public String home(HttpServletRequest request) {
+
+        String contextPath = request.getContextPath();
+        String host = request.getServerName();
+
+        // Spring Boot &gt;= 2.0.0.M7
+        String endpointBasePath = &quot;/actuator&quot;;
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(&quot;&lt;h2&gt;Sprig Boot Actuator&lt;/h2&gt;&quot;);
+        sb.append(&quot;&lt;ul&gt;&quot;);
+
+        // http://localhost:8090/actuator
+        String url = &quot;http://&quot; + host + &quot;:8090&quot; + contextPath + endpointBasePath;
+
+        sb.append(&quot;&lt;li&gt;&lt;a href='&quot; + url + &quot;'&gt;&quot; + url + &quot;&lt;/a&gt;&lt;/li&gt;&quot;);
+
+        sb.append(&quot;&lt;/ul&gt;&quot;);
+
+        return sb.toString();
+    }
+
+}
+</code></pre>
+
+<hr />
+
+<p>Configuration de actuator
+boostrap.yml</p>
+
+<pre><code>management:
+    server:
+        port: 8080
+    endpoints:
+        web:
+            exposure:
+                include: &quot;*&quot;
+        shutdown:
+            enabled: true
+</code></pre>
+
+<hr />
+
+<p>Etapes d&rsquo;un appel simple :</p>
+
+<ul>
+<li>1/Le client lance une requête vers le proxy-service</li>
+<li>2/Le proxy-service va router vers une instance disponible (instance 1)</li>
+<li>3/Le serveur d&rsquo;authentification va vérifier les informations de sécurité du header et authoriser la requête</li>
+<li>4/L&rsquo;instance 1 va retourner la response au proxy-service</li>
+<li>5/Proxy service va retourner le résultat de la requête au client</li>
+</ul>
+
+<p>Il s&rsquo;agit d&rsquo;un exemple très simple. Le service-proxy a la possibilité de faire traitement lorsqu&rsquo;il recoit une requête (filtre, traitement avant la response, etc&hellip;)</p>
+
+<p><img src="/blog/img/6/Micro-service-3.png" alt="Etapes" /></p>
+
+<h3 id="mise-à-jour-des-bases-de-données-des-différentes-instances">Mise à jour des bases de données des différentes instances</h3>
+
+<p>Les instances disposent d&rsquo;une propre base de données. Il faut en conséquence pouvoir gérer lors d&rsquo;insertions ou de modifications de données.
+Une des solutions consiste à utiliser un messaging middleware:</p>
+
+<ul>
+<li>1/Dans notre exemple, l&rsquo;instance 1 va faire une insertion dans la base de donnée.</li>
+<li>2/L&rsquo;instance 1 va envoyer un producer dans un topic. Il va contenir l&rsquo;objet qui a été persisté.</li>
+<li>3/Toutes les instances disposent d&rsquo;un listener de ce même topic, et vont le consommer (récupérer l&rsquo;objet)</li>
+<li>4/Ils vont se mettre à niveau en faisant également l&rsquo;insertion</li>
+</ul>
+
+<p><img src="/blog/img/6/Micro-service-4.png" alt="update-database" /></p>
+
+<pre><code>Implémentation
+</code></pre>
+
+<p>Dépendance</p>
+
+<pre><code>    &lt;dependency&gt;
+        &lt;groupId&gt;org.apache.activemq&lt;/groupId&gt;
+        &lt;artifactId&gt;activemq-broker&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+</code></pre>
+
+<hr />
+
+<p>Configuration</p>
+
+<pre><code>@Configuration
+@EnableJms
+public class JmsConfig {
+
+    @Value(&quot;${activemq.broker-url}&quot;)
+    private String brokerUrl;
+
+    @Bean
+    public DefaultJmsListenerContainerFactory userFactory() {
+        DefaultJmsListenerContainerFactory containerFactory = new DefaultJmsListenerContainerFactory();
+        containerFactory.setPubSubDomain(true);
+        containerFactory.setConnectionFactory(connectionFactory());
+        containerFactory.setMessageConverter(jacksonJmsMessageConverter());
+        return containerFactory;
+    }
+    @Bean
+    public CachingConnectionFactory connectionFactory() {
+        CachingConnectionFactory cachConnectionFactory = new CachingConnectionFactory();
+        ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory();
+        connectionFactory.setBrokerURL(brokerUrl);
+        cachConnectionFactory.setTargetConnectionFactory(connectionFactory);
+        return cachConnectionFactory;
+    }
+    @Bean
+    public MessageConverter jacksonJmsMessageConverter() {
+        MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
+        converter.setTargetType(MessageType.TEXT);
+        converter.setTypeIdPropertyName(&quot;_type&quot;);
+        return converter;
+    }
+</code></pre>
+
+<hr />
+
+<p>Création du topic</p>
+
+<pre><code>private static Topic userTopic;
+
+public static void main(String[] args) throws JMSException {
+    final ConfigurableApplicationContext context = SpringApplication.run(UserServiceApplication.class, args);
+    final JmsTemplate jmsTemplate = context.getBean(JmsTemplate.class);
+    userTopic = jmsTemplate.getConnectionFactory().createConnection()
+            .createSession().createTopic(Constant.TOPIC_USER_SERVICE_SAVE_USER);
+}
+
+public static Topic getUserTopic() {
+    return userTopic;
+}
+</code></pre>
+
+<hr />
+
+<p>Envoie du topic. Pour l&rsquo;utiliser on va passer en argument le topic userTopic et l&rsquo;objet à persister</p>
+
+<pre><code>public T pushOnJms(final Topic topic, final T t) throws JMSException {
+    try {
+        jmsTemplate.convertAndSend(topic, t);
+        jmsTemplate.setReceiveTimeout(10_000);
+        return t;
+    }catch (Exception ex){
+        throw new CustomJmsException(&quot;Message cannot be sent : &quot; + ex.getMessage());
+    }
+}
+</code></pre>
+
+<hr />
+
+<p>Le listener va récupérer les objets du topic pour persister l&rsquo;objet.</p>
+
+<pre><code>    @org.springframework.jms.annotation.JmsListener(destination = Constant.TOPIC_USER_SERVICE_SAVE_USER, containerFactory = &quot;userFactory&quot;)
+    public void saveUserByConsumer(Message message) throws JMSException, JsonProcessingException {
+        final ActiveMQTextMessage amqMessage = (ActiveMQTextMessage) message;
+        final String messageResponse = amqMessage.getText();
+        User user = singletonBean.getObjectMapper().readValue(messageResponse, User.class);
+        try{
+            user = testCreateUser(user);
+        }catch (CustomTransactionalException ex){
+            System.out.println(ex.getMessage());
+        }
+        /**
+        * toDo do something with return
+        */
+
+        System.out.println(&quot;user return &quot; + user.toString());
+    }
+</code></pre>
+
+<p>Cette méthode comporte plusieurs points de vigilance</p>
+
+<ul>
+<li>Les id auto-incrémenté vont se décaler entre les bases de données des différentes instances</li>
+<li>L&rsquo;instance qui va produire va également consommer (Exception à gérer en cas de re-persistence!)</li>
+<li>Vérifier que les bases de données de toutes les instances comportent tous les mêmes éléments</li>
+</ul>
+
+<h3 id="conclusion">Conclusion</h3>
+
+<p>Il est très simple avec Spring-Cloud d&rsquo;implémenter un projet en micro-service. Elle prend également en charge le système de sécurité OpenID. Avec l&rsquo;intégration continue et docker il est également très aisée de scaler les services, et même de changer de vm.</p>
 
 				</section>
 			</article>
@@ -689,9 +830,12 @@ Pour ce faire la requête devra comporter l&rsquo;url de proxy-service + le nom 
 <ul>
 <li><a href="#le-projet">Le projet</a></li>
 <li><a href="#configuration-service">Configuration-service</a></li>
-<li><a href="#user-service">User-service</a></li>
+<li><a href="#configuration">Configuration</a></li>
 <li><a href="#registartion-service">Registartion-service</a></li>
 <li><a href="#proxy-service">Proxy-service</a></li>
+<li><a href="#user-service">User-service</a></li>
+<li><a href="#mise-à-jour-des-bases-de-données-des-différentes-instances">Mise à jour des bases de données des différentes instances</a></li>
+<li><a href="#conclusion">Conclusion</a></li>
 </ul></li>
 </ul></li>
 </ul>
