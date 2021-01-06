@@ -536,45 +536,28 @@ Configuration-service fera ainsi le mapping grâce au nommage (fichier user-serv
 
 ### Actuator ###
 
-Actuator renseignera sur des informations sur user-service et permet que les données actualisés du fichier de configuration puisse aussi l'être pour le server (exemple à suivre)
+Spring Boot Actuator est un sous projet du projet Spring Boot. Il est créé pour collecter, superviser les informations de l'application par un ensemble de endpoints fournits.
 
-    @Controller
-    public class MainController {
+Son utilisation est très simple, il suffit juste de rajouter la dépendance et d'indiquer son port d'exposition.
 
-        @ResponseBody
-        @RequestMapping(path = "/")
-        public String home(HttpServletRequest request) {
-
-            String contextPath = request.getContextPath();
-            String host = request.getServerName();
-
-            // Spring Boot >= 2.0.0.M7
-            String endpointBasePath = "/actuator";
-
-            StringBuilder sb = new StringBuilder();
-
-            sb.append("<h2>Sprig Boot Actuator</h2>");
-            sb.append("<ul>");
-
-            // http://localhost:8090/actuator
-            String url = "http://" + host + ":8090" + contextPath + endpointBasePath;
-
-            sb.append("<li><a href='" + url + "'>" + url + "</a></li>");
-
-            sb.append("</ul>");
-
-            return sb.toString();
-        }
-
-    }
+Un exemple d'utilisation sera illustré avec user-service.
 
 ---
-Configuration de actuator
-boostrap.yml
 
-    management:
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+---
+
+Configuration de actuator
+
+---
+
+    management: #actuator not in use for integration test
         server:
-            port: 8080
+            port: 8080 #0 random port on local if more than 1 service else 8080
         endpoints:
             web:
                 exposure:
@@ -583,6 +566,23 @@ boostrap.yml
                 enabled: true
 
 ---
+
+Dans le fichier de configuration central, le port d'exposition en local doit être en random (soit 0), si plus d'une instance de user-service est déployé. En effet 2 instances différents ne peuvent pas exposer un service sur le même port en local!
+
+Dans cet exemple nous allons ouvrir le port 8080 ou une des instances de user-service est déployé (ip 35.208.214.143) 
+
+Ne pas oublier d'ajouter le tag réseau qui va autoriser l'exposition du port 8080 sur le web!
+
+![gcp-2](/blog/img/6/gcp-2.png)
+
+L'url http://35.208.214.143:8080/actuator/ va lister tous les end-points disponibles.
+
+http://35.208.214.143:8080/actuator/beans pour connaître tous les beans chargés en mémoire.
+
+http://35.208.214.143:8080/actuator/env/ va indiquer l'environnement du service.
+
+Son utilisation est donc très intuitive.
+
 
 ### Requête simple ###
 

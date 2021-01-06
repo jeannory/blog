@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>6/Micro Services on Jeannory&#39;s blog</title>
-    <link>https://jeannory.github.io/blog/categories/6/micro-services/</link>
-    <description>Recent content in 6/Micro Services on Jeannory&#39;s blog</description>
+    <title>6/Micro Services Spring Cloud Part 2 on Jeannory&#39;s blog</title>
+    <link>https://jeannory.github.io/blog/tags/6/micro-services-spring-cloud-part-2/</link>
+    <description>Recent content in 6/Micro Services Spring Cloud Part 2 on Jeannory&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Wed, 06 Jan 2021 21:18:30 +0100</lastBuildDate>
     
-	<atom:link href="https://jeannory.github.io/blog/categories/6/micro-services/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://jeannory.github.io/blog/tags/6/micro-services-spring-cloud-part-2/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
@@ -20,16 +20,6 @@
       <description>Micro-service Spring Cloud part 2 Nous allons désormais faire communiquer 2 services à travers un exemple très simple.
 Pour ce faire nous allons utiliser implémenter &amp;ldquo;choreography-based saga&amp;rdquo; tel que définit ici. Nous allons utiliser la même fonction dans notre projet micro service.
    Step Triggering event Participan Command Events     1  Order Service createPendingOrder() OrderCreated   2 OrderCreated Customer Service reserveCredit() Credit Reserved, Credit Limit Exceeded   3a Credit Reserved Order Service approveOrder()    3b Credit Limit Exceeded Order Service rejectOrder()     Voici comment les services vont communiquer entre eux par cette implémentation:</description>
-    </item>
-    
-    <item>
-      <title>Spring Cloud Part 1</title>
-      <link>https://jeannory.github.io/blog/articles/micro-service/spring-cloud-part-1/</link>
-      <pubDate>Fri, 30 Oct 2020 09:05:35 +0100</pubDate>
-      
-      <guid>https://jeannory.github.io/blog/articles/micro-service/spring-cloud-part-1/</guid>
-      <description>Micro-service Spring Cloud part 1 Le projet A travers ce projet, je vais illustrer un exemple d&amp;rsquo;implémentation d&amp;rsquo;un micro service avec Spring-Cloud. Ce projet va être déployé sur plusieurs VM du cloud de googl-cloud-plateform. Il va s&amp;rsquo;agir de la 1ère partie ou sera développé un seul service sur plusieurs instances.
-Objectif Schéma de&#39;infrastructure du projet réalisé.  Projet de base  Reprise du projet du paragraphe Jms Websocket Dépôts</description>
     </item>
     
   </channel>

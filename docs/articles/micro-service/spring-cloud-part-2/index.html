@@ -6,7 +6,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<link rel="alternate" href="/index.xml" type="application/rss+xml" title="Jeannory&#39;s blog">
 		<link rel="icon" href="https://jeannory.github.io/blog/favicon.ico">
-		<title>Articles - Jeannory&#39;s blog</title>
+		<title>Spring Cloud Part 2 - Jeannory&#39;s blog</title>
 		
 		<link rel="stylesheet" href="https://jeannory.github.io/blog/css/highlight/default.css">
 		<link rel="stylesheet" href="https://jeannory.github.io/blog/css/bootstrap.min.css">
@@ -67,68 +67,105 @@
 <div class="row">
 	<div class="col-sm-8 doc-main">
 		<main role="main">
-			<div class="doc-list-header">
-				<h3>Pages in Articles</h3>
-			</div>
-			<div class="doc-list-entry">
-			<ul>
-	
-				<li><a class="doc-entry" href="/blog/articles/micro-service/spring-cloud-part-2/">
-					<span class="doc-entry-title">Spring Cloud Part 2</span>
-					<span class="doc-entry-meta in-list">
-						(<time datetime="2021-01-06">January 06, 2021</time>)
-					</span>
-				</a></li>
-	
-				<li><a class="doc-entry" href="/blog/articles/micro-service/spring-cloud-part-1/">
-					<span class="doc-entry-title">Spring Cloud Part 1</span>
-					<span class="doc-entry-meta in-list">
-						(<time datetime="2020-10-30">October 30, 2020</time>)
-					</span>
-				</a></li>
-	
-				<li><a class="doc-entry" href="/blog/articles/jms-websocket/">
-					<span class="doc-entry-title">Jms Websocket</span>
-					<span class="doc-entry-meta in-list">
-						(<time datetime="2020-07-30">July 30, 2020</time>)
-					</span>
-				</a></li>
-	
-				<li><a class="doc-entry" href="/blog/articles/gitlab-ci-cd/">
-					<span class="doc-entry-title">Gitlab Ci Cd</span>
-					<span class="doc-entry-meta in-list">
-						(<time datetime="2020-04-26">April 26, 2020</time>)
-					</span>
-				</a></li>
-	
-				<li><a class="doc-entry" href="/blog/articles/keycloak/">
-					<span class="doc-entry-title">Keycloak</span>
-					<span class="doc-entry-meta in-list">
-						(<time datetime="2020-04-23">April 23, 2020</time>)
-					</span>
-				</a></li>
-	
-				<li><a class="doc-entry" href="/blog/articles/springboot-tests/">
-					<span class="doc-entry-title">Springboot-tests</span>
-					<span class="doc-entry-meta in-list">
-						(<time datetime="2019-10-25">October 25, 2019</time>)
-					</span>
-				</a></li>
-	
-				<li><a class="doc-entry" href="/blog/articles/spring-security/">
-					<span class="doc-entry-title">Spring Security</span>
-					<span class="doc-entry-meta in-list">
-						(<time datetime="2019-10-07">October 07, 2019</time>)
-					</span>
-				</a></li>
-	
-			</ul>
-			</div>
+			<article>
+				<a id="title"></a>
+				<h1 class="doc-entry-title">Spring Cloud Part 2</h1>
+				<div class="doc-entry-meta">
+					<span><time datetime="2021-01-06">January 06, 2021</time></span>
+				</div>
+				<section>
+					
+
+<h2 id="micro-service-spring-cloud-part-2">Micro-service Spring Cloud part 2</h2>
+
+<p>Nous allons désormais faire communiquer 2 services à travers un exemple très simple.</p>
+
+<p>Pour ce faire nous allons utiliser implémenter &ldquo;choreography-based saga&rdquo; tel que définit <a href="https://chrisrichardson.net/post/sagas/2019/08/15/developing-sagas-part-3.html">ici</a>.
+Nous allons utiliser la même fonction dans notre projet micro service.</p>
+
+<hr />
+
+<table>
+<thead>
+<tr>
+<th align="right">Step</th>
+<th>Triggering event</th>
+<th>Participan</th>
+<th align="center">Command</th>
+<th align="left">Events</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td align="right">1</td>
+<td></td>
+<td>Order Service</td>
+<td align="center">createPendingOrder()</td>
+<td align="left">OrderCreated</td>
+</tr>
+
+<tr>
+<td align="right">2</td>
+<td>OrderCreated</td>
+<td>Customer Service</td>
+<td align="center">reserveCredit()</td>
+<td align="left">Credit Reserved, Credit Limit Exceeded</td>
+</tr>
+
+<tr>
+<td align="right">3a</td>
+<td>Credit Reserved</td>
+<td>Order Service</td>
+<td align="center">approveOrder()</td>
+<td align="left"></td>
+</tr>
+
+<tr>
+<td align="right">3b</td>
+<td>Credit Limit Exceeded</td>
+<td>Order Service</td>
+<td align="center">rejectOrder()</td>
+<td align="left"></td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<p>Voici comment les services vont communiquer entre eux par cette implémentation:</p>
+
+<hr />
+
+<p><img src="/blog/img/6/schema-choreography-micro-service-1.png" alt="schema" /></p>
+
+<hr />
+
+				</section>
+			</article>
 		</main>
 	</div> 
 
 	
+
 <div class="col-sm-3 col-sm-offset-1 doc-sidebar">
+	<div id="sidebar">
+	<div class="sidebar-module">
+		<div class="sidebar-toc">
+			<h4 class="sidebar-heading">Table of Contents</h4>
+			<ul>
+				<li><strong><a href="#title">Spring Cloud Part 2</a></strong></li>
+			</ul>
+			<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#micro-service-spring-cloud-part-2">Micro-service Spring Cloud part 2</a></li>
+</ul></li>
+</ul>
+</nav>
+		</div>
+	</div>
 	<div class="sidebar-module">
 		<h4 class="sidebar-heading">Pages in Categories</h4>
 		<ul class="sidebar-category-list">
@@ -138,7 +175,8 @@
 					<span class="doc-list-category">1/Spring-Security</span>
 				</a>
 				<ul>
-					<li><a href="/blog/articles/spring-security/">Spring Security</a></li>
+					<li><a href="/blog/articles/spring-security/">Spring Security</a>
+					</li>
 				
 				</ul>
 			</li>
@@ -148,7 +186,8 @@
 					<span class="doc-list-category">2/Springboot-Tests</span>
 				</a>
 				<ul>
-					<li><a href="/blog/articles/springboot-tests/">Springboot-tests</a></li>
+					<li><a href="/blog/articles/springboot-tests/">Springboot-tests</a>
+					</li>
 				
 				</ul>
 			</li>
@@ -158,7 +197,8 @@
 					<span class="doc-list-category">3/Keycloak</span>
 				</a>
 				<ul>
-					<li><a href="/blog/articles/keycloak/">Keycloak</a></li>
+					<li><a href="/blog/articles/keycloak/">Keycloak</a>
+					</li>
 				
 				</ul>
 			</li>
@@ -168,7 +208,8 @@
 					<span class="doc-list-category">4/Gitlab-Ci-Cd</span>
 				</a>
 				<ul>
-					<li><a href="/blog/articles/gitlab-ci-cd/">Gitlab Ci Cd</a></li>
+					<li><a href="/blog/articles/gitlab-ci-cd/">Gitlab Ci Cd</a>
+					</li>
 				
 				</ul>
 			</li>
@@ -178,7 +219,8 @@
 					<span class="doc-list-category">5/Jms-Websocket</span>
 				</a>
 				<ul>
-					<li><a href="/blog/articles/jms-websocket/">Jms Websocket</a></li>
+					<li><a href="/blog/articles/jms-websocket/">Jms Websocket</a>
+					</li>
 				
 				</ul>
 			</li>
@@ -188,9 +230,12 @@
 					<span class="doc-list-category">6/Micro-Services</span>
 				</a>
 				<ul>
-					<li><a href="/blog/articles/micro-service/spring-cloud-part-2/">Spring Cloud Part 2</a></li>
+					<li>
+						<span class="active">Spring Cloud Part 2</span>
+						</li>
 				
-					<li><a href="/blog/articles/micro-service/spring-cloud-part-1/">Spring Cloud Part 1</a></li>
+					<li><a href="/blog/articles/micro-service/spring-cloud-part-1/">Spring Cloud Part 1</a>
+					</li>
 				
 				</ul>
 			</li>
@@ -218,6 +263,7 @@
 			<a class="tag-item" href="https://jeannory.github.io/blog/tags/author">author</a>
 		
 		</div>
+	</div>
 	</div>
 </div>
 

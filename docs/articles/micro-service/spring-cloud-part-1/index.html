@@ -616,47 +616,29 @@ spring:
 
 <h3 id="actuator">Actuator</h3>
 
-<p>Actuator renseignera sur des informations sur user-service et permet que les données actualisés du fichier de configuration puisse aussi l&rsquo;être pour le server (exemple à suivre)</p>
+<p>Spring Boot Actuator est un sous projet du projet Spring Boot. Il est créé pour collecter, superviser les informations de l&rsquo;application par un ensemble de endpoints fournits.</p>
 
-<pre><code>@Controller
-public class MainController {
+<p>Son utilisation est très simple, il suffit juste de rajouter la dépendance et d&rsquo;indiquer son port d&rsquo;exposition.</p>
 
-    @ResponseBody
-    @RequestMapping(path = &quot;/&quot;)
-    public String home(HttpServletRequest request) {
+<p>Un exemple d&rsquo;utilisation sera illustré avec user-service.</p>
 
-        String contextPath = request.getContextPath();
-        String host = request.getServerName();
+<hr />
 
-        // Spring Boot &gt;= 2.0.0.M7
-        String endpointBasePath = &quot;/actuator&quot;;
-
-        StringBuilder sb = new StringBuilder();
-
-        sb.append(&quot;&lt;h2&gt;Sprig Boot Actuator&lt;/h2&gt;&quot;);
-        sb.append(&quot;&lt;ul&gt;&quot;);
-
-        // http://localhost:8090/actuator
-        String url = &quot;http://&quot; + host + &quot;:8090&quot; + contextPath + endpointBasePath;
-
-        sb.append(&quot;&lt;li&gt;&lt;a href='&quot; + url + &quot;'&gt;&quot; + url + &quot;&lt;/a&gt;&lt;/li&gt;&quot;);
-
-        sb.append(&quot;&lt;/ul&gt;&quot;);
-
-        return sb.toString();
-    }
-
-}
+<pre><code>    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-actuator&lt;/artifactId&gt;
+    &lt;/dependency&gt;
 </code></pre>
 
 <hr />
 
-<p>Configuration de actuator
-boostrap.yml</p>
+<p>Configuration de actuator</p>
 
-<pre><code>management:
+<hr />
+
+<pre><code>management: #actuator not in use for integration test
     server:
-        port: 8080
+        port: 8080 #0 random port on local if more than 1 service else 8080
     endpoints:
         web:
             exposure:
@@ -666,6 +648,22 @@ boostrap.yml</p>
 </code></pre>
 
 <hr />
+
+<p>Dans le fichier de configuration central, le port d&rsquo;exposition en local doit être en random (soit 0), si plus d&rsquo;une instance de user-service est déployé. En effet 2 instances différents ne peuvent pas exposer un service sur le même port en local!</p>
+
+<p>Dans cet exemple nous allons ouvrir le port 8080 ou une des instances de user-service est déployé (ip 35.208.214.143)</p>
+
+<p>Ne pas oublier d&rsquo;ajouter le tag réseau qui va autoriser l&rsquo;exposition du port 8080 sur le web!</p>
+
+<p><img src="/blog/img/6/gcp-2.png" alt="gcp-2" /></p>
+
+<p>L&rsquo;url <a href="http://35.208.214.143:8080/actuator/">http://35.208.214.143:8080/actuator/</a> va lister tous les end-points disponibles.</p>
+
+<p><a href="http://35.208.214.143:8080/actuator/beans">http://35.208.214.143:8080/actuator/beans</a> pour connaître tous les beans chargés en mémoire.</p>
+
+<p><a href="http://35.208.214.143:8080/actuator/env/">http://35.208.214.143:8080/actuator/env/</a> va indiquer l&rsquo;environnement du service.</p>
+
+<p>Son utilisation est donc très intuitive.</p>
 
 <h3 id="requête-simple">Requête simple</h3>
 
@@ -914,6 +912,9 @@ public static Topic getUserTopic() {
 					<span class="doc-list-category">6/Micro-Services</span>
 				</a>
 				<ul>
+					<li><a href="/blog/articles/micro-service/spring-cloud-part-2/">Spring Cloud Part 2</a>
+					</li>
+				
 					<li>
 						<span class="active">Spring Cloud Part 1</span>
 						</li>
@@ -938,6 +939,8 @@ public static Topic getUserTopic() {
 			<a class="tag-item" href="https://jeannory.github.io/blog/tags/5/jms-websocket">5/jms-websocket</a>
 		
 			<a class="tag-item" href="https://jeannory.github.io/blog/tags/6/micro-services-spring-cloud-part-1">6/micro-services-spring-cloud-part-1</a>
+		
+			<a class="tag-item" href="https://jeannory.github.io/blog/tags/6/micro-services-spring-cloud-part-2">6/micro-services-spring-cloud-part-2</a>
 		
 			<a class="tag-item" href="https://jeannory.github.io/blog/tags/author">author</a>
 		
