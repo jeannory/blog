@@ -12,11 +12,10 @@ categories: ["6/Micro-services"]
 Nous allons désormais faire communiquer 2 services à travers un exemple très simple.
 
 Pour ce faire nous allons utiliser implémenter "choreography-based saga" tel que définit [ici](https://chrisrichardson.net/post/sagas/2019/08/15/developing-sagas-part-3.html).
-Nous allons utiliser la même fonction dans notre projet micro service.
 
 ---
 
-| Step | Triggering event | Participan | Command | Events |
+| Step | Triggering event | Participant | Command | Events |
 |--:|---------|---------|:--:|:----|
 | 1 | | Order Service | createPendingOrder() | OrderCreated |
 | 2 | OrderCreated | Customer Service | reserveCredit() |Credit Reserved, Credit Limit Exceeded |
