@@ -17,9 +17,9 @@
       <pubDate>Wed, 06 Jan 2021 21:18:30 +0100</pubDate>
       
       <guid>https://jeannory.github.io/blog/articles/micro-service/spring-cloud-part-2/</guid>
-      <description>Micro-service Spring Cloud part 2 Nous allons désormais faire communiquer 2 services à travers un exemple très simple.
-Pour ce faire nous allons utiliser implémenter &amp;ldquo;choreography-based saga&amp;rdquo; tel que définit ici. Nous allons utiliser la même fonction dans notre projet micro service.
-   Step Triggering event Participan Command Events     1  Order Service createPendingOrder() OrderCreated   2 OrderCreated Customer Service reserveCredit() Credit Reserved, Credit Limit Exceeded   3a Credit Reserved Order Service approveOrder()    3b Credit Limit Exceeded Order Service rejectOrder()     Voici comment les services vont communiquer entre eux par cette implémentation:</description>
+      <description>Micro-service Spring Cloud part 2 Article en cours de rédaction&amp;hellip;
+Introduction A travers cet article, nous allons aborder un moyen pour réaliser des échanges entre 2 micro-services, tout en assurant la sécurisation des transactions. Nous allons expliquer les patterns choreography-based saga et oubox. Je vous mettrais un exemple d’implémentation avec le code source à travers un cas métier concret.
+Dépôts git  user-service : ici order-service : ici  Les fonctions ont été développées sous la branch &amp;ldquo;dev/add-order-service&amp;rdquo;.</description>
     </item>
     
   </channel>
