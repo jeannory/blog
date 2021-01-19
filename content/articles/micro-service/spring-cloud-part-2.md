@@ -54,9 +54,9 @@ Dans le cas de notre micro-service le service order-service s’occupera exclusi
 
 * Etape 1 : order-service va enregistrer une nouvelle commande dans sa base de donnée.
 Il retourne au client (réponse de la requête http) que la cliente est en attente. Il transmet l’information à user-service.
-La compensation est le cas ou un problème est survenu pendant l’étape. Dans nous retournons au client une erreur serveur (500) en lui demandant de ressayer.
-* Etape 2a : user-service reçoit la demande pour un utilisateur donné. Il va vérifier si le client dispose des fonds nécessaire dans son compte. Le compte est suffisamment approvisionné. user-service déduit le montant du compte utilisateur (reserveCredit()) et transmet l’information à order-service.
-* Etape 2b : user-service reçoit la demande pour un utilisateur donné. Il va vérifier si le client dispose des fond nécessaire dans son compte. Le compte n’est pas suffisamment approvisionné, user-service va simplement transmettre cette information à order-service.
+La compensation est le cas ou un problème est survenu pendant l’étape. Dans ce cas nous retournons au client une erreur serveur (500) en lui demandant de ressayer.
+* Etape 2a : user-service reçoit la demande pour un utilisateur donné. Il va vérifier si le client dispose des fonds nécessaire sur son compte. Le compte est suffisamment approvisionné. user-service déduit le montant du compte utilisateur (reserveCredit()) et transmet l’information à order-service.
+* Etape 2b : user-service reçoit la demande pour un utilisateur donné. Il va vérifier si le client dispose des fonds nécessaire sur son compte. Le compte n’est pas suffisamment approvisionné. user-service va transmettre cette information à order-service.
 * Etape 3a : order-service va enregistrer dans sa base que la commande est validée.
 * Etape 3b : order-service va enregistrer dans sa base que la commande est rejetée.
 
@@ -64,9 +64,9 @@ La compensation est le cas ou un problème est survenu pendant l’étape. Dans 
 
 A travers cet exemple nous vous montrerons un exemple d'implémentation sur un projet springcloud.
 
-*Dans notre application, les micro-services order-service et user-service seront chacun composé de 3 instances. Nous ne ferons intervenir qu’un front-end et un gateway pour l’explication.*
+*Dans notre application, les micro-services order-service et user-service seront chacun composés de 3 instances. Nous ne ferons intervenir qu’un front-end et un gateway pour l’explication.*
 Nous allons utiliser le messaging middleware activemq pour router les messages entre micro-services. Chaque micro service pourra produire topic (pouvant être consommé/récupéré par tous les micro-service qui sont à son écoute) ou queue (ne peut être consommé/récupéré uniquement par le 1er micro-service qui l’aura intercepté).
-J’ai choisit activemq par sa simplicité d’utilisation. Pour une application en micro-service en entreprise, un messaging middleware sur un système distribué serait plus adapté (kafka, rabbitmq, etc..) 
+J’ai choisit activemq par sa simplicité. Pour une application en micro-service en entreprise, un messaging middleware sur un système distribué serait plus adapté (kafka, rabbitmq, etc..) 
 
 ![schema](/blog/img/6/schema-choreography-micro-service-1.png)
 
